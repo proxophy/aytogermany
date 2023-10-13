@@ -24,6 +24,7 @@
         "Marie",
         "Alicia"
     ],
+    "dm": "Max",
     "dmtuple": [
         "Peter",
         "Max"
@@ -448,5 +449,17 @@
             false
         ]
     ],
-    "bonights": [7]
+    "bonights": [
+        7
+    ],
+    "boxesepisode": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        7,
+        7
+    ]
 }

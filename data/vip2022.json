@@ -24,6 +24,7 @@
         "Ricarda",
         "Zoe"
     ],
+    "dm": "Felix",
     "nights": [
         [
             [
@@ -455,6 +456,13 @@
         ],
         [
             [
+                "Luisa",
+                "Lukas"
+            ],
+            true
+        ],
+        [
+            [
                 "Felix",
                 "Ricarda"
             ],
@@ -497,5 +505,17 @@
         ]
     ],
     "bonights": [],
-    "cancelled": 3
+    "cancelled": 3,
+    "boxesepisode": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+    ]
 }

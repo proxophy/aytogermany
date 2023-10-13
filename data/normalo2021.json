@@ -24,6 +24,7 @@
         "Victoria",
         "Vanessa M."
     ],
+    "dm": "Vanessa M.",
     "nights": [
         [
             [
@@ -536,5 +537,15 @@
     ],
     "bonights": [
         7
+    ],
+    "boxesepisode": [
+        0,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9
     ]
 }

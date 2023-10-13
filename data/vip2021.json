@@ -24,6 +24,7 @@
         "Steffi",
         "Vanessa"
     ],
+    "dm": "Vanessa",
     "nights": [
         [
             [
@@ -441,6 +442,13 @@
         ],
         [
             [
+                "Francesco",
+                "Jules"
+            ],
+            true
+        ],
+        [
+            [
                 "Tommy",
                 "Walentina"
             ],
@@ -487,17 +495,21 @@
                 "Aurelia"
             ],
             true
-        ],
-        [
-            [
-                "Francesco",
-                "Jules"
-            ],
-            true
         ]
     ],
     "bonights": [
         6
     ],
-    "cancelled": 4
+    "cancelled": 4,
+    "boxesepisode": [
+        0,
+        1,
+        2,
+        5,
+        6,
+        7,
+        8,
+        8,
+        9
+    ]
 }

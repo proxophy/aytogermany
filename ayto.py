@@ -27,6 +27,23 @@ class AYTO():
         else:
             raise ValueError(f"not enough or too much women or men")
 
+        # seatings and lights for nights
+        self.read_nights()
+
+        # matchboxes with results
+        self.read_matchboxes()
+
+        # nights with blackout
+        self.bonights = data["bonights"]
+
+        # do we know who is the second match to someone
+        # besides normalo2023, yes
+        if "dm" in data:
+            self.dm_rights = [data["dm"]]
+        else:
+            self.dm_rights = self.rights
+            # self.dm_rights = [r for r in self.rights if r not in self.haspm]
+
         if "dmtuple" in data:
             dm1, dm2 = data["dmtuple"]
             if not (dm1 in self.rights and dm2 in self.rights):
@@ -36,14 +53,15 @@ class AYTO():
         else:
             self.dmtuple = None
 
-        # seatings and lights for nights
-        self.read_nights()
+        # added to do some funny analyzing
+        if "cancelled" in data:
+            self.cancellednight = data["cancelled"]
+        else:
+            self.cancellednight = -1
 
-        # matchboxes with results
-        self.read_matchboxes()
-
-        # nights with blackout
-        self.bonights = data["bonights"]
+        self.read_boxesepisode()
+        
+        # ---------------------
 
         # known perfect matches
         self.knownpm = [p for p in self.matchboxes.keys()
@@ -55,6 +73,18 @@ class AYTO():
         # possible matches for each person without considering lights in matching nights
         self.possible_matches = {l: [r for r in self.rights if not self.no_match(l, r)]
                                  for l in self.lefts}
+
+        # do we know which two share the same match
+        # besides vip2023, no
+        if "dmtuple" in data:
+            # change possible matches
+            for l in self.possible_matches:
+                # if not still both possible for this left, remove them as an option
+                if not (dm1 in self.possible_matches[l] and dm2 in self.possible_matches[l]):
+                    self.possible_matches[l] = list(
+                        set(self.possible_matches[l]) - {dm1, dm2})
+        else:
+            self.dmtuple = None
 
     def read_nights(self) -> None:
         # assert that nights are in data
@@ -105,6 +135,26 @@ class AYTO():
                 if (r, l) in self.matchboxes:
                     raise ValueError(f"Double matchbox result for {r,l}")
                 self.matchboxes[(r, l)] = result
+
+    def read_boxesepisode(self) -> None:
+        if "boxesepisode" in self.data:
+            assert len(self.matchboxes) == len(self.data["boxesepisode"]), \
+                r"not every matchbox could be assigned a episode"
+
+            numepisodes = len(self.nights) + \
+                (1 if self.cancellednight != -1 else 0)
+
+            self.knownboxes = [0 for _ in range(numepisodes)]
+            for i, e in enumerate(self.data["boxesepisode"]):
+                self.knownboxes[e] = i
+            for i in range(1, len(self.knownboxes)):
+                if self.knownboxes[i] == 0:
+                    self.knownboxes[i] = self.knownboxes[i - 1]
+        else:
+            self.knownboxes = [i for i in range(len(self.nights))]
+
+    def get_possible_matches(self):
+        return
 
     def no_match(self, l: str, r: str) -> bool:
         '''(l,r) are definitely no match'''
@@ -157,45 +207,41 @@ class AYTO():
                 return False
         return True
 
-    def find_solutions(self, def_double_match: bool = True):
-        '''def_double_match: bool, if true, we know that the last of the rights is a double match to someone'''
-
-        if def_double_match:
-            dm_rights = [self.rights[-1]]
+    def generate_solutions(self):
+        '''Generating solutions that fit matchboxes, blackout nights and possible double matches'''
+        # consider possible dm
+        if len(self.dm_rights) == 1:
             dm_lefts = [l for l in self.lefts if not self.no_match(
                 l, self.rights[-1])]
-            # remove last right from possible matches to avoid duplicates
+            # remove dm right from possible matches to avoid duplicates
             modified_pos_matches = {l: [r for r in self.possible_matches[l]
-                                        if r not in dm_rights]
+                                        if r not in self.dm_rights]
                                     for l in self.possible_matches}
         else:
-            dm_rights = list(
-                filter(lambda x: x not in self.haspm, self.rights))
             dm_lefts = list(
                 filter(lambda x: x not in self.haspm, self.lefts))
             modified_pos_matches = self.possible_matches
-
-        # get first ten matches
 
         def zip_product(ordering):
             return list(zip(self.lefts, ordering))
         products = [list(ps) for ps in itertools.product(*modified_pos_matches.values())
                     if len(set(ps)) == 10]
+
+        # get first ten matches
         solutions_tenmatches = list(map(zip_product, products))
 
-        # print(f"solutions_tenmatches: {len(solutions_tenmatches)}")
+        solutions = []
 
         # add additional eleventh match
-        solutions = []
         if self.dmtuple is None:
             pos_additional_matches = list(
-                itertools.product(dm_lefts, dm_rights))
+                itertools.product(dm_lefts, self.dm_rights))
             for tenmatches, additionalmatch \
                     in list(itertools.product(solutions_tenmatches, pos_additional_matches)):
                 solutions.append(set(tenmatches + [additionalmatch]))
         else:
             dm1, dm2 = self.dmtuple
-            if dm1 in dm_rights:
+            if dm1 in self.dm_rights:
                 dm1, dm2 = dm2, dm1
 
             for tenmaches in solutions_tenmatches:
@@ -203,8 +249,11 @@ class AYTO():
                 sol = set(tenmaches+[(dml[0], dm2)])
                 solutions.append(sol)
 
-        # print(f"solutions: {len(solutions)}")
-        # find all possible solutions
+        return solutions
+
+    def find_solutions(self):
+        solutions = self.generate_solutions()
+
         solutions = list(
             filter(self.solution_possible, solutions))
 
@@ -242,20 +291,21 @@ class AYTO():
         return
 
 
-def transform_dictionnary(mydict: Dict):
-    lkeys, rkeys = list(zip(*mydict.keys()))
-    lkeys, rkeys = set(lkeys), set(rkeys)
-    x = {l: {r: mydict[(l, r)] for r in rkeys} for l in lkeys}
-    return x
-
-
 if __name__ == "__main__":
-    with open("data/vip2022.json", "r") as f:
-        seasondata = json.loads(f.read())
+    allseasons = ["normalo2020", "normalo2021", "normalo2022", "normalo2023",
+                  "vip2021", "vip2022", "vip2023"]
 
-    season = AYTO(seasondata)
-    res = season.find_solutions()
-    print(res, len(res))
+    for seasonfn in allseasons[4:]:
+        with open(f"data/{seasonfn}.json", "r") as f:
+            seasondata = json.loads(f.read())
+        print(seasonfn)
+        season = AYTO(seasondata)
+        season.get_possible_matches()
+        print()
+        # if seasonfn == "vip2022":
+        #     print(season.matchboxes)
+    # res = season.find_solutions()
+    # print(res, len(res))
 
     # TODO: add known right dm to data
-    # TODO: add cancelled nights
+    # TODO:  cancelled nights
