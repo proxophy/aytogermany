@@ -1,17 +1,26 @@
 from typing import List, Tuple, Dict, Set, Union
 import itertools
-from copy import deepcopy
 import json
+import functools
 
 
 class AYTO():
+    data: Dict
+
     lefts: List[str]
     rights: List[str]
-    data: Dict
+
     nights: List[Tuple[List[Tuple[str, str]], int]]
     matchboxes: Dict[Tuple[str, str], bool]
-    possible_matches: Dict[str, List[str]]
+
+    dm: Union[str, None]
     dmtuple: Union[Tuple[str, str], None]
+    cancellednight: int
+    numepisodes: int
+    knownnights: List[int]
+    knownboxes: List[int]
+    knownpm: List[Tuple[str, str]]
+    knowhaspm: List[str]
 
     def __init__(self, data) -> None:
         self.data = data
@@ -141,7 +150,7 @@ class AYTO():
         else:
             self.knownboxes = [i for i in range(len(self.nights))]
 
-    def get_upto_episode(self, end):
+    def get_upto_episode(self, end: int):
         if end >= self.numepisodes - 1:
             return self.matchboxes, self.nights, self.knownpm, self.haspm, self.bonights
 
@@ -155,7 +164,7 @@ class AYTO():
 
         return usedmb, usednights, usedknownpm, usedhaspm, usedbo
 
-    def no_match(self, l: str, r: str, end) -> bool:
+    def no_match(self, l: str, r: str, end: int) -> bool:
         '''(l,r) are definitely no match'''
         assert l in self.lefts and r in self.rights, f"f: {l}, s: {r}"
 
@@ -168,7 +177,7 @@ class AYTO():
             or ((l, r) in mb.keys() and not mb[(l, r)]) \
             or any([(l, r) in nights[bo][0] and (l, r) not in kpm for bo in bon])
 
-    def get_possible_matches(self, end):
+    def get_possible_matches(self, end: int) -> Dict[str, List[str]]:
         # mb, nights, kpm, hpm, bon = self.get_upto_episode(end)
         possible_matches = {l: [r for r in self.rights if not self.no_match(l, r, end)]
                             for l in self.lefts}
@@ -185,8 +194,8 @@ class AYTO():
 
     def solution_correct_format(self, solution: Set[Tuple[str, str]]) -> bool:
         if len(solution) != 11:
-            print(solution)
-            print("len(solution) != 11")
+            # print(solution)
+            # print("len(solution) != 11")
             return False
 
         leftseated = {l: 0 for l in self.lefts}
@@ -200,16 +209,16 @@ class AYTO():
             rightseated[r] += 1
 
         if 0 in leftseated.values() or 0 in rightseated.values():
-            print(leftseated)
-            print(rightseated)
-            print(solution)
+            # print(leftseated)
+            # print(rightseated)
+            # print(solution)
             return False
         return True
 
-    def solution_possible(self, solution: Set[Tuple[str, str]], end) -> bool:
+    def solution_possible(self, solution: Set[Tuple[str, str]], end: int) -> bool:
         assert self.solution_correct_format(solution)
 
-        mb, nights, kpm, hpm, bon = self.get_upto_episode(end)
+        _, nights, kpm, _, _ = self.get_upto_episode(end)
 
         # known perfect matches are in sol
         if not all([pm in solution for pm in kpm]):
@@ -230,7 +239,7 @@ class AYTO():
                 return False
         return True
 
-    def generate_solutions(self, end):
+    def generate_solutions(self, end: int) -> List[Set[Tuple[str, str]]]:
         '''Generating solutions that fit matchboxes, blackout nights and possible double matches'''
         def zip_product(ordering):
             return list(zip(self.lefts, ordering))
@@ -276,24 +285,29 @@ class AYTO():
                     sol = set(tenmatches+[(dml[0], dm2)])
                     solutions.append(sol)
         else:
+            # Normalo 2023
             modified_pos_matches = possible_matches
-            for l in modified_pos_matches:
-                print(l, modified_pos_matches[l])
 
-             # get first ten matches
+            # get first ten matches
             products = [list(ps) for ps in itertools.product(*modified_pos_matches.values())
                         if len(set(ps)) == 10]
             solutions_tenmatches = list(map(zip_product, products))
 
             solutions = []
 
-            # dm_rights = [r for r in self.rights if r not in hpm]
-            # dm_lefts = list(
-            #     filter(lambda x: x not in hpm, self.lefts))
+            for tenmatches in solutions_tenmatches:
+                _, rs = zip(*tenmatches)
+                msr = list(set(self.rights) - set(rs))[0]
+                addmatches = [(l, msr)
+                              for l in self.lefts if not self.no_match(l, msr, end)]
+                for additionalmatch in addmatches:
+                    sol = set(tenmatches + [additionalmatch])
+                    if sol not in solutions:
+                        solutions.append(sol)
 
         return solutions
 
-    def find_solutions(self, end):
+    def find_solutions(self, end: int) -> List[Set[Tuple[str, str]]]:
         solutions = self.generate_solutions(end)
 
         solutions = list(
@@ -301,11 +315,169 @@ class AYTO():
 
         return solutions
 
-    def analysize_solutions(self, fn, dbpair: Union[Tuple[str, str], None] = None):
+    def assumption_possible(self, assumption: Set[Tuple[str, str]], end: int):
+        _, nights, _, _, _ = self.get_upto_episode(end)
+
+        if any([self.no_match(*p, end)for p in assumption]):
+            return False
+
+        if self.dmtuple is not None:
+            # perfect matches of dbpair, must be the same person
+            dml = [l for (l, r) in assumption if r in self.dmtuple]
+            if len(dml) > 1 and dml[0] != dml[1]:
+                return False
+
+        for pairs, lights in nights:
+
+            intersection = set(pairs) & assumption
+            if len(intersection) > lights:
+                return False
+            elif len(intersection) < lights:
+                otherpairs = set(pairs) - assumption
+                defnolights = [p for p in otherpairs if self.no_match(*p, end)]
+                poslightsleft = len(otherpairs) - len(defnolights)
+                if len(intersection) + poslightsleft < lights:
+                    print("this case")
+                    return False
+
+        return True
+
+    def analyze_nights(self, end):
+
+        solnormalo2020 = {("Laura", "Aleks"), ("Luisa", "Axel"), ("Ivana", "Dominic"), ("Madleine", "Edin"),
+                          ("Sabrina", "Elisha"), ("Nadine",
+                                                  "Ferhat"), ("Madleine", "Juliano"),
+                          ("Kathi", "Kevin"), ("Melissa", "Laurin"), ("Aline", "Mo"), ("Michelle", "René")}
+
+        _, nights, kpm, _, _ = self.get_upto_episode(end)
+
+        asm_per_night = []
+        for i, (pairs, lights) in enumerate(self.nights[:(end+1)]):
+            notcorrect = list(filter(lambda p: self.no_match(*p, end),
+                                     pairs))
+            defcorrect = list(filter(lambda p: p in kpm, pairs))
+            remaining = set(pairs) - set(defcorrect) - set(notcorrect)
+
+            combs = [set(comb).union(set(defcorrect))
+                     for comb in itertools.combinations(remaining, lights - len(defcorrect))]
+
+            asm_per_night.append(combs)
+
+        merged_asm = functools.reduce(self.merge_assumptions,
+                                      asm_per_night)
+        merged_asm = list(filter(lambda a: self.assumption_possible(a, self.numepisodes-2),
+                                 merged_asm))
+
+        # print(f"len(merged_asm): {len(merged_asm)}")
+        # testh = {('Ivana', 'Dominic'), ('Kathi', 'Kevin'), ('Sabrina', 'Elisha'), ('Aline', 'Mo'), ('Michelle', 'René'),
+        #          ('Melissa', 'Laurin'), ('Nadine', 'Ferhat'), ('Luisa', 'Axel')}
+        # print(
+        #     f"difference: {len(testh)}  {len(solnormalo2020 - testh)} {solnormalo2020 - testh}")
+
+        # t = self.generate_solutions_assumption(testh, end)
+        # print()
+        # print(len(t))
+        # for x in t:
+        #     print(x==solnormalo2020)
+        solutions = []
+
+        for a in merged_asm:
+            t = self.generate_solutions_assumption(a, end)
+            # print(f"self.generate_solutions_assumption(a): {len(a)}, {len(t)}")
+            # print(t)
+            solutions += t
+        # print("len(solutions)", len(solutions))
+        solutions = list(filter(lambda s: self.solution_possible(s,end),
+                                solutions))
+        print("len(solutions)", len(solutions))
+        return solutions
+
+    def merge_assumptions(self, asm_1: List[Set], asm_2: List[Set]):
+        m_asm = []
+        for a1, a2 in itertools.product(asm_1, asm_2):
+            possible = True
+
+            for (l1, r1), (l2, r2) in itertools.product(a1, a2):
+                if l1 != l2 and r1 == r2:
+                    possible = False
+                # double match
+                elif l1 == l2 and r1 != r2:
+                    if r1 == self.dm or r2 == self.dm:
+                        continue
+                    else:
+                        possible = False
+                    # TODO: adjust for unknown dm and dm couple
+
+            if len(a1.union(a2)) > 11:
+                possible = False
+
+            if possible:
+                m_asm.append(a1.union(a2))
+
+        return m_asm
+
+    def generate_solutions_assumption(self, asm, end):
+        mb, nights, kpm, hpm, bon = self.get_upto_episode(end)
+
+        # print(len(asm))
+        asmdict = {l: r for l, r in asm}
+        leftasm, rightasm = zip(*asm)
+        rightopen = set(self.rights) - set(rightasm)
+        # adjust self.dm
+        leftopen = {l for l in self.lefts
+                    if (l in asmdict and asmdict[l] == self.dm)
+                    or l not in asmdict}
+        # print(leftopen, rightopen, "\n")
+         
+        sols = []
+        for ropenpermut in itertools.permutations(rightopen):
+            # print(ropenpermut)
+            pairs = set(zip(leftopen, ropenpermut)).union(asm)
+            pdict = {r:l for l,r in pairs} 
+
+            ## add eleventh match
+            rlast = ropenpermut[-1]
+            if rlast == self.dm:
+                for l in self.lefts:
+                    sol = pairs.union([(l, rlast)])
+                    if sol not in sols:
+                        sols.append(sol)
+            else:
+                sol = pairs.union([(pdict[self.dm], rlast)])
+                if sol not in sols:
+                    sols.append(sol)
+                # print(len(sol))
+
+        # addmatches = [set(zip(leftopen, ropenpermut))
+        #               for ropenpermut in itertools.permutations(rightopen)]
+        # test = {('Madleine', 'Edin'), ('Laura', 'Aleks'),
+        #         ('Madleine', 'Juliano')}
+        # # print(len(addmatches))
+        # sols = []
+        # for am in addmatches:
+        #     sol = asm.union(am)
+        #     ldm = [l for l,r in sol if r==self.dm]
+        #     rdm = [r for r in list(zip(*am))[1]]
+        #     print(am, rdm)
+        #     if len(ldm) == 1:
+        #         print((ldm[0], ))
+
+        # sols = [asm.union(addmatch) for addmatch in addmatches]
+        # print("before loop")
+        # for x in sols:
+        #     print(f"self.solution_correct_format: {self.solution_correct_format(x)}")
+        # print(len(sols))
+        res = list(filter(self.solution_correct_format, sols))
+        # print(len(res))
+        # print(f"len(res): {len(res)}")
+        return res
+
+    def analysize_solutions(self, fn: str, end: int) -> None:
         with open(fn, "r") as f:
             currentsols = eval(f.readlines()[-1])
 
-        possols = list(filter(self.solution_possible, currentsols))
+        possols = list(
+            filter(lambda s: self.solution_possible(s, end), currentsols))  # type: ignore
 
         print(f"len(sols): {len(currentsols)}, len(possols): {len(possols)}")
         if len(possols) < len(currentsols):
@@ -317,7 +489,7 @@ class AYTO():
         pms = {}
         for sol in possols:
             print(sol)
-            for l, r in sol:
+            for l, r in sol:  # type: ignore
                 if (l, r) in pms:
                     pms[l, r] += 1
                 else:
@@ -338,31 +510,29 @@ if __name__ == "__main__":
                   "vip2021", "vip2022", "vip2023"]
     import math
 
-    # solnormalo2020 = {("Laura", "Aleks"), ("Luisa", "Axel"),("Ivana", "Dominic"), ("Madleine", "Edin"),
-    #        ("Sabrina", "Elisha"), ("Nadine", "Ferhat"), ("Madleine", "Juliano"),
-    #        ("Kathi", "Kevin"), ("Melissa", "Laurin"), ("Aline", "Mo"), ("Michelle", "René")}
+    anormalo2020 = {('Ivana', 'Dominic'), ('Melissa', 'Laurin'), ('Madleine', 'Edin'), ('Aline', 'Mo'), (
+        'Nadine', 'Ferhat'), ('Luisa', 'Axel'), ('Michelle', 'René'), ('Kathi', 'Kevin'), ('Sabrina', 'Elisha')}
 
     solnormalo2023 = {("Larissa", "Barkin"), ("Juliette", "Burim"), ("Steffi", "Cris"),
                       ("Carina", "Deniz"), ("Valeria", "Joel"), ("Caro", "Ken"),
                       ("Henna", "Kenneth"), ("Vanessa", "Marwin"), ("Caro", "Max"),
                       ("Aurelia", "Pascal"), ("Dorna", "Sasa")}
 
-    for seasonfn in allseasons[3:4]:
+    for seasonfn in allseasons[1:2]:
+        # if seasonfn == "normalo2022":
+        #     # skip this because it's very slow
+        #     continue
         with open(f"data/{seasonfn}.json", "r") as f:
             seasondata = json.loads(f.read())
 
         print(seasonfn)
         season = AYTO(seasondata)
+        sols1 = season.analyze_nights(7)
+        print("season.analyze_nights(7)", len(sols1))
+        sols2 = season.find_solutions(7)
+        print("season.find_solutions(7)", len(sols2))
 
-        res = season.find_solutions(9)
-        print(res, len(res))
-        # print("this", season.solution_possible(solnormalo2023, 9))
-        # res = season.generate_solutions(9)
-
-        # x = 1
-        # for i, (p, n) in enumerate(season.nights):
-        #     x *= math.comb(10, n)
-        #     print(f"{i}: {n} lights, {math.comb(10,n)}")
-        # print(x)
+        # res = season.find_solutions(4)
+        # print(len(res))
 
     # normalo22: 1258416
