@@ -150,6 +150,30 @@ class AYTO():
         else:
             self.knownboxes = [i for i in range(len(self.nights))]
 
+    def solution_correct_format(self, solution: Set[Tuple[str, str]]) -> bool:
+        if len(solution) != 11:
+            # print(solution)
+            print("len(solution) != 11")
+            return False
+
+        leftseated = {l: 0 for l in self.lefts}
+        rightseated = {r: 0 for r in self.rights}
+
+        for l, r in solution:
+            if l not in self.lefts or r not in self.rights:
+                print(f"{l} {r}")
+                return False
+            leftseated[l] += 1
+            rightseated[r] += 1
+
+        if 0 in leftseated.values() or 0 in rightseated.values():
+            print("0 in leftseated.values() or 0 in rightseated.values()")
+            print(solution)
+            print(leftseated)
+            print(rightseated)
+            return False
+        return True
+
     def get_upto_episode(self, end: int):
         if end >= self.numepisodes - 1:
             return self.matchboxes, self.nights, self.knownpm, self.haspm, self.bonights
@@ -192,29 +216,6 @@ class AYTO():
 
         return possible_matches
 
-    def solution_correct_format(self, solution: Set[Tuple[str, str]]) -> bool:
-        if len(solution) != 11:
-            # print(solution)
-            # print("len(solution) != 11")
-            return False
-
-        leftseated = {l: 0 for l in self.lefts}
-        rightseated = {r: 0 for r in self.rights}
-
-        for l, r in solution:
-            if l not in self.lefts or r not in self.rights:
-                print(f"{l} {r}")
-                return False
-            leftseated[l] += 1
-            rightseated[r] += 1
-
-        if 0 in leftseated.values() or 0 in rightseated.values():
-            # print(leftseated)
-            # print(rightseated)
-            # print(solution)
-            return False
-        return True
-
     def solution_possible(self, solution: Set[Tuple[str, str]], end: int) -> bool:
         assert self.solution_correct_format(solution)
 
@@ -239,24 +240,41 @@ class AYTO():
                 return False
         return True
 
-    def generate_solutions(self, end: int) -> List[Set[Tuple[str, str]]]:
-        '''Generating solutions that fit matchboxes, blackout nights and possible double matches'''
+    def generate_solutions(self, end: int, asm: Set[Tuple[str, str]] = set()) -> List[Set[Tuple[str, str]]]:
+        '''Generating solutions that fit matchboxes, blackout nights, possible double matches and assumption'''
         def zip_product(ordering):
             return list(zip(self.lefts, ordering))
 
-        possible_matches = self.get_possible_matches(end)
-
         mb, nights, kpm, hpm, bon = self.get_upto_episode(end)
+
+        possible_matches = self.get_possible_matches(end)
 
         if self.dm is not None:
             # lefts who can have a double match
             dm_lefts = [
                 l for l in self.lefts if not self.no_match(l, self.dm, end)]
 
+            asm_dict = {}
+            if len(asm) > 0:
+                _, a_rights = zip(*asm)
+                a_rights = list(set(a_rights) - set([self.dm]))
+            else:
+                a_rights = []
+
+            for l, r in asm:
+                if l not in asm and r != self.dm:
+                    asm_dict[l] = [r]
+
             # remove dm right from possible matches to avoid duplicates solution generation
-            modified_pos_matches = {l: [r for r in possible_matches[l]
-                                        if r != self.dm or (l, r) in kpm]
-                                    for l in possible_matches}
+            modified_pos_matches = {}
+            for l in self.lefts:
+                if l in asm_dict:
+                    modified_pos_matches[l] = asm_dict[l]
+                else:
+                    modified_pos_matches[l] = [r for r in self.rights
+                                               if r not in a_rights and
+                                               r != self.dm and
+                                               not self.no_match(l, r, end)]
 
             # get first ten matches
             products = [list(ps) for ps in itertools.product(*modified_pos_matches.values())
@@ -269,13 +287,12 @@ class AYTO():
 
                 for tenmatches, additionalmatch in itertools.product(solutions_tenmatches, pos_additional_matches):
                     if additionalmatch in tenmatches:
-                        print(additionalmatch in tenmatches)
                         continue
 
                     solutions.append(set(tenmatches + [additionalmatch]))
 
             else:
-                # In VIP 2023, we know the pair with
+                # In VIP 2023, we know the pair with the same match
                 dm1, dm2 = self.dmtuple
                 if dm1 == self.dm:
                     dm1, dm2 = dm2, dm1
@@ -286,7 +303,22 @@ class AYTO():
                     solutions.append(sol)
         else:
             # Normalo 2023
+            asm_dict = {l: [r] for l, r in asm}
+            if len(asm) > 0:
+                _, a_rights = zip(*asm)
+            else:
+                a_rights = []
+
             modified_pos_matches = possible_matches
+            modified_pos_matches = {}
+            for l in self.lefts:
+                if l in asm_dict:
+                    modified_pos_matches[l] = asm_dict[l]
+                else:
+                    modified_pos_matches[l] = [r for r in self.rights
+                                               if r not in a_rights and
+                                               not self.no_match(l, r, end)]
+
 
             # get first ten matches
             products = [list(ps) for ps in itertools.product(*modified_pos_matches.values())
@@ -337,18 +369,12 @@ class AYTO():
                 defnolights = [p for p in otherpairs if self.no_match(*p, end)]
                 poslightsleft = len(otherpairs) - len(defnolights)
                 if len(intersection) + poslightsleft < lights:
-                    print("this case")
+                    print("len(intersection) + poslightsleft < lights")
                     return False
 
         return True
 
-    def analyze_nights(self, end):
-
-        solnormalo2020 = {("Laura", "Aleks"), ("Luisa", "Axel"), ("Ivana", "Dominic"), ("Madleine", "Edin"),
-                          ("Sabrina", "Elisha"), ("Nadine",
-                                                  "Ferhat"), ("Madleine", "Juliano"),
-                          ("Kathi", "Kevin"), ("Melissa", "Laurin"), ("Aline", "Mo"), ("Michelle", "René")}
-
+    def find_solutions_fast(self, end):
         _, nights, kpm, _, _ = self.get_upto_episode(end)
 
         asm_per_night = []
@@ -363,176 +389,170 @@ class AYTO():
 
             asm_per_night.append(combs)
 
-        merged_asm = functools.reduce(self.merge_assumptions,
+        merged_asm = functools.reduce(lambda a1, a2: merge_assumptions(self, a1, a2),
                                       asm_per_night)
-        merged_asm = list(filter(lambda a: self.assumption_possible(a, self.numepisodes-2),
+        merged_asm = list(filter(lambda a: self.assumption_possible(a, end),
                                  merged_asm))
 
-        # print(f"len(merged_asm): {len(merged_asm)}")
-        # testh = {('Ivana', 'Dominic'), ('Kathi', 'Kevin'), ('Sabrina', 'Elisha'), ('Aline', 'Mo'), ('Michelle', 'René'),
-        #          ('Melissa', 'Laurin'), ('Nadine', 'Ferhat'), ('Luisa', 'Axel')}
-        # print(
-        #     f"difference: {len(testh)}  {len(solnormalo2020 - testh)} {solnormalo2020 - testh}")
-
-        # t = self.generate_solutions_assumption(testh, end)
-        # print()
-        # print(len(t))
-        # for x in t:
-        #     print(x==solnormalo2020)
         solutions = []
 
         for a in merged_asm:
-            t = self.generate_solutions_assumption(a, end)
-            # print(f"self.generate_solutions_assumption(a): {len(a)}, {len(t)}")
-            # print(t)
-            solutions += t
-        # print("len(solutions)", len(solutions))
-        solutions = list(filter(lambda s: self.solution_possible(s,end),
+            solutions += self.generate_solutions(end, a)
+
+        solutions = list(filter(lambda s: self.solution_possible(s, end),
                                 solutions))
-        print("len(solutions)", len(solutions))
+
         return solutions
 
-    def merge_assumptions(self, asm_1: List[Set], asm_2: List[Set]):
-        m_asm = []
-        for a1, a2 in itertools.product(asm_1, asm_2):
-            possible = True
+def merge_assumptions(season, asm_1: List[Set], asm_2: List[Set]):
+    print("merge_assumptions")
 
-            for (l1, r1), (l2, r2) in itertools.product(a1, a2):
-                if l1 != l2 and r1 == r2:
-                    possible = False
-                # double match
-                elif l1 == l2 and r1 != r2:
-                    if r1 == self.dm or r2 == self.dm:
-                        continue
-                    else:
-                        possible = False
-                    # TODO: adjust for unknown dm and dm couple
-
-            if len(a1.union(a2)) > 11:
+    m_asm = []
+    for a1, a2 in itertools.product(asm_1, asm_2):
+        possible = True
+        dmc = 0
+        # print("new loop")
+        for (l1, r1), (l2, r2) in itertools.product(a1, a2):
+            if l1 != l2 and r1 == r2:
                 possible = False
+            # double match
+            elif l1 == l2 and r1 != r2:
+                # print(f"{l1,r1}, {l2,r2}")
+                if r1 == season.dm or r2 == season.dm:
+                    continue
+                elif season.dm == None:
+                    # for Normalo 2023: make sure we only have only double match in assumption
+                    dmc += 1
+                    if dmc > 1:
+                        possible = False
+                else:
+                    possible = False
+                # TODO: adjust for unknown dm and dm couple
+            if not possible:
+                break
 
-            if possible:
-                m_asm.append(a1.union(a2))
+        if len(a1.union(a2)) > 11:
+            possible = False
 
-        return m_asm
+        if possible and a1.union(a2) not in m_asm:
+            m_asm.append(a1.union(a2))
 
-    def generate_solutions_assumption(self, asm, end):
-        mb, nights, kpm, hpm, bon = self.get_upto_episode(end)
+    return m_asm
 
-        # print(len(asm))
-        asmdict = {l: r for l, r in asm}
-        leftasm, rightasm = zip(*asm)
-        rightopen = set(self.rights) - set(rightasm)
-        # adjust self.dm
-        leftopen = {l for l in self.lefts
-                    if (l in asmdict and asmdict[l] == self.dm)
-                    or l not in asmdict}
-        # print(leftopen, rightopen, "\n")
-         
-        sols = []
-        for ropenpermut in itertools.permutations(rightopen):
-            # print(ropenpermut)
-            pairs = set(zip(leftopen, ropenpermut)).union(asm)
-            pdict = {r:l for l,r in pairs} 
+def generate_solutions_assumption(season : AYTO, end: int, asm: Set[Tuple[str, str]]) -> List[Set[Tuple[str, str]]]:
+    mb, nights, kpm, hpm, bon = season.get_upto_episode(end)
 
-            ## add eleventh match
-            rlast = ropenpermut[-1]
-            if rlast == self.dm:
-                for l in self.lefts:
-                    sol = pairs.union([(l, rlast)])
-                    if sol not in sols:
-                        sols.append(sol)
-            else:
-                sol = pairs.union([(pdict[self.dm], rlast)])
+    # print(len(asm))
+    asmdict = {l: r for l, r in asm}
+    leftasm, rightasm = zip(*asm)
+    rightopen = set(season.rights) - set(rightasm)
+    # adjust self.dm
+    leftopen = {l for l in season.lefts
+                if (l in asmdict and asmdict[l] == season.dm)
+                or l not in asmdict}
+
+    sols = []
+    for ropenpermut in itertools.permutations(rightopen):
+        # print(ropenpermut)
+        pairs = set(zip(leftopen, ropenpermut)).union(asm)
+        pdict = {r: l for l, r in pairs}
+
+        # add eleventh match
+        rlast = ropenpermut[-1]
+        if rlast == season.dm:
+            for l in season.lefts:
+                sol = pairs.union([(l, rlast)])
                 if sol not in sols:
                     sols.append(sol)
-                # print(len(sol))
+        else:
+            sol = pairs.union([(pdict[season.dm], rlast)])  # type: ignore
+            if sol not in sols:
+                sols.append(sol)
 
-        # addmatches = [set(zip(leftopen, ropenpermut))
-        #               for ropenpermut in itertools.permutations(rightopen)]
-        # test = {('Madleine', 'Edin'), ('Laura', 'Aleks'),
-        #         ('Madleine', 'Juliano')}
-        # # print(len(addmatches))
-        # sols = []
-        # for am in addmatches:
-        #     sol = asm.union(am)
-        #     ldm = [l for l,r in sol if r==self.dm]
-        #     rdm = [r for r in list(zip(*am))[1]]
-        #     print(am, rdm)
-        #     if len(ldm) == 1:
-        #         print((ldm[0], ))
+    res = list(filter(season.solution_correct_format, sols))
 
-        # sols = [asm.union(addmatch) for addmatch in addmatches]
-        # print("before loop")
-        # for x in sols:
-        #     print(f"self.solution_correct_format: {self.solution_correct_format(x)}")
-        # print(len(sols))
-        res = list(filter(self.solution_correct_format, sols))
-        # print(len(res))
-        # print(f"len(res): {len(res)}")
-        return res
+    return res
 
-    def analysize_solutions(self, fn: str, end: int) -> None:
-        with open(fn, "r") as f:
-            currentsols = eval(f.readlines()[-1])
+def analysize_solutions(season, fn: str, end: int) -> None:
+    with open(fn, "r") as f:
+        currentsols = eval(f.readlines()[-1])
 
-        possols = list(
-            filter(lambda s: self.solution_possible(s, end), currentsols))  # type: ignore
+    possols = list(
+        filter(lambda s: season.solution_possible(s, end), currentsols))  # type: ignore
 
-        print(f"len(sols): {len(currentsols)}, len(possols): {len(possols)}")
-        if len(possols) < len(currentsols):
-            print("writing new solutions in file")
-            with open(fn, "a") as f:
-                f.write(f"\n \n{str(possols)}")
+    print(f"len(sols): {len(currentsols)}, len(possols): {len(possols)}")
+    if len(possols) < len(currentsols):
+        print("writing new solutions in file")
+        with open(fn, "a") as f:
+            f.write(f"\n \n{str(possols)}")
 
-        # returning possible matches
-        pms = {}
-        for sol in possols:
-            print(sol)
-            for l, r in sol:  # type: ignore
-                if (l, r) in pms:
-                    pms[l, r] += 1
-                else:
-                    pms[l, r] = 1
+    # returning possible matches
+    pms = {}
+    for sol in possols:
+        print(sol)
+        for l, r in sol:  # type: ignore
+            if (l, r) in pms:
+                pms[l, r] += 1
+            else:
+                pms[l, r] = 1
 
-        import pandas
-        fields = [""] + self.rights
-        rows = [[l] + [str(pms[(l, r)]) if (l, r) in pms else "0" for r in self.rights]
-                for l in self.lefts]
-        df = pandas.DataFrame(data=rows, columns=fields)
-        print(df)
+    import pandas
+    fields = [""] + season.rights
+    rows = [[l] + [str(pms[(l, r)]) if (l, r) in pms else "0" for r in season.rights]
+            for l in season.lefts]
+    df = pandas.DataFrame(data=rows, columns=fields)
+    print(df)
 
-        return
+    return
 
 
 if __name__ == "__main__":
     allseasons = ["normalo2020", "normalo2021", "normalo2022", "normalo2023",
                   "vip2021", "vip2022", "vip2023"]
-    import math
 
-    anormalo2020 = {('Ivana', 'Dominic'), ('Melissa', 'Laurin'), ('Madleine', 'Edin'), ('Aline', 'Mo'), (
-        'Nadine', 'Ferhat'), ('Luisa', 'Axel'), ('Michelle', 'René'), ('Kathi', 'Kevin'), ('Sabrina', 'Elisha')}
+    solnormalo2020 = {("Laura", "Aleks"), ("Luisa", "Axel"), ("Ivana", "Dominic"),
+                      ("Madleine", "Edin"), ("Sabrina",
+                                             "Elisha"), ("Nadine", "Ferhat"),
+                      ("Madleine", "Juliano"), ("Kathi",
+                                                "Kevin"), ("Melissa", "Laurin"),
+                      ("Aline", "Mo"), ("Michelle", "René")}
 
     solnormalo2023 = {("Larissa", "Barkin"), ("Juliette", "Burim"), ("Steffi", "Cris"),
                       ("Carina", "Deniz"), ("Valeria", "Joel"), ("Caro", "Ken"),
                       ("Henna", "Kenneth"), ("Vanessa", "Marwin"), ("Caro", "Max"),
                       ("Aurelia", "Pascal"), ("Dorna", "Sasa")}
 
-    for seasonfn in allseasons[1:2]:
+    test = {('Aline', 'Mo'), ('Sabrina', 'Edin'), ('Nadine', 'Elisha'),
+            ('Madleine', 'Aleks'), ('Luisa', 'Ferhat'), ('Kathi', 'Dominic'),
+            ('Laura', 'Juliano'), ('Ivana', 'Kevin'), ('Sabrina', 'Axel'),
+            ('Michelle', 'René'), ('Melissa', 'Laurin')}
+
+    for seasonfn in allseasons[-1:]:
         # if seasonfn == "normalo2022":
         #     # skip this because it's very slow
         #     continue
+
         with open(f"data/{seasonfn}.json", "r") as f:
             seasondata = json.loads(f.read())
 
         print(seasonfn)
         season = AYTO(seasondata)
-        sols1 = season.analyze_nights(7)
-        print("season.analyze_nights(7)", len(sols1))
-        sols2 = season.find_solutions(7)
-        print("season.find_solutions(7)", len(sols2))
+        # r = season.generate_solutions(7,test)
+        i = 5
+        sols1 = season.find_solutions_fast(i)
+        # print(f"season.analyze_nights({i})", len(sols1))
+        sols2 = season.find_solutions(i)
+        print(f"season.find_solutions({i})", len(sols2))
 
-        # res = season.find_solutions(4)
-        # print(len(res))
+        with open("vip2023test.txt", "w") as f:
+            f.write(str(sols2))
+            # sols1 = eval(f.readline())
 
-    # normalo22: 1258416
+        newl = []
+        for i in range(0,len(sols2)):
+            if sols2[i] in newl:
+                print("duplicates in sol")
+                print(sols1[i])
+            else:
+                newl.append(sols2[i])
+        print(len(newl))
