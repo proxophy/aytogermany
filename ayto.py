@@ -39,6 +39,9 @@ class AYTO:
             self.lefts, self.rights = data["men"], data["women"]
         elif len(data["women"]) == 10 and len(data["men"]) == 11:
             self.lefts, self.rights = data["women"], data["men"]
+        elif len(data["men"]) == 10 and len(data["women"]) == 12:
+            print("Normalo 2024: 12 women")
+            self.lefts, self.rights = data["men"], data["women"]
         else:
             raise ValueError(f"not enough or too much women or men")
 
@@ -57,6 +60,7 @@ class AYTO:
             self.dm = data["dm"]
         else:
             self.dm = None
+            print("dm is not known")
             # self.dm_rights = [r for r in self.rights if r not in self.haspm]
 
         # do we know which two share the same match
@@ -263,7 +267,10 @@ class AYTO:
 
         # no known no matches
         if any([self.no_match(*p, end) for p in guess]):
-            print("guess has known no match")
+            ba: List = [self.no_match(*p, end) for p in guess]
+            trueindex = ba.index(True)
+
+            # print(f"guess has known no match: {list(guess)[trueindex]} {self.x}")
             return False
 
         # perfect matches of dmtuple must be the same person
@@ -440,7 +447,7 @@ class AYTO:
 
         return solutions
 
-    def mergeable_guesses_loop(self, a1:Set, a2:Set) -> bool:
+    def mergeable_guesses_loop(self, a1: Set, a2: Set) -> bool:
         '''misses some cases'''
         dmc = False
         dml = None
@@ -470,7 +477,7 @@ class AYTO:
                     dml = l1
                 else:
                     return False
-                
+
         g_union = a1.union(a2)
         if len({l for l, r in g_union if self.dmtuple is not None and r in self.dmtuple}) > 1:
             return False
@@ -478,17 +485,18 @@ class AYTO:
             return False
 
         return True
-    
-    def mergeable_guesses(self, a1:set, a2:set) -> bool:
+
+    def mergeable_guesses(self, a1: set, a2: set) -> bool:
         g_union = a1.union(a2)
 
         # condition 1: must be no more than 11 pairs
         c1 = len(g_union) <= 11
-        
-        sl, sr = zip(*g_union) # seated lefts and rights
+
+        sl, sr = zip(*g_union)  # seated lefts and rights
         sl, sr = set(sl), set(sr)
-        pd = {l: [r1 for (l1, r1) in g_union if l == l1] for l in sl} # dict for partners
-        dls = [l for l in pd if len(pd[l]) == 2] # lefts appearing twice
+        pd = {l: [r1 for (l1, r1) in g_union if l == l1]
+              for l in sl}  # dict for partners
+        dls = [l for l in pd if len(pd[l]) == 2]  # lefts appearing twice
 
         # no double seated rights
         c2 = len(sr) == len(g_union) and \
@@ -501,13 +509,13 @@ class AYTO:
             dl = dls[0]
             g_dmtuple = pd[dl]
             c4 = (self.dmtuple is None and (self.dm in g_dmtuple)) \
-                    or (self.dmtuple is not None and set(g_dmtuple) == set(self.dmtuple))
+                or (self.dmtuple is not None and set(g_dmtuple) == set(self.dmtuple))
 
         c5 = True
         if self.dmtuple is not None:
             c5 = len({l for l, r in g_union if r in self.dmtuple}) <= 1
 
-        return all([c1,c2,c3,c4,c5])
+        return all([c1, c2, c3, c4, c5])
 
     def merge_assumptions_lists(self, asm_1: List[Set], asm_2: List[Set]):
         '''
@@ -517,58 +525,81 @@ class AYTO:
 
         m_asm = []
         for a1, a2 in itertools.product(asm_1, asm_2):
-            if self.mergeable_guesses_loop(a1,a2) and a1.union(a2) not in m_asm:
+            if self.mergeable_guesses_loop(a1, a2) and a1.union(a2) not in m_asm:
                 m_asm.append(a1.union(a2))
 
         return m_asm
 
 
-def analysize_solutions(season, fn: str, end: int) -> None:
+def analysize_solutions(season: AYTO, fn: str, end: int) -> None:
     with open(fn, "r") as f:
-        currentsols = eval(f.readlines()[-1])
+        content = f.readlines()
 
-    possols = list(
-        filter(lambda s: season.guess_solution(s, end), currentsols))
+    print(f"i: {end} \n")
 
-    print(f"len(sols): {len(currentsols)}, len(possols): {len(possols)}")
-    if len(possols) < len(currentsols):
-        print("writing new solutions in file")
-        with open(fn, "a") as f:
-            f.write(f"\n \n{str(possols)}")
+    mbs = season.matchboxes_up_to_episode(end)
+    # print(season.matchboxes_up_to_episode(i+1))
 
-    # returning possible matches
-    pms = {}
-    for sol in possols:
-        print(sol)
-        for l, r in sol:
-            if (l, r) in pms:
-                pms[l, r] += 1
+    sols = [eval(line) for line in content]
+    nsols = list(filter(lambda sn: season.guess_possible(sn, end), sols))
+
+    print(f"after half: {len(sols)}, after night {end}: {len(nsols)} \n")
+    sols = nsols
+
+    pdict = {}
+    for s in sols:
+        for p in s:
+            if p in pdict:
+                pdict[p] += 1
             else:
-                pms[l, r] = 1
+                pdict[p] = 1
+    pdict = {p: v for (p, v) in sorted(
+        pdict.items(), key=lambda x: x[1], reverse=True)}
+    
+    def givescore(s1):
+        return sum([pdict[p] for p in s1])
 
-    import pandas
-    fields = [""] + season.rights
-    rows = [[l] + [str(pms[(l, r)]) if (l, r) in pms else "0" for r in season.rights]
-            for l in season.lefts]
-    df = pandas.DataFrame(data=rows, columns=fields)
-    print(df)
+    elevenmostlikely = list(pdict.items())[:11]
+
+    print(f"{elevenmostlikely}\n")
+
+    allpairs = [(l, r) for l in season.lefts for r in season.rights]
+    impairs = [p for p in allpairs if p not in pdict and p not in mbs]
+    pms = [p for p in allpairs if p in pdict and pdict[p] == len(sols)]
+    newpms = [p for p in allpairs if p in pdict and pdict[p] == len(sols) and p not in mbs]
+    print(f"New pms: {len(newpms)} ({len(pms)}) {newpms}")
+    print(f"{len(impairs)}\n")
+
+
+    # p = ("Leon", "Estelle")
+    # if season.no_match(*p, i):
+    #     print(f"{p} is definitely no match\n")
+    # else:
+    #     if p in pdict:
+    #         pdict_keys = list(pdict.keys())
+    #         print(
+    #             f"{p}: {pdict[p]} poss., place {pdict_keys.index(p)} from {len(pdict_keys)}\n")
+    #     else:
+    #         print(f"{p} is not a match according to left possible solutions\n")
 
     return
 
 
 if __name__ == "__main__":
     allseasons = ["normalo2020", "normalo2021", "normalo2022", "normalo2023",
-                  "vip2021", "vip2022", "vip2023"]
+                  "vip2021", "vip2022", "vip2023", "normalo2024"]
 
-    for seasonfn in allseasons:
+    for seasonfn in allseasons[-1:]:
         with open(f"data/{seasonfn}.json", "r") as f:
             seasondata = json.loads(f.read())
 
         print(seasonfn)
         season = AYTO(seasondata)
 
-        i = 6
-        sols1 = season.find_solutions_fast(i)
-        print(f"season.find_solutions_fast({i})", len(sols1))
-        print()
-        # print(sols1)
+        # i = 5
+        # sols1 = season.find_solutions_fast(i)
+        # print(f"season.find_solutions_fast({i})", len(sols1))
+        # print()
+
+
+        # analysize_solutions(season, f"analytics/{seasonfn}_half.txt", i)
