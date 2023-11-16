@@ -30,10 +30,11 @@ class AYTO:
     def foo(self, x):
         return 1
 
-    def __init__(self, fn: str, nightsfromexcel: bool = False) -> None:
+    def __init__(self, fn: str, nightsfromexcel: bool = True) -> None:
         with open(f"data/{fn}.json", "r") as f:
             jsondata = json.loads(f.read())
         self.jsondata = jsondata
+        self.fn = fn
 
         # read data
 
@@ -49,7 +50,7 @@ class AYTO:
             raise ValueError(f"not enough or too much women or men")
 
         # seatings and lights for nights
-        self.read_nights(fn, nightsfromexcel)
+        self.read_nights(nightsfromexcel)
 
         # matchboxes with results
         self.read_matchboxes()
@@ -104,17 +105,14 @@ class AYTO:
             self.solution = {(l, r) for l, r in jsondata["solution"]}
             print(self.solution)
 
-    def read_nights(self, fn: str, nightsfromexcel: bool) -> None:
+    def read_nights(self,  nightsfromexcel: bool) -> None:
         '''Read nights and check if everything is fine'''
 
         if nightsfromexcel:
             print("NIGHTS FROM EXCEL")
-
             nightsdf = pd.read_excel(
-                f"data/{fn}.xlsx", sheet_name="Nights", header=None)
-            nightsdf = nightsdf.transpose()
-            nightsdf.columns = nightsdf.iloc[0]
-            nightsdf.drop(index=0, axis=0, inplace=True)
+                f"data/{self.fn}.xlsx", sheet_name="Nights",
+                header=0, index_col=0)
             leftsh = nightsdf.columns.values.tolist()
 
             nights = [(list(zip(leftsh, row[:-1])), row[-1])
@@ -155,7 +153,26 @@ class AYTO:
                     raise ValueError(
                         f"{l} or {r} is neither in the list of women or men")
 
-            self.nights.append((seated_pairs,lights))
+            self.nights.append((seated_pairs, lights))
+        return
+
+    def write_nights_excel(self) -> None:
+        dflist = []
+
+        for pairs, lights in self.nights:
+            ndict = {}
+            for l, r in pairs:
+                ndict[l] = r
+            ndict["lights"] = lights
+            dflist.append(ndict)
+
+        df = pd.DataFrame(dflist)
+        if len(self.nights) == 0:
+            df = pd.DataFrame(columns=self.lefts + ["Lights"])
+
+        df.to_excel(f"data/{self.fn}.xlsx",
+                    sheet_name="Nights", merge_cells=False)
+
         return
 
     def read_matchboxes(self) -> None:
@@ -608,20 +625,20 @@ def analysize_solutions(season: AYTO, fn: str, end: int) -> None:
 
 if __name__ == "__main__":
     allseasons = ["normalo2020", "normalo2021", "normalo2022", "normalo2023",
-                  "vip2021", "vip2022", "vip2023", 
+                  "vip2021", "vip2022", "vip2023",
                   "normalo2024"]
 
-    for seasonfn in allseasons[-1:]:
+    for seasonfn in allseasons[:-1]:
         # with open(f"data/{seasonfn}.json", "r") as f:
         #     seasondata = json.loads(f.read())
 
         print(seasonfn)
         season = AYTO(seasonfn, nightsfromexcel=True)
-        print(season.nights)
+        # season.write_nights_excel()
 
-        # i = 8
-        # sols1 = season.find_solutions_fast(i)
-        # print(f"season.find_solutions_fast({i})", len(sols1))
-        # print()
+        i = 8
+        sols1 = season.find_solutions_fast(i)
+        print(f"season.find_solutions_fast({i})", len(sols1))
+        print()
 
         # analysize_solutions(season, f"analytics/{seasonfn}_half.txt", i)
