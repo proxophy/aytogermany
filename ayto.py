@@ -27,9 +27,6 @@ class AYTO:
 
     solution: Optional[Set[Tuple[str, str]]]
 
-    def foo(self, x):
-        return 1
-
     def __init__(self, fn: str, nightsfromexcel: bool = True) -> None:
         with open(f"data/{fn}.json", "r") as f:
             jsondata = json.loads(f.read())
@@ -205,6 +202,60 @@ class AYTO:
         else:
             self.knownboxes = [i for i in range(len(self.nights))]
 
+    def nights_up_to_episode(self, end: int) -> List[Tuple[List[Tuple[str, str]], int]]:
+        if end >= self.numepisodes - 1:
+            return self.nights
+        return self.nights[:(self.knownnights[end]+1)]
+
+    def matchboxes_up_to_episode(self, end: int) -> Dict[Tuple[str, str], bool]:
+        if end >= self.numepisodes - 1:
+            return self.matchboxes
+
+        usedmbkeys = list(self.matchboxes.keys())[:(self.knownboxes[end]+1)]
+        usedmb = {k: self.matchboxes[k] for k in usedmbkeys}
+        return usedmb
+
+    def bonights_up_to_episode(self, end: int) -> List[int]:
+        if end >= self.numepisodes - 1:
+            return self.bonights
+        return [bo for bo in self.bonights if bo <= self.knownnights[end]]
+
+    def knownpm_up_to_episode(self, end: int) -> List[Tuple[str, str]]:
+        mb = self.matchboxes_up_to_episode(end)
+        return list(set(mb.keys()) & set(self.knownpm))
+
+    def get_possible_matches(self, end: int) -> Dict[str, List[str]]:
+        # mb, nights, kpm, hpm, bon = self.get_upto_episode(end)
+        possible_matches = {l: [r for r in self.rights if not self.no_match(l, r, end)]
+                            for l in self.lefts}
+        # change possible matches
+        if self.dmtuple is not None:
+            dm1, dm2 = self.dmtuple
+            for l in possible_matches:
+                # if not still both possible for this left, remove them as an option
+                if not (dm1 in possible_matches[l] and dm2 in possible_matches[l]):
+                    possible_matches[l] = list(
+                        set(possible_matches[l]) - {dm1, dm2})
+
+        return possible_matches
+
+    def no_match(self, l: str, r: str, end: int) -> bool:
+        '''(l,r) are definitely no match'''
+        assert l in self.lefts and r in self.rights, f"f: {l}, s: {r}"
+
+        nights = self.nights_up_to_episode(end)
+        mb = self.matchboxes_up_to_episode(end)
+        bon = self.bonights_up_to_episode(end)
+        kpm = self.knownpm_up_to_episode(end)
+        hpm = [e for p in kpm for e in p]
+
+        # one is part of known perfect match
+        # matchbox result was false
+        # pair in blackout night who is not known perfect match
+        return ((l, r) not in kpm and ((l in hpm) or (r in hpm))) \
+            or ((l, r) in mb.keys() and not mb[(l, r)]) \
+            or any([(l, r) in nights[bo][0] and (l, r) not in kpm for bo in bon])
+
     def guess_correct_format(self, guess: Set[Tuple[str, str]]) -> bool:
         if len(guess) > 11:
             print("len(solution) > 11")
@@ -235,60 +286,6 @@ class AYTO:
                 rightseated.add(r)
 
         return True
-
-    def nights_up_to_episode(self, end: int) -> List[Tuple[List[Tuple[str, str]], int]]:
-        if end >= self.numepisodes - 1:
-            return self.nights
-        return self.nights[:(self.knownnights[end]+1)]
-
-    def matchboxes_up_to_episode(self, end: int) -> Dict[Tuple[str, str], bool]:
-        if end >= self.numepisodes - 1:
-            return self.matchboxes
-
-        usedmbkeys = list(self.matchboxes.keys())[:(self.knownboxes[end]+1)]
-        usedmb = {k: self.matchboxes[k] for k in usedmbkeys}
-        return usedmb
-
-    def bonights_up_to_episode(self, end: int) -> List[int]:
-        if end >= self.numepisodes - 1:
-            return self.bonights
-        return [bo for bo in self.bonights if bo <= self.knownnights[end]]
-
-    def knownpm_up_to_episode(self, end: int) -> List[Tuple[str, str]]:
-        mb = self.matchboxes_up_to_episode(end)
-        return list(set(mb.keys()) & set(self.knownpm))
-
-    def no_match(self, l: str, r: str, end: int) -> bool:
-        '''(l,r) are definitely no match'''
-        assert l in self.lefts and r in self.rights, f"f: {l}, s: {r}"
-
-        nights = self.nights_up_to_episode(end)
-        mb = self.matchboxes_up_to_episode(end)
-        bon = self.bonights_up_to_episode(end)
-        kpm = self.knownpm_up_to_episode(end)
-        hpm = [e for p in kpm for e in p]
-
-        # one is part of known perfect match
-        # matchbox result was false
-        # pair in blackout night who is not known perfect match
-        return ((l, r) not in kpm and ((l in hpm) or (r in hpm))) \
-            or ((l, r) in mb.keys() and not mb[(l, r)]) \
-            or any([(l, r) in nights[bo][0] and (l, r) not in kpm for bo in bon])
-
-    def get_possible_matches(self, end: int) -> Dict[str, List[str]]:
-        # mb, nights, kpm, hpm, bon = self.get_upto_episode(end)
-        possible_matches = {l: [r for r in self.rights if not self.no_match(l, r, end)]
-                            for l in self.lefts}
-        # change possible matches
-        if self.dmtuple is not None:
-            dm1, dm2 = self.dmtuple
-            for l in possible_matches:
-                # if not still both possible for this left, remove them as an option
-                if not (dm1 in possible_matches[l] and dm2 in possible_matches[l]):
-                    possible_matches[l] = list(
-                        set(possible_matches[l]) - {dm1, dm2})
-
-        return possible_matches
 
     def guess_possible(self, guess: Set[Tuple[str, str]], end) -> bool:
         assert len(guess) <= 11, "The guess cannot have more than 11 pairs"
@@ -339,8 +336,11 @@ class AYTO:
 
         return True
 
-    def generate_solutions(self, end: int, asm: Set[Tuple[str, str]] = set()) -> List[Set[Tuple[str, str]]]:
+    def generate_complete_guesses(self, end: int, asm: Set[Tuple[str, str]] = set()) -> List[Set[Tuple[str, str]]]:
         '''Generating solutions that fit matchboxes, blackout nights, possible double matches and assumption'''
+        if len(asm) == 11:
+            return [asm]
+
         def zip_product(ordering):
             return list(zip(self.lefts, ordering))
 
@@ -348,8 +348,8 @@ class AYTO:
 
         if self.dm is not None:
             # lefts who can have a double match
-            dm_lefts = [
-                l for l in self.lefts if not self.no_match(l, self.dm, end)]
+            dm_lefts = [l for l in self.lefts
+                        if not self.no_match(l, self.dm, end)]
 
             asm_dict = {}
             if len(asm) > 0:
@@ -433,12 +433,12 @@ class AYTO:
                     if sol not in solutions:
                         solutions.append(sol)
                     if not self.guess_correct_format(sol):
-                        print("not self.solution_correct_format(sol)")
+                        print("not self.guess_correct_format(sol)")
 
         return solutions
 
     def find_solutions(self, end: int) -> List[Set[Tuple[str, str]]]:
-        solutions = self.generate_solutions(end)
+        solutions = self.generate_complete_guesses(end)
         print(len(solutions))
 
         solutions = list(
@@ -464,7 +464,7 @@ class AYTO:
             asm_per_night.append(combs)
             # print(i, len(combs))
 
-        merged_asm = functools.reduce(lambda a1, a2: self.merge_assumptions_lists(a1, a2),
+        merged_asm = functools.reduce(lambda a1, a2: self.merge_guesses_lists(a1, a2),
                                       asm_per_night)
         print("before", len(merged_asm))
         merged_asm = list(filter(lambda a: self.guess_possible(a, end),
@@ -473,7 +473,7 @@ class AYTO:
         solutions = []
 
         for a in merged_asm:
-            sols_a = self.generate_solutions(end, a)
+            sols_a = self.generate_complete_guesses(end, a)
             # avoiding duplicate solution
             for s in sols_a:
                 if s not in solutions:
@@ -524,7 +524,7 @@ class AYTO:
 
         return True
 
-    def mergeable_guesses(self, a1: set, a2: set) -> bool:
+    def mergeable_guesses(self, a1: Set, a2: Set) -> bool:
         g_union = a1.union(a2)
 
         # condition 1: must be no more than 11 pairs
@@ -555,7 +555,7 @@ class AYTO:
 
         return all([c1, c2, c3, c4, c5])
 
-    def merge_assumptions_lists(self, asm_1: List[Set], asm_2: List[Set]):
+    def merge_guesses_lists(self, asm_1: List[Set], asm_2: List[Set]):
         '''
         Input: season, two list of assumptions (set of pairs)
         Output: List of merged together assumptions 
