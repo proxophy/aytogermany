@@ -6,7 +6,6 @@ import json
 import pandas as pd
 
 
-
 class AYTO:
 
     lefts: List[str]
@@ -29,8 +28,13 @@ class AYTO:
     solution: Optional[Set[Tuple[str, str]]]
 
     def __init__(self,
-                 fn: str, nightsfromexcel: bool = True) -> None:
+                 fn: str, nightsfromexcel: bool = True,
+                 nummatches: int = 11) -> None:
         self.fn = fn
+        self.nummatches = nummatches
+        if nummatches > 11:
+            print("MORE THAN 11 MATCHES")
+
         self.read_data(fn, nightsfromexcel)
 
     def read_data(self, fn: str, nightsfromexcel: bool = True) -> None:
@@ -121,14 +125,12 @@ class AYTO:
             jsondata = json.loads(f.read())
 
         # set left and right
-        if len(jsondata["women"]) == 11 and len(jsondata["men"]) == 10:
+        if len(jsondata["women"]) == self.nummatches and len(jsondata["men"]) == 10:
             self.lefts, self.rights = jsondata["men"], jsondata["women"]
-        elif len(jsondata["women"]) == 10 and len(jsondata["men"]) == 11:
+        elif len(jsondata["women"]) == 10 and len(jsondata["men"]) == self.nummatches:
             self.lefts, self.rights = jsondata["women"], jsondata["men"]
-        elif len(jsondata["men"]) == 10 and len(jsondata["women"]) == 12:
-            print("Normalo 2024: 12 women")
-            self.lefts, self.rights = jsondata["men"], jsondata["women"]
         else:
+            print(len(jsondata["women"]), len(jsondata["men"]), self.nummatches)
             raise ValueError(f"not enough or too much women or men")
 
         # seatings and lights for nights
@@ -261,8 +263,8 @@ class AYTO:
             or any([(l, r) in nights[bo][0] and (l, r) not in kpm for bo in bon])
 
     def guess_correct_format(self, guess: Set[Tuple[str, str]]) -> bool:
-        if len(guess) > 11:
-            print("len(solution) > 11")
+        if len(guess) > self.nummatches:
+            print("len(solution) > self.nummatches")
             return False
 
         leftseated = set()
@@ -292,14 +294,14 @@ class AYTO:
         return True
 
     def guess_possible(self, guess: Set[Tuple[str, str]], end) -> bool:
-        assert len(guess) <= 11, "The guess cannot have more than 11 pairs"
+        assert len(guess) <= self.nummatches, "The guess cannot have more than self.nummatches pairs"
 
         if not self.guess_correct_format(guess):
             print("Solution not correct format")
             # print(guess)
             return False
 
-        complete: bool = len(guess) == 11
+        complete: bool = len(guess) == self.nummatches
 
         nights = self.nights_up_to_episode(end)
         kpm = self.knownpm_up_to_episode(end)
@@ -321,13 +323,13 @@ class AYTO:
                 return False
 
         if complete:
-            # if 11 matches, we must have all perfect matches
+            # if guess has self.nummatches matches, we must have all perfect matches
             if not all([pm in guess for pm in kpm]):
                 print("complete and not all perfect matches")
                 return False
 
         # number of lights with pairs matching lights in nights
-        # if we don't have 11 pairs, we allow lesser lights
+        # if we don't have self.nummatches pairs, we allow lesser lights
         for pairs, lights in nights:
             intersection = set(pairs) & guess
             clights = len(intersection)
@@ -341,14 +343,12 @@ class AYTO:
         return True
 
     def generate_complete_guesses(self, end: int, asm: Set[Tuple[str, str]] = set()) -> List[Set[Tuple[str, str]]]:
-        '''Generating solutions that fit matchboxes, blackout nights, possible double matches and assumption'''
-        if len(asm) == 11:
+        '''Generating solutions'''
+        if len(asm) == self.nummatches:
             return [asm]
 
         def zip_product(ordering):
             return list(zip(self.lefts, ordering))
-
-        possible_matches = self.get_possible_matches(end)
 
         if self.dm is not None:
             # lefts who can have a double match
@@ -410,7 +410,6 @@ class AYTO:
             else:
                 a_rights = []
 
-            modified_pos_matches = possible_matches
             modified_pos_matches = {}
             for l in self.lefts:
                 if l in asm_dict:
@@ -420,28 +419,38 @@ class AYTO:
                                                if r not in a_rights and
                                                not self.no_match(l, r, end)]
 
+            for l in modified_pos_matches:
+                print(l, modified_pos_matches[l])
+
             # get first ten matches
             products = [list(ps) for ps in itertools.product(*modified_pos_matches.values())
                         if len(set(ps)) == 10]
             solutions_tenmatches = list(map(zip_product, products))
+            print("before", len(solutions_tenmatches))
+            solutions_tenmatches = list(filter(lambda g: self.guess_possible(set(g), end),
+                                               solutions_tenmatches))
+            print("after", len(solutions_tenmatches))
 
             solutions = []
+            raddmatch = {r: [(l,r) for l in self.lefts if not self.no_match(l,r,end)] 
+                         for r in self.rights}
 
             for tenmatches in solutions_tenmatches:
                 _, rs = zip(*tenmatches)
                 msr = list(set(self.rights) - set(rs))[0]
-                addmatches = [(l, msr)
-                              for l in self.lefts if not self.no_match(l, msr, end)]
+                addmatches = raddmatch[msr]
+                
                 for additionalmatch in addmatches:
                     sol = set(tenmatches + [additionalmatch])
                     if sol not in solutions:
                         solutions.append(sol)
-                    if not self.guess_correct_format(sol):
-                        print("not self.guess_correct_format(sol)")
+                    # if not self.guess_correct_format(sol):
+                    #     print("not self.guess_correct_format(sol)")
+            print(len(solutions))
 
         return solutions
 
-    def find_solutions(self, end: int) -> List[Set[Tuple[str, str]]]:
+    def find_solutions_slow(self, end: int) -> List[Set[Tuple[str, str]]]:
         solutions = self.generate_complete_guesses(end)
         print(len(solutions))
 
@@ -450,13 +459,12 @@ class AYTO:
 
         return solutions
 
-    def find_solutions_fast(self, end: int) -> List[Set[Tuple[str, str]]]:
-        # _, nights, kpm, _, _ = self.get_upto_episode(end)
+    def compute_guesses(self, end: int) -> List[Set[Tuple[str,str]]]:
         nights = self.nights_up_to_episode(end)
         kpm = self.knownpm_up_to_episode(end)
 
-        asm_per_night = []
-        for i, (pairs, lights) in enumerate(nights):
+        guesses_per_night = []
+        for pairs, lights in nights:
             notcorrect = list(filter(lambda p: self.no_match(*p, end),
                                      pairs))
             defcorrect = list(filter(lambda p: p in kpm, pairs))
@@ -465,40 +473,43 @@ class AYTO:
             combs = [set(comb).union(set(defcorrect))
                      for comb in itertools.combinations(remaining, lights - len(defcorrect))]
 
-            asm_per_night.append(combs)
-            # print(i, len(combs))
+            guesses_per_night.append(combs)
 
-        merged_asm = functools.reduce(lambda a1, a2: self.merge_guesses_lists(a1, a2),
-                                      asm_per_night)
-        print("before", len(merged_asm))
-        merged_asm = list(filter(lambda a: self.guess_possible(a, end),
-                                 merged_asm))
-        asm_lengths = list(map(len,merged_asm))
-        asm_lengths_counter = Counter(asm_lengths)
-        print(asm_lengths_counter)
-        exit()
+        merged_guesses = functools.reduce(lambda g1, a2: self.merge_guesses_lists(g1, a2),
+                                          guesses_per_night)
+
+        merged_guesses = list(filter(lambda a: self.guess_possible(a, end),
+                                     merged_guesses))
+
+        guesses_lengths_counter = Counter(map(len, merged_guesses))
+        print(f"Guesses lengths: {guesses_lengths_counter}")
+
+        return merged_guesses
+
+    def find_solutions(self, end: int = 9) -> List[Set[Tuple[str, str]]]:
+        merged_guesses = self.compute_guesses(end)
 
         solutions = []
 
-        for a in merged_asm:
+        for a in merged_guesses:
             sols_a = self.generate_complete_guesses(end, a)
-            # avoiding duplicate solution
+            # avoiding duplicate solutions
             for s in sols_a:
                 if s not in solutions:
                     solutions.append(s)
-        print("len(solutions)", len(solutions))
+        print("Number of generated solutions:", len(solutions))
 
         solutions = list(filter(lambda s: self.guess_possible(s, end),
                                 solutions))
 
         return solutions
 
-    def mergeable_guesses_loop(self, a1: Set, a2: Set) -> bool:
+    def mergeable_guesses_loop(self, g1: Set, g2: Set) -> bool:
         '''misses some cases'''
         dmc = False
         dml = None
 
-        for (l1, r1), (l2, r2) in itertools.product(a1, a2):
+        for (l1, r1), (l2, r2) in itertools.product(g1, g2):
             # two distinct lefts have same match
             if l1 != l2 and r1 == r2:
                 return False
@@ -524,19 +535,19 @@ class AYTO:
                 else:
                     return False
 
-        g_union = a1.union(a2)
+        g_union = g1.union(g2)
         if len({l for l, r in g_union if self.dmtuple is not None and r in self.dmtuple}) > 1:
             return False
-        elif len(g_union) > 11:
+        elif len(g_union) > self.nummatches:
             return False
 
         return True
 
-    def mergeable_guesses(self, a1: Set, a2: Set) -> bool:
-        g_union = a1.union(a2)
+    def mergeable_guesses(self, g1: Set, g2: Set) -> bool:
+        g_union = g1.union(g2)
 
         # condition 1: must be no more than 11 pairs
-        c1 = len(g_union) <= 11
+        c1 = len(g_union) <=  self.nummatches
 
         sl, sr = zip(*g_union)  # seated lefts and rights
         sl, sr = set(sl), set(sr)
@@ -563,16 +574,21 @@ class AYTO:
 
         return all([c1, c2, c3, c4, c5])
 
-    def merge_guesses_lists(self, asm_1: List[Set], asm_2: List[Set]):
+    def merge_guesses_lists(self, gsl_1: List[Set], gsl_2: List[Set]):
         '''
         Input: season, two list of assumptions (set of pairs)
         Output: List of merged together assumptions 
         '''
 
         m_asm = []
-        for a1, a2 in itertools.product(asm_1, asm_2):
-            if self.mergeable_guesses_loop(a1, a2) and a1.union(a2) not in m_asm:
-                m_asm.append(a1.union(a2))
+        for g1, g2 in itertools.product(gsl_1, gsl_2):
+            # self.mergeable_guesses_loop misses some cases when DM is not known, but is faster
+            if self.dm is not None:
+                pred = self.mergeable_guesses_loop(g1, g2)
+            else:
+                pred = self.mergeable_guesses(g1,g2)
+            if pred and g1.union(g2) not in m_asm:
+                m_asm.append(g1.union(g2))
 
         return m_asm
 
@@ -605,9 +621,9 @@ def analysize_solutions(season: AYTO, fn: str, end: int) -> None:
     def givescore(s1):
         return sum([pdict[p] for p in s1])
 
-    elevenmostlikely = list(pdict.items())[:11]
+    mostlikely = list(pdict.items())[:season.nummatches]
 
-    print(f"{elevenmostlikely}\n")
+    print(f"{mostlikely}\n")
 
     allpairs = [(l, r) for l in season.lefts for r in season.rights]
     impairs = [p for p in allpairs if p not in pdict and p not in mbs]
@@ -641,12 +657,20 @@ if __name__ == "__main__":
         #     seasondata = json.loads(f.read())
 
         print(seasonfn)
-        season = AYTO(seasonfn, nightsfromexcel=True)
-        print(season.nights)
+        season = AYTO(seasonfn, nightsfromexcel=True, 
+                      nummatches=12 if seasonfn=="normalo2024" else 11)
 
-        i = 2
-        sols1 = season.find_solutions_fast(i)
-        print(f"season.find_solutions_fast({i})", len(sols1))
+        i = 3
+        guesses = season.compute_guesses(i)
+        for g in guesses:
+            if len(g) == 2:
+                print(g)
+        # gr = {('Eti', 'Lisa-Marie'), ('Wilson', 'Shelly'), ('Ryan', 'Pia'), ('Gerrit', 'Tais')}
+        
+        # gsols = season.generate_complete_guesses(i,gr)
+        # print(len(gsols))
+        # sols = season.find_solutions(i)
+        # print(f"season.find_solutions({i})", len(sols))
         # print()
 
         # analysize_solutions(season, f"analytics/{seasonfn}_half.txt", i)
