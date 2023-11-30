@@ -1,12 +1,13 @@
 from typing import List, Tuple, Dict, Set, Union, Optional
+from collections import Counter
 import itertools
+import functools
 import json
 import pandas as pd
-import functools
+
 
 
 class AYTO:
-    jsondata: Dict
 
     lefts: List[str]
     rights: List[str]
@@ -27,13 +28,97 @@ class AYTO:
 
     solution: Optional[Set[Tuple[str, str]]]
 
-    def __init__(self, fn: str, nightsfromexcel: bool = True) -> None:
+    def __init__(self,
+                 fn: str, nightsfromexcel: bool = True) -> None:
+        self.fn = fn
+        self.read_data(fn, nightsfromexcel)
+
+    def read_data(self, fn: str, nightsfromexcel: bool = True) -> None:
+        def read_nights(nightsfromexcel: bool) -> None:
+            '''Read nights and check if everything is fine'''
+
+            if nightsfromexcel:
+                print("NIGHTS FROM EXCEL")
+                nightsdf = pd.read_excel(
+                    f"data/{self.fn}.xlsx", sheet_name="Nights",
+                    header=0, index_col=0)
+                leftsh = nightsdf.columns.values.tolist()
+
+                nights = [(list(zip(leftsh, row[:-1])), row[-1])
+                          for row in nightsdf.values.tolist()]
+            else:
+                print("NIGHTS FROM JSON")
+                # assert that nights are in data
+                assert "nights" in jsondata, "data has not a night key"
+                nights = [([tuple(p) for p in pairs], lights)
+                          for pairs, lights in jsondata["nights"]]
+
+            self.nights = []
+
+            # make sure all pairs are valid pairs and there are no duplicates
+            for pairs, lights in nights:
+                seated_pairs = []
+
+                seated_lefts, seated_rights = [], []
+
+                for l, r in pairs:
+                    if l in self.lefts and r in self.rights:
+                        # check that we don't have double seatings
+                        if l in seated_lefts or r in seated_rights:
+                            raise ValueError(
+                                f"{l} or {r} has already been seated")
+                        seated_lefts.append(l)
+                        seated_rights.append(r)
+
+                        seated_pairs.append((l, r))
+                    elif l in self.rights and r in self.lefts:
+                        # check that we don't have double seatings
+                        if l in seated_rights or r in seated_lefts:
+                            raise ValueError(
+                                f"{l} or {r} has already been seated")
+                        seated_lefts.append(r)
+                        seated_rights.append(l)
+
+                        seated_pairs.append((r, l))
+                    else:
+                        raise ValueError(
+                            f"{l} or {r} is neither in the list of women or men")
+
+                self.nights.append((seated_pairs, lights))
+            return
+
+        def read_matchboxes() -> None:
+            '''Read matchboxes'''
+            assert "matchboxes" in jsondata, "data has not a night key"
+
+            self.matchboxes = {}
+
+            for (l, r), result in jsondata["matchboxes"]:
+                if l in self.lefts and r in self.rights:
+                    if (l, r) in self.matchboxes:
+                        raise ValueError(f"Double matchbox result for {l,r}")
+                    self.matchboxes[(l, r)] = result
+                elif l in self.rights and r in self.lefts:
+                    if (r, l) in self.matchboxes:
+                        raise ValueError(f"Double matchbox result for {r,l}")
+                    self.matchboxes[(r, l)] = result
+
+        def read_boxesepisode() -> None:
+            if "boxesepisode" in jsondata:
+                assert len(self.matchboxes) == len(jsondata["boxesepisode"]), \
+                    r"not every matchbox could be assigned a episode"
+
+                self.knownboxes = [0 for _ in range(self.numepisodes)]
+                for i, e in enumerate(jsondata["boxesepisode"]):
+                    self.knownboxes[e] = i
+                for i in range(1, len(self.knownboxes)):
+                    if self.knownboxes[i] == 0:
+                        self.knownboxes[i] = self.knownboxes[i - 1]
+            else:
+                self.knownboxes = [i for i in range(len(self.nights))]
+
         with open(f"data/{fn}.json", "r") as f:
             jsondata = json.loads(f.read())
-        self.jsondata = jsondata
-        self.fn = fn
-
-        # read data
 
         # set left and right
         if len(jsondata["women"]) == 11 and len(jsondata["men"]) == 10:
@@ -47,10 +132,10 @@ class AYTO:
             raise ValueError(f"not enough or too much women or men")
 
         # seatings and lights for nights
-        self.read_nights(nightsfromexcel)
+        read_nights(nightsfromexcel)
 
         # matchboxes with results
-        self.read_matchboxes()
+        read_matchboxes()
 
         # nights with blackout
         self.bonights = jsondata["bonights"]
@@ -90,7 +175,7 @@ class AYTO:
             self.numepisodes = len(self.nights)
             self.knownnights = [i for i in range(self.numepisodes)]
 
-        self.read_boxesepisode()
+        read_boxesepisode()
 
         # known perfect matches
         self.knownpm = [p for p in self.matchboxes.keys()
@@ -101,57 +186,6 @@ class AYTO:
         if "solution" in jsondata:
             self.solution = {(l, r) for l, r in jsondata["solution"]}
             print(self.solution)
-
-    def read_nights(self,  nightsfromexcel: bool) -> None:
-        '''Read nights and check if everything is fine'''
-
-        if nightsfromexcel:
-            print("NIGHTS FROM EXCEL")
-            nightsdf = pd.read_excel(
-                f"data/{self.fn}.xlsx", sheet_name="Nights",
-                header=0, index_col=0)
-            leftsh = nightsdf.columns.values.tolist()
-
-            nights = [(list(zip(leftsh, row[:-1])), row[-1])
-                      for row in nightsdf.values.tolist()]
-        else:
-            print("NIGHTS FROM JSON")
-            # assert that nights are in data
-            assert "nights" in self.jsondata, "data has not a night key"
-            nights = [([tuple(p) for p in pairs], lights)
-                      for pairs, lights in self.jsondata["nights"]]
-
-        self.nights = []
-
-        # make sure all pairs are valid pairs and there are no duplicates
-        for pairs, lights in nights:
-            seated_pairs = []
-
-            seated_lefts, seated_rights = [], []
-
-            for l, r in pairs:
-                if l in self.lefts and r in self.rights:
-                    # check that we don't have double seatings
-                    if l in seated_lefts or r in seated_rights:
-                        raise ValueError(f"{l} or {r} has already been seated")
-                    seated_lefts.append(l)
-                    seated_rights.append(r)
-
-                    seated_pairs.append((l, r))
-                elif l in self.rights and r in self.lefts:
-                    # check that we don't have double seatings
-                    if l in seated_rights or r in seated_lefts:
-                        raise ValueError(f"{l} or {r} has already been seated")
-                    seated_lefts.append(r)
-                    seated_rights.append(l)
-
-                    seated_pairs.append((r, l))
-                else:
-                    raise ValueError(
-                        f"{l} or {r} is neither in the list of women or men")
-
-            self.nights.append((seated_pairs, lights))
-        return
 
     def write_nights_excel(self) -> None:
         dflist = []
@@ -171,36 +205,6 @@ class AYTO:
                     sheet_name="Nights", merge_cells=False)
 
         return
-
-    def read_matchboxes(self) -> None:
-        '''Read matchboxes'''
-        assert "matchboxes" in self.jsondata, "data has not a night key"
-
-        self.matchboxes = {}
-
-        for (l, r), result in self.jsondata["matchboxes"]:
-            if l in self.lefts and r in self.rights:
-                if (l, r) in self.matchboxes:
-                    raise ValueError(f"Double matchbox result for {l,r}")
-                self.matchboxes[(l, r)] = result
-            elif l in self.rights and r in self.lefts:
-                if (r, l) in self.matchboxes:
-                    raise ValueError(f"Double matchbox result for {r,l}")
-                self.matchboxes[(r, l)] = result
-
-    def read_boxesepisode(self) -> None:
-        if "boxesepisode" in self.jsondata:
-            assert len(self.matchboxes) == len(self.jsondata["boxesepisode"]), \
-                r"not every matchbox could be assigned a episode"
-
-            self.knownboxes = [0 for _ in range(self.numepisodes)]
-            for i, e in enumerate(self.jsondata["boxesepisode"]):
-                self.knownboxes[e] = i
-            for i in range(1, len(self.knownboxes)):
-                if self.knownboxes[i] == 0:
-                    self.knownboxes[i] = self.knownboxes[i - 1]
-        else:
-            self.knownboxes = [i for i in range(len(self.nights))]
 
     def nights_up_to_episode(self, end: int) -> List[Tuple[List[Tuple[str, str]], int]]:
         if end >= self.numepisodes - 1:
@@ -469,7 +473,11 @@ class AYTO:
         print("before", len(merged_asm))
         merged_asm = list(filter(lambda a: self.guess_possible(a, end),
                                  merged_asm))
-        print("after", len(merged_asm))
+        asm_lengths = list(map(len,merged_asm))
+        asm_lengths_counter = Counter(asm_lengths)
+        print(asm_lengths_counter)
+        exit()
+
         solutions = []
 
         for a in merged_asm:
@@ -628,17 +636,17 @@ if __name__ == "__main__":
                   "vip2021", "vip2022", "vip2023",
                   "normalo2024"]
 
-    for seasonfn in allseasons[:-1]:
+    for seasonfn in allseasons[-1:]:
         # with open(f"data/{seasonfn}.json", "r") as f:
         #     seasondata = json.loads(f.read())
 
         print(seasonfn)
         season = AYTO(seasonfn, nightsfromexcel=True)
-        # season.write_nights_excel()
+        print(season.nights)
 
-        i = 8
+        i = 2
         sols1 = season.find_solutions_fast(i)
         print(f"season.find_solutions_fast({i})", len(sols1))
-        print()
+        # print()
 
         # analysize_solutions(season, f"analytics/{seasonfn}_half.txt", i)
