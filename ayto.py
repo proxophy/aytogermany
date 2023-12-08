@@ -130,7 +130,8 @@ class AYTO:
         elif len(jsondata["women"]) == 10 and len(jsondata["men"]) == self.nummatches:
             self.lefts, self.rights = jsondata["women"], jsondata["men"]
         else:
-            print(len(jsondata["women"]), len(jsondata["men"]), self.nummatches)
+            print(len(jsondata["women"]), len(
+                jsondata["men"]), self.nummatches)
             raise ValueError(f"not enough or too much women or men")
 
         # seatings and lights for nights
@@ -187,7 +188,7 @@ class AYTO:
 
         if "solution" in jsondata:
             self.solution = {(l, r) for l, r in jsondata["solution"]}
-            print(self.solution)
+            # print(self.solution)
 
     def write_nights_excel(self) -> None:
         dflist = []
@@ -294,7 +295,8 @@ class AYTO:
         return True
 
     def guess_possible(self, guess: Set[Tuple[str, str]], end) -> bool:
-        assert len(guess) <= self.nummatches, "The guess cannot have more than self.nummatches pairs"
+        assert len(guess) <= self.nummatches, \
+            f"The guess has {len(guess)} instead of {self.nummatches}"
 
         if not self.guess_correct_format(guess):
             print("Solution not correct format")
@@ -310,8 +312,7 @@ class AYTO:
         if any([self.no_match(*p, end) for p in guess]):
             ba: List = [self.no_match(*p, end) for p in guess]
             trueindex = ba.index(True)
-
-            # print(f"guess has known no match: {list(guess)[trueindex]} {self.x}")
+            print(f"guess has known no match: {list(guess)[trueindex]}")
             return False
 
         # perfect matches of dmtuple must be the same person
@@ -419,36 +420,119 @@ class AYTO:
                                                if r not in a_rights and
                                                not self.no_match(l, r, end)]
 
-            for l in modified_pos_matches:
-                print(l, modified_pos_matches[l])
-
             # get first ten matches
             products = [list(ps) for ps in itertools.product(*modified_pos_matches.values())
                         if len(set(ps)) == 10]
             solutions_tenmatches = list(map(zip_product, products))
-            print("before", len(solutions_tenmatches))
+            # print("before", len(solutions_tenmatches))
             solutions_tenmatches = list(filter(lambda g: self.guess_possible(set(g), end),
                                                solutions_tenmatches))
-            print("after", len(solutions_tenmatches))
+            # print("after", len(solutions_tenmatches))
 
             solutions = []
-            raddmatch = {r: [(l,r) for l in self.lefts if not self.no_match(l,r,end)] 
+            raddmatch = {r: [(l, r) for l in self.lefts if not self.no_match(l, r, end)]
                          for r in self.rights}
 
             for tenmatches in solutions_tenmatches:
                 _, rs = zip(*tenmatches)
                 msr = list(set(self.rights) - set(rs))[0]
                 addmatches = raddmatch[msr]
-                
+
                 for additionalmatch in addmatches:
                     sol = set(tenmatches + [additionalmatch])
                     if sol not in solutions:
                         solutions.append(sol)
                     # if not self.guess_correct_format(sol):
                     #     print("not self.guess_correct_format(sol)")
-            print(len(solutions))
 
         return solutions
+
+    def generate_complete_guesses2(self, end: int, asm: Set[Tuple[str, str]] = set()) -> List[Set[Tuple[str, str]]]:
+        '''Generating solutions'''
+        if len(asm) == self.nummatches:
+            return [asm]
+
+        def zip_product(clefts, ordering):
+            return set(zip(clefts, ordering))
+
+        if len(asm) > 0:
+            _, a_rights = zip(*asm)
+            a_rights = list(a_rights)
+        else:
+            a_rights = []
+
+        asm_dict = {}
+        dm_in_asm = False
+        for l, r in asm:
+            if l not in asm_dict:
+                asm_dict[l] = [r]
+            else:
+                asm_dict[l].append(r)
+                dm_in_asm = True
+
+        modified_pos_matches = {}
+        for l in self.lefts:
+            if l not in asm_dict:
+                modified_pos_matches[l] = [r for r in self.rights
+                                           if r not in a_rights and
+                                           not self.no_match(l, r, end)]
+        # for l in modified_pos_matches:
+        #     print(l, modified_pos_matches[l])
+
+        products = [list(ps) for ps in itertools.product(*modified_pos_matches.values())
+                    if len(set(ps)) == len(ps)]
+        others_list = list(map(lambda p: zip_product(modified_pos_matches.keys(), p),
+                               products))
+        
+        if dm_in_asm:
+            # print("DM IN ASM")
+            return [asm.union(set(othermatches)) for othermatches in others_list]
+
+        solutions = []
+
+        addmatches_dict = {r: [(l, r) for l in self.lefts if not self.no_match(l, r, end)]
+                           for r in self.rights}
+
+        # if self.dm is not None:
+        for othermatches in others_list:
+            tenmatches = asm.union(othermatches)
+            _, crights = zip(*tenmatches)
+            missingright = [r for r in self.rights if r not in crights][0]
+
+            if self.dmtuple is not None:
+                # VIP 2023
+                if missingright not in self.dmtuple:
+                    continue
+
+                dmleft = [l for (l, r) in tenmatches if r in self.dmtuple][0]
+                solutions.append(tenmatches.union(
+                    [(dmleft, missingright)]))
+            elif self.dm is not None:
+                # Most other seasons
+                if missingright == self.dm:
+                    solutions += [tenmatches.union([(l, self.dm)])
+                                    for l in self.lefts
+                                    if not self.no_match(l, self.dm, end)]
+
+                else:
+                    dmleft = [
+                        l for (l, r) in tenmatches if r == self.dm][0]
+                    
+                    if self.no_match(dmleft,missingright,end):
+                        continue
+                    solutions.append(tenmatches.union(
+                        [(dmleft, missingright)]))
+            else:
+                # Normalo 2023
+                solutions += [tenmatches.union([ap])
+                              for ap in addmatches_dict[missingright]]
+                pass
+
+        solutions2 = []
+        for sol in solutions:
+            if sol not in solutions2:
+                solutions2.append(sol)
+        return solutions2
 
     def find_solutions_slow(self, end: int) -> List[Set[Tuple[str, str]]]:
         solutions = self.generate_complete_guesses(end)
@@ -459,7 +543,7 @@ class AYTO:
 
         return solutions
 
-    def compute_guesses(self, end: int) -> List[Set[Tuple[str,str]]]:
+    def compute_guesses(self, end: int) -> List[Set[Tuple[str, str]]]:
         nights = self.nights_up_to_episode(end)
         kpm = self.knownpm_up_to_episode(end)
 
@@ -486,18 +570,23 @@ class AYTO:
 
         return merged_guesses
 
-    def find_solutions(self, end: int = 9) -> List[Set[Tuple[str, str]]]:
+    def find_solutions(self, end: int = 9, old=True) -> List[Set[Tuple[str, str]]]:
         merged_guesses = self.compute_guesses(end)
 
         solutions = []
 
         for a in merged_guesses:
-            sols_a = self.generate_complete_guesses(end, a)
+            if old:
+                sols_a = self.generate_complete_guesses(end, a)
+            else:
+                sols_a = self.generate_complete_guesses2(end, a)
+
             # avoiding duplicate solutions
             for s in sols_a:
                 if s not in solutions:
                     solutions.append(s)
         print("Number of generated solutions:", len(solutions))
+        # return solutions
 
         solutions = list(filter(lambda s: self.guess_possible(s, end),
                                 solutions))
@@ -547,7 +636,7 @@ class AYTO:
         g_union = g1.union(g2)
 
         # condition 1: must be no more than 11 pairs
-        c1 = len(g_union) <=  self.nummatches
+        c1 = len(g_union) <= self.nummatches
 
         sl, sr = zip(*g_union)  # seated lefts and rights
         sl, sr = set(sl), set(sr)
@@ -586,7 +675,7 @@ class AYTO:
             if self.dm is not None:
                 pred = self.mergeable_guesses_loop(g1, g2)
             else:
-                pred = self.mergeable_guesses(g1,g2)
+                pred = self.mergeable_guesses(g1, g2)
             if pred and g1.union(g2) not in m_asm:
                 m_asm.append(g1.union(g2))
 
@@ -652,25 +741,36 @@ if __name__ == "__main__":
                   "vip2021", "vip2022", "vip2023",
                   "normalo2024"]
 
-    for seasonfn in allseasons[-1:]:
+    for seasonfn in allseasons[4:7]:
         # with open(f"data/{seasonfn}.json", "r") as f:
         #     seasondata = json.loads(f.read())
 
         print(seasonfn)
-        season = AYTO(seasonfn, nightsfromexcel=True, 
-                      nummatches=12 if seasonfn=="normalo2024" else 11)
+        season: AYTO = AYTO(seasonfn, nightsfromexcel=True,
+                            nummatches=12 if seasonfn == "normalo2024" else 11)
 
-        i = 3
+        i = 5
         guesses = season.compute_guesses(i)
-        for g in guesses:
-            if len(g) == 2:
-                print(g)
-        # gr = {('Eti', 'Lisa-Marie'), ('Wilson', 'Shelly'), ('Ryan', 'Pia'), ('Gerrit', 'Tais')}
-        
-        # gsols = season.generate_complete_guesses(i,gr)
-        # print(len(gsols))
-        # sols = season.find_solutions(i)
-        # print(f"season.find_solutions({i})", len(sols))
-        # print()
+        for guess in guesses:
+            lg, rg = zip(*guess)
+            if not season.dm in rg:
+                gsols = season.generate_complete_guesses(i, guess)
+                gsols2 = season.generate_complete_guesses2(i, guess)
+                if len(gsols) != len(gsols2):
+                    print("not equal")
+
+        # gr = {('Paulo', 'Tais'), ('Kevin', 'Sina'), ('Martin', 'Lisa-Marie'), 
+        #       ('Wilson', 'Maja'), ('Ryan', 'Jana'), ('Paddy', 'Julia'), ('Sidar', 'Afra')}
+
+        # gsols = season.generate_complete_guesses(i, gr)
+        # gsols2 = season.generate_complete_guesses2(i, gr)
+        # print(len(gsols),len(gsols2))
+        # gsols = list(filter(lambda guess: season.guess_possible(guess,i), gsols))
+        # gsols2 = list(filter(lambda guess: season.guess_possible(guess,i), gsols2))
+        # print(len(gsols),len(gsols2))
+
+        # sols1 = season.find_solutions(i, True)
+        # sols2 = season.find_solutions(i, False)
+        # print("len(sols)", len(sols1), len(sols2))
 
         # analysize_solutions(season, f"analytics/{seasonfn}_half.txt", i)
