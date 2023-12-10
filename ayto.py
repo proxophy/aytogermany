@@ -1,9 +1,10 @@
-from typing import List, Tuple, Dict, Set, Union, Optional
+from typing import List, Tuple, Dict, Set, Optional
 from collections import Counter
 import itertools
 import functools
 import json
 import pandas as pd
+import utils
 
 
 class AYTO:
@@ -17,202 +18,67 @@ class AYTO:
 
     dm: Optional[str]
     dmtuple: Optional[Tuple[str, str]]
+    tm: Optional[str]
 
-    cancellednight: int
+    # cancellednight: int
     numepisodes: int
     knownnights: List[int]
     knownboxes: List[int]
     knownpm: List[Tuple[str, str]]
-    knowhaspm: List[str]
 
     solution: Optional[Set[Tuple[str, str]]]
 
     def __init__(self,
-                 fn: str, nightsfromexcel: bool = True,
-                 nummatches: int = 11) -> None:
-        self.fn = fn
-        self.nummatches = nummatches
-        if nummatches > 11:
+                 lefts: List[str], rights: List[str],
+                 nights: List[Tuple[List[Tuple[str, str]], int]],
+                 matchboxes: Dict[Tuple[str, str], bool] = {},
+                 bonights: List[int] = [],
+                 dm: Optional[str] = None, dmtuple: Optional[Tuple[str, str]] = None,
+                 tm: Optional[str] = None,
+                 cancellednight: int = -1, boxesepisodes: List[int] = list(range(10)),
+                 solution: Optional[Set[Tuple[str, str]]] = None) -> None:
+
+        self.lefts = lefts
+        self.rights = rights
+        self.nummatches = max(len(lefts), len(rights))
+        if self.nummatches > 11:
             print("MORE THAN 11 MATCHES")
 
-        self.read_data(fn, nightsfromexcel)
+        self.nights = nights
+        self.matchboxes = matchboxes
+        self.bonights = bonights
 
-    def read_data(self, fn: str, nightsfromexcel: bool = True) -> None:
-        def read_nights(nightsfromexcel: bool) -> None:
-            '''Read nights and check if everything is fine'''
+        self.dm = dm
+        self.dmtuple = dmtuple
+        self.tm = tm
 
-            if nightsfromexcel:
-                print("NIGHTS FROM EXCEL")
-                nightsdf = pd.read_excel(
-                    f"data/{self.fn}.xlsx", sheet_name="Nights",
-                    header=0, index_col=0)
-                leftsh = nightsdf.columns.values.tolist()
+        self.solution = solution
 
-                nights = [(list(zip(leftsh, row[:-1])), row[-1])
-                          for row in nightsdf.values.tolist()]
-            else:
-                print("NIGHTS FROM JSON")
-                # assert that nights are in data
-                assert "nights" in jsondata, "data has not a night key"
-                nights = [([tuple(p) for p in pairs], lights)
-                          for pairs, lights in jsondata["nights"]]
-
-            self.nights = []
-
-            # make sure all pairs are valid pairs and there are no duplicates
-            for pairs, lights in nights:
-                seated_pairs = []
-
-                seated_lefts, seated_rights = [], []
-
-                for l, r in pairs:
-                    if l in self.lefts and r in self.rights:
-                        # check that we don't have double seatings
-                        if l in seated_lefts or r in seated_rights:
-                            raise ValueError(
-                                f"{l} or {r} has already been seated")
-                        seated_lefts.append(l)
-                        seated_rights.append(r)
-
-                        seated_pairs.append((l, r))
-                    elif l in self.rights and r in self.lefts:
-                        # check that we don't have double seatings
-                        if l in seated_rights or r in seated_lefts:
-                            raise ValueError(
-                                f"{l} or {r} has already been seated")
-                        seated_lefts.append(r)
-                        seated_rights.append(l)
-
-                        seated_pairs.append((r, l))
-                    else:
-                        raise ValueError(
-                            f"{l} or {r} is neither in the list of women or men")
-
-                self.nights.append((seated_pairs, lights))
-            return
-
-        def read_matchboxes() -> None:
-            '''Read matchboxes'''
-            assert "matchboxes" in jsondata, "data has not a night key"
-
-            self.matchboxes = {}
-
-            for (l, r), result in jsondata["matchboxes"]:
-                if l in self.lefts and r in self.rights:
-                    if (l, r) in self.matchboxes:
-                        raise ValueError(f"Double matchbox result for {l,r}")
-                    self.matchboxes[(l, r)] = result
-                elif l in self.rights and r in self.lefts:
-                    if (r, l) in self.matchboxes:
-                        raise ValueError(f"Double matchbox result for {r,l}")
-                    self.matchboxes[(r, l)] = result
-
-        def read_boxesepisode() -> None:
-            if "boxesepisode" in jsondata:
-                assert len(self.matchboxes) == len(jsondata["boxesepisode"]), \
-                    r"not every matchbox could be assigned a episode"
-
-                self.knownboxes = [0 for _ in range(self.numepisodes)]
-                for i, e in enumerate(jsondata["boxesepisode"]):
-                    self.knownboxes[e] = i
-                for i in range(1, len(self.knownboxes)):
-                    if self.knownboxes[i] == 0:
-                        self.knownboxes[i] = self.knownboxes[i - 1]
-            else:
-                self.knownboxes = [i for i in range(len(self.nights))]
-
-        with open(f"data/{fn}.json", "r") as f:
-            jsondata = json.loads(f.read())
-
-        # set left and right
-        if len(jsondata["women"]) == self.nummatches and len(jsondata["men"]) == 10:
-            self.lefts, self.rights = jsondata["men"], jsondata["women"]
-        elif len(jsondata["women"]) == 10 and len(jsondata["men"]) == self.nummatches:
-            self.lefts, self.rights = jsondata["women"], jsondata["men"]
+        # added for analyzing
+        if cancellednight == -1:
+            self.numepisodes = len(self.nights)
+            self.knownnights = [i for i in range(self.numepisodes)]
         else:
-            print(len(jsondata["women"]), len(
-                jsondata["men"]), self.nummatches)
-            raise ValueError(f"not enough or too much women or men")
-
-        # seatings and lights for nights
-        read_nights(nightsfromexcel)
-
-        # matchboxes with results
-        read_matchboxes()
-
-        # nights with blackout
-        self.bonights = jsondata["bonights"]
-
-        # do we know who is the second match to someone
-        # besides normalo2023, yes
-        if "dm" in jsondata:
-            self.dm = jsondata["dm"]
-        else:
-            self.dm = None
-            print("dm is not known")
-
-        if "tm" in jsondata:
-            print("We have a tripple match")
-            self.tm = jsondata["tm"]
-        else:
-            self.tm = None
-
-        # do we know which two share the same match
-        # besides vip2023, no
-        if "dmtuple" in jsondata:
-            dm1, dm2 = jsondata["dmtuple"]
-            if not (dm1 in self.rights and dm2 in self.rights):
-                raise ValueError(
-                    f"{dm1} or {dm2} may be misspelled for dmtuple")
-            self.dmtuple = (dm1, dm2)
-        else:
-            self.dmtuple = None
-
-        # added to do some funny analyzing
-        if "cancelled" in jsondata:
-            self.cancellednight = jsondata["cancelled"]
             self.numepisodes = len(self.nights) + 1
             self.knownnights = []
             for i in range(self.numepisodes):
-                if i < self.cancellednight:
+                if i < cancellednight:
                     self.knownnights.append(i)
                 else:
                     self.knownnights.append(i-1)
-        else:
-            self.cancellednight = -1
-            self.numepisodes = len(self.nights)
-            self.knownnights = [i for i in range(self.numepisodes)]
 
-        read_boxesepisode()
+        self.knownboxes = [0 for _ in range(self.numepisodes)]
+        for i, e in enumerate(boxesepisodes):
+            self.knownboxes[e] = i
+        for i in range(1, len(self.knownboxes)):
+            if self.knownboxes[i] == 0:
+                self.knownboxes[i] = self.knownboxes[i - 1]
 
         # known perfect matches
         self.knownpm = [p for p in self.matchboxes.keys()
                         if self.matchboxes[p]]
         # people who have known perfect match
         self.haspm = [e for p in self.knownpm for e in p]
-
-        if "solution" in jsondata:
-            self.solution = {(l, r) for l, r in jsondata["solution"]}
-            # print(self.solution)
-
-    def write_nights_excel(self) -> None:
-        dflist = []
-
-        for pairs, lights in self.nights:
-            ndict = {}
-            for l, r in pairs:
-                ndict[l] = r
-            ndict["lights"] = lights
-            dflist.append(ndict)
-
-        df = pd.DataFrame(dflist)
-        if len(self.nights) == 0:
-            df = pd.DataFrame(columns=self.lefts + ["Lights"])
-
-        df.to_excel(f"data/{self.fn}.xlsx",
-                    sheet_name="Nights", merge_cells=False)
-
-        return
 
     def nights_up_to_episode(self, end: int) -> List[Tuple[List[Tuple[str, str]], int]]:
         if end >= self.numepisodes - 1:
@@ -769,27 +635,29 @@ if __name__ == "__main__":
                   "vip2021", "vip2022", "vip2023",
                   "normalo2024"]
 
-    for seasonfn in allseasons[7:]:
+    for seasonfn in allseasons[:1]:
         # with open(f"data/{seasonfn}.json", "r") as f:
         #     seasondata = json.loads(f.read())
 
         print(seasonfn)
-        season: AYTO = AYTO(seasonfn, nightsfromexcel=True,
-                            nummatches=12 if seasonfn == "normalo2024" else 11)
+        season: AYTO = utils.read_data(seasonfn)
+        # AYTO (seasonfn, nightsfromexcel=True,
+        #                    nummatches=12 if seasonfn == "normalo2024" else 11)
 
-        i = 4
+        i = 7
         # guesses = season.compute_guesses(i)
         # for g in guesses:
         #     _, gr = zip(*g)
         #     if len(g) == 8 and "Mela" not in gr:
         #         print(g)
 
-        gr = {('Paddy', 'Shelly'), ('Gerrit', 'Pia'), ('Sandro', 'Sina'), ('Eti', 'Maja'),
-              ('Ryan', 'Jana'), ('Sidar', 'Afra'), ('Paulo', 'Lisa-Marie'), ('Martin', 'Julia')}
-        gsols = season.generate_complete_guesses2(i, gr)
-        print(len(gsols))
+        # gr = {('Paddy', 'Shelly'), ('Gerrit', 'Pia'), ('Sandro', 'Sina'), ('Eti', 'Maja'),
+        #       ('Ryan', 'Jana'), ('Sidar', 'Afra'), ('Paulo', 'Lisa-Marie'), ('Martin', 'Julia')}
+        # gsols = season.generate_complete_guesses2(i, gr)
+        # print(len(gsols))
 
-        # sols1 = season.find_solutions(i, True)
+        sols1 = season.find_solutions(i, True)
+        print(len(sols1))
         # sols2 = season.find_solutions(i, False)
         # print("len(sols)", len(sols1), len(sols2))
 
