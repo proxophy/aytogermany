@@ -150,7 +150,12 @@ class AYTO:
         else:
             self.dm = None
             print("dm is not known")
-            # self.dm_rights = [r for r in self.rights if r not in self.haspm]
+
+        if "tm" in jsondata:
+            print("We have a tripple match")
+            self.tm = jsondata["tm"]
+        else:
+            self.tm = None
 
         # do we know which two share the same match
         # besides vip2023, no
@@ -456,35 +461,34 @@ class AYTO:
             return set(zip(clefts, ordering))
 
         if len(asm) > 0:
-            _, a_rights = zip(*asm)
-            a_rights = list(a_rights)
+            a_lefts, a_rights = zip(*asm)
+            a_lefts, a_rights = list(a_lefts), list(a_rights)
         else:
-            a_rights = []
+            a_lefts, a_rights = {}
 
-        asm_dict = {}
-        dm_in_asm = False
-        for l, r in asm:
-            if l not in asm_dict:
-                asm_dict[l] = [r]
-            else:
-                asm_dict[l].append(r)
-                dm_in_asm = True
+        # are the double matches in asm
+        dmpairs_in_asm = len(set(a_lefts)) != len(a_lefts)
 
-        modified_pos_matches = {}
-        for l in self.lefts:
-            if l not in asm_dict:
-                modified_pos_matches[l] = [r for r in self.rights
-                                           if r not in a_rights and
-                                           not self.no_match(l, r, end)]
-        # for l in modified_pos_matches:
-        #     print(l, modified_pos_matches[l])
+        # is double/tripple match right in asm
+        dm_in_asm = self.dm is not None and self.dm in a_rights
+        tm_in_asm = self.tm is not None and self.dm in a_rights
+        print(tm_in_asm)
 
-        products = [list(ps) for ps in itertools.product(*modified_pos_matches.values())
+        # possible matches for the lefts not assigned
+        pos_matches = {l: [r for r in self.rights
+                           if r not in a_rights and
+                           not self.no_match(l, r, end)]
+                       for l in self.lefts if l not in a_lefts}
+
+        for l in pos_matches:
+            print(l, pos_matches[l])
+
+        products = [list(ps) for ps in itertools.product(*pos_matches.values())
                     if len(set(ps)) == len(ps)]
-        others_list = list(map(lambda p: zip_product(modified_pos_matches.keys(), p),
+        others_list = list(map(lambda p: zip_product(pos_matches.keys(), p),
                                products))
-        
-        if dm_in_asm:
+        print("len(products)", len(products))
+        if dmpairs_in_asm:
             # print("DM IN ASM")
             return [asm.union(set(othermatches)) for othermatches in others_list]
 
@@ -499,26 +503,44 @@ class AYTO:
             _, crights = zip(*tenmatches)
             missingright = [r for r in self.rights if r not in crights][0]
 
-            if self.dmtuple is not None:
+            if self.tm is not None:
+                missingrights = [r for r in self.rights if r not in crights]
+                mr1, mr2 = missingrights
+                if self.tm in missingrights:
+                    for l in self.lefts:
+                        addmatches = [(l, mr1), (l, mr2)]
+                        # if all([not self.no_match(*p,end) for p in addmatches]):
+                        solutions.append(tenmatches.union(addmatches))
+                        # else:
+                        #     print("no match")
+                    print("if", len(solutions))
+                else:
+                    dmleft = [l for (l, r) in tenmatches if r == self.tm][0]
+                    addmatches = [(dmleft, mr1), (dmleft, mr2)]
+                    # if all([not self.no_match(*p,end) for p in addmatches]):
+                    solutions.append(tenmatches.union(addmatches))
+                    # else:
+                    #     print("no match")
+                    print("else", len(solutions))
+            elif self.dmtuple is not None:
                 # VIP 2023
                 if missingright not in self.dmtuple:
                     continue
 
                 dmleft = [l for (l, r) in tenmatches if r in self.dmtuple][0]
-                solutions.append(tenmatches.union(
-                    [(dmleft, missingright)]))
+                solutions.append(tenmatches.union([(dmleft, missingright)]))
             elif self.dm is not None:
                 # Most other seasons
                 if missingright == self.dm:
                     solutions += [tenmatches.union([(l, self.dm)])
-                                    for l in self.lefts
-                                    if not self.no_match(l, self.dm, end)]
+                                  for l in self.lefts
+                                  if not self.no_match(l, self.dm, end)]
 
                 else:
                     dmleft = [
                         l for (l, r) in tenmatches if r == self.dm][0]
-                    
-                    if self.no_match(dmleft,missingright,end):
+
+                    if self.no_match(dmleft, missingright, end):
                         continue
                     solutions.append(tenmatches.union(
                         [(dmleft, missingright)]))
@@ -527,11 +549,17 @@ class AYTO:
                 solutions += [tenmatches.union([ap])
                               for ap in addmatches_dict[missingright]]
                 pass
-
+        print(len(solutions))
         solutions2 = []
         for sol in solutions:
             if sol not in solutions2:
                 solutions2.append(sol)
+
+            if len(sol) != self.nummatches:
+                raise ValueError
+            ls, rs = zip(*sol)
+            if 2 in Counter(ls).values():
+                raise ValueError
         return solutions2
 
     def find_solutions_slow(self, end: int) -> List[Set[Tuple[str, str]]]:
@@ -741,7 +769,7 @@ if __name__ == "__main__":
                   "vip2021", "vip2022", "vip2023",
                   "normalo2024"]
 
-    for seasonfn in allseasons[4:7]:
+    for seasonfn in allseasons[7:]:
         # with open(f"data/{seasonfn}.json", "r") as f:
         #     seasondata = json.loads(f.read())
 
@@ -749,25 +777,17 @@ if __name__ == "__main__":
         season: AYTO = AYTO(seasonfn, nightsfromexcel=True,
                             nummatches=12 if seasonfn == "normalo2024" else 11)
 
-        i = 5
-        guesses = season.compute_guesses(i)
-        for guess in guesses:
-            lg, rg = zip(*guess)
-            if not season.dm in rg:
-                gsols = season.generate_complete_guesses(i, guess)
-                gsols2 = season.generate_complete_guesses2(i, guess)
-                if len(gsols) != len(gsols2):
-                    print("not equal")
+        i = 4
+        # guesses = season.compute_guesses(i)
+        # for g in guesses:
+        #     _, gr = zip(*g)
+        #     if len(g) == 8 and "Mela" not in gr:
+        #         print(g)
 
-        # gr = {('Paulo', 'Tais'), ('Kevin', 'Sina'), ('Martin', 'Lisa-Marie'), 
-        #       ('Wilson', 'Maja'), ('Ryan', 'Jana'), ('Paddy', 'Julia'), ('Sidar', 'Afra')}
-
-        # gsols = season.generate_complete_guesses(i, gr)
-        # gsols2 = season.generate_complete_guesses2(i, gr)
-        # print(len(gsols),len(gsols2))
-        # gsols = list(filter(lambda guess: season.guess_possible(guess,i), gsols))
-        # gsols2 = list(filter(lambda guess: season.guess_possible(guess,i), gsols2))
-        # print(len(gsols),len(gsols2))
+        gr = {('Paddy', 'Shelly'), ('Gerrit', 'Pia'), ('Sandro', 'Sina'), ('Eti', 'Maja'),
+              ('Ryan', 'Jana'), ('Sidar', 'Afra'), ('Paulo', 'Lisa-Marie'), ('Martin', 'Julia')}
+        gsols = season.generate_complete_guesses2(i, gr)
+        print(len(gsols))
 
         # sols1 = season.find_solutions(i, True)
         # sols2 = season.find_solutions(i, False)
