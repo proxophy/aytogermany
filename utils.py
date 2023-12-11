@@ -76,6 +76,8 @@ def read_data(fn: str) -> AYTO:
         elif l in rights and r in lefts:
             matchboxes[(r, l)] = result
         else:
+            print(l,r)
+            print(jsondata["matchboxes"])
             raise AssertionError(f"{l} or {r} is not a valid name")
 
     # nights with blackout
@@ -98,7 +100,7 @@ def read_data(fn: str) -> AYTO:
 
     # mapping from matchboxes to episode
     boxesepisodes = jsondata.get("boxesepisode", list(range(10)))
-    assert len(boxesepisodes) == len(matchboxes)
+    assert len(boxesepisodes) == len(matchboxes), f"{len(boxesepisodes),len(matchboxes)}"
 
     # solution
     solution = {(l, r) for l, r in jsondata.get("solution", [])}
@@ -110,4 +112,59 @@ def read_data(fn: str) -> AYTO:
                 cancellednight=cancellednight,
                 boxesepisodes=boxesepisodes,
                 solution=solution)
+
+
+def analysize_solutions(season: AYTO, fn: str, end: int) -> None:
+    with open(fn, "r") as f:
+        content = f.readlines()
+
+    print(f"i: {end} \n")
+
+    mbs = season.get_matchboxes(end)
+    # print(season.matchboxes_up_to_episode(i+1))
+
+    sols = [eval(line) for line in content]
+    nsols = list(filter(lambda sn: season.guess_possible(sn, end), sols))
+
+    print(f"after half: {len(sols)}, after night {end}: {len(nsols)} \n")
+    sols = nsols
+
+    pdict = {}
+    for s in sols:
+        for p in s:
+            if p in pdict:
+                pdict[p] += 1
+            else:
+                pdict[p] = 1
+    pdict = {p: v for (p, v) in sorted(
+        pdict.items(), key=lambda x: x[1], reverse=True)}
+
+    def givescore(s1):
+        return sum([pdict[p] for p in s1])
+
+    mostlikely = list(pdict.items())[:season.nummatches]
+
+    print(f"{mostlikely}\n")
+
+    allpairs = [(l, r) for l in season.lefts for r in season.rights]
+    impairs = [p for p in allpairs if p not in pdict and p not in mbs]
+    pms = [p for p in allpairs if p in pdict and pdict[p] == len(sols)]
+    newpms = [p for p in allpairs if p in pdict and pdict[p]
+              == len(sols) and p not in mbs]
+    print(f"New pms: {len(newpms)} ({len(pms)}) {newpms}")
+    print(f"{len(impairs)}\n")
+
+    # p = ("Leon", "Estelle")
+    # if season.no_match(*p, i):
+    #     print(f"{p} is definitely no match\n")
+    # else:
+    #     if p in pdict:
+    #         pdict_keys = list(pdict.keys())
+    #         print(
+    #             f"{p}: {pdict[p]} poss., place {pdict_keys.index(p)} from {len(pdict_keys)}\n")
+    #     else:
+    #         print(f"{p} is not a match according to left possible solutions\n")
+
+    return
+
 
