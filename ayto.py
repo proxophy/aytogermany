@@ -390,12 +390,9 @@ class AYTO:
         else:
             a_lefts, a_rights = {}, {}
 
-        # are the double matches in asm
-        dmpairs_in_asm = len(set(a_lefts)) != len(a_lefts)
-
         # is double/tripple match right in asm
         dm_in_asm = self.dm is not None and self.dm in a_rights
-        tm_in_asm = self.tm is not None and self.tm in a_rights
+        not_tm_in_asm = self.tm is not None and self.tm not in a_rights
         dmt = self.dmtuple is not None
         dmt_in_asm = dmt and (
             self.dmtuple[0] in a_rights or self.dmtuple[1] in a_rights)  # type: ignore
@@ -403,22 +400,48 @@ class AYTO:
         # possible matches for the lefts not assigned
         pos_matches = {l: [r for r in self.rights
                            if r not in a_rights and not self.no_match(l, r, end) and
-                           (tm_in_asm or r != self.tm) and
+                           (not (not_tm_in_asm) or r != self.tm) and
                            (not dm_in_asm or r != self.dm) and
-                           (not dmt_in_asm or (dmt and r not in self.dmtuple)) and # type: ignore
+                           (not dmt_in_asm or (dmt and r not in self.dmtuple)) and  # type: ignore
                            (dmt_in_asm or r != self.dm)]  # type: ignore
                        for l in self.lefts if l not in a_lefts}
 
-        for l in pos_matches:
-            print(l, pos_matches[l])
+        # for l in pos_matches:
+        #     print(l, pos_matches[l])
 
         products = [list(ps) for ps in itertools.product(*pos_matches.values())
                     if len(set(ps)) == len(ps)]
         others_list = list(map(lambda p: zip_product(pos_matches.keys(), p),
                                products))
-        # print("len(products)", len(products))
-        if dmpairs_in_asm:
-            # print("DM IN ASM")
+
+        # are the double/tripple matches in asm
+        if self.tm is not None and len(a_lefts) - len(set(a_lefts)) == 2:
+            if self.tm not in a_rights:
+                print("tm must be part of tripple match")
+                return []
+            print("TM IN ASM")
+            return [asm.union(set(othermatches)) for othermatches in others_list]
+
+        elif self.tm is not None and len(a_lefts) - len(set(a_lefts)) == 1:
+            print("DM OF TM IN ASM")
+            counter = Counter(a_lefts)
+            tmleft = [l for l in self.lefts if counter[l] == 2][0]
+
+            solutions = []
+            for othermatches in others_list:
+                elevenmatches = asm.union(othermatches)
+                _, crights = zip(*elevenmatches)
+                missingright = [r for r in self.rights if r not in crights][0]
+                # if we still have to add Mela: skip when we want somebody else
+                if not_tm_in_asm and missingright != self.tm or self.no_match(tmleft, missingright, end):
+                    print("continue")
+                    continue
+                solutions.append(elevenmatches.union([(tmleft, missingright)]))
+
+            return solutions
+
+        elif self.tm is None and len(a_lefts) - len(set(a_lefts)) == 1:
+            print("DM IN ASM")
             return [asm.union(set(othermatches)) for othermatches in others_list]
 
         solutions = []
@@ -426,9 +449,10 @@ class AYTO:
         addmatches_dict = {r: [(l, r) for l in self.lefts if not self.no_match(l, r, end)]
                            for r in self.rights}
 
-        # if self.dm is not None:
         for othermatches in others_list:
             tenmatches = asm.union(othermatches)
+            assert len(tenmatches) == 10
+
             _, crights = zip(*tenmatches)
             missingright = [r for r in self.rights if r not in crights][0]
 
@@ -436,11 +460,14 @@ class AYTO:
                 missingrights = [r for r in self.rights if r not in crights]
                 mr1, mr2 = missingrights
                 if self.tm in missingrights:
+                    # no multiple seatings, Mela not seated
+                    # print("true")
                     for l in self.lefts:
                         addmatches = [(l, mr1), (l, mr2)]
                         if all([not self.no_match(*p, end) for p in addmatches]):
                             solutions.append(tenmatches.union(addmatches))
                 else:
+                    # no mutiple seatings, Mela seated
                     dmleft = [l for (l, r) in tenmatches if r == self.tm][0]
                     addmatches = [(dmleft, mr1), (dmleft, mr2)]
                     if all([not self.no_match(*p, end) for p in addmatches]):
@@ -480,6 +507,7 @@ class AYTO:
             if sol not in solutions2:
                 solutions2.append(sol)
             else:
+                # print(sol-asm)
                 duplicates += 1
 
             if len(sol) != self.nummatches:
@@ -487,10 +515,10 @@ class AYTO:
             ls, rs = zip(*sol)
             if 2 in Counter(rs).values():
                 raise ValueError
-            
+
         # print(duplicates)
-        if duplicates > 0:
-            print("duplicates", duplicates)
+        # if duplicates > 0:
+        #     print("duplicates", duplicates)
 
         return solutions2
 
@@ -510,7 +538,7 @@ class AYTO:
 
             guesses_per_night.append(combs)
 
-        merged_guesses = functools.reduce(lambda g1, a2: merge_guesses_lists(self,g1, a2),
+        merged_guesses = functools.reduce(lambda g1, a2: merge_guesses_lists(self, g1, a2),
                                           guesses_per_night)
 
         merged_guesses = list(filter(lambda a: self.guess_possible(a, end),
@@ -531,6 +559,7 @@ def find_solutions_slow(season: AYTO, end: int) -> List[Set[Tuple[str, str]]]:
 
     return solutions
 
+
 def merge_guesses_lists(season, gsl_1: List[Set], gsl_2: List[Set]):
     '''
     Input: season, two list of assumptions (set of pairs)
@@ -549,30 +578,32 @@ def merge_guesses_lists(season, gsl_1: List[Set], gsl_2: List[Set]):
 
     return m_asm
 
-def find_solutions(season : AYTO, end: int = 9, old: bool =True) -> List[Set[Tuple[str, str]]]:
+
+def find_solutions(season: AYTO, end: int = 9, old: bool = True) -> List[Set[Tuple[str, str]]]:
     merged_guesses = season.compute_guesses(end)
 
     solutions = []
-    duplicates = 0
+    x = 0
     for a in merged_guesses:
         if old:
             sols_a = season.generate_solutions(end, a)
         else:
             sols_a = season.generate_solutions2(end, a)
 
-        # avoiding duplicate solutions
-        for s in sols_a:
-            if s not in solutions:
-                solutions.append(s)
-            else:
-                duplicates += 1
-    print(
-        f"Number of generated solutions: {len(solutions)}; Duplicates: {duplicates}")
+        solutions += sols_a
+        x += 1
+        if x % 20 == 0:
+            print(x)
 
+    print("Generation done", len(solutions))
+
+    solutions = list(k for k, _ in itertools.groupby(solutions))
+    print(f"Number of generated solutions: {len(solutions)}")
     solutions = list(filter(lambda s: season.guess_possible(s, end),
                             solutions))
 
     return solutions
+
 
 if __name__ == "__main__":
     allseasons = ["normalo2020", "normalo2021", "normalo2022", "normalo2023",
@@ -588,33 +619,40 @@ if __name__ == "__main__":
 
         i = 4
         guesses = season.compute_guesses(i)
+        print(len(guesses))
 
-        start = time.time()
-        
-        # for g in guesses:
-        #     if len(g) == 8:
-        #        print(g)
-        # print(time.time()-start)
+        # TODO: adjust generate guesses for triple m
 
-
-        # with Mela
+        # with Mela and without DM: OK
         gr1 = {('Martin', 'Lina'), ('Kevin', 'Mela'), ('Paddy', 'Maja'), ('Gerrit', 'Pia'),
                ('Ryan', 'Jana'),  ('Sandro', 'Sina'), ('Sidar', 'Afra'), ('Paulo', 'Lisa-Marie')}
-        # without Mela, old: 54/66, new: 54/60
+        # without Mela and without DM: still has duplicates
         gr2 = {('Paddy', 'Shelly'), ('Gerrit', 'Pia'), ('Sandro', 'Sina'), ('Eti', 'Maja'),
                ('Ryan', 'Jana'), ('Sidar', 'Afra'), ('Paulo', 'Lisa-Marie'), ('Martin', 'Julia')}
+        # double PM without Mela: OK
+        gr3 = {('Paddy', 'Shelly'), ('Gerrit', 'Pia'), ('Sandro', 'Sina'), ('Eti', 'Maja'),
+               ('Ryan', 'Jana'), ('Sidar', 'Afra'), ('Paddy', 'Lina'), ('Martin', 'Julia')}
+        # tripple match, with Mela: OK
+        gr4 = {('Paddy', 'Shelly'), ('Gerrit', 'Pia'), ('Paddy', 'Sina'), ('Eti', 'Maja'),
+               ('Ryan', 'Jana'), ('Sidar', 'Afra'), ('Paddy', 'Mela'), ('Martin', 'Julia')}
+        # double PM with Mela: OK
+        gr5 = {('Paddy', 'Shelly'), ('Gerrit', 'Pia'), ('Sandro', 'Sina'), ('Eti', 'Maja'),
+               ('Ryan', 'Jana'), ('Sidar', 'Afra'), ('Paddy', 'Mela'), ('Martin', 'Julia')}
 
         gr = gr2
 
         gsols = season.generate_solutions2(i, gr)
         print("len(gsols)", len(gsols))
+        print(len(gsols[0]))
 
         # sols1 = find_solutions_slow(season,i)
         # sols1 = find_solutions(season,i, True)
-        # sols2 = find_solutions(season,i, False)
+        # start = time.time()
+        # sols2 = find_solutions(season, i, False)
+        # print("len(sols)", len(sols2))
+        # print(time.time()-start, "s")
         # print("len(sols)", len(sols1), len(sols2))
-        
+
         # print(len(sols2))
         # with open("normalo20242.txt","w") as f:
         #     f.write(str(sols1))
-
