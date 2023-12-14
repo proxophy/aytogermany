@@ -54,6 +54,27 @@
                 "Mela"
             ],
             false
+        ],
+        [
+            [
+                "Wilson",
+                "Shelly"
+            ],
+            true
+        ],
+        [
+            [
+                "Gerrit",
+                "Tais"
+            ],
+            true
+        ],
+        [
+            [
+                "Gerrit",
+                "Mela"
+            ],
+            true
         ]
     ],
     "bonights": [],
@@ -61,6 +82,9 @@
         0,
         1,
         1,
-        2
+        2,
+        3,
+        3,
+        3
     ]
 }
