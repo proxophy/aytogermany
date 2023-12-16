@@ -3,6 +3,7 @@ from collections import Counter
 import itertools
 import functools
 import time
+import pandas as pd
 import utils
 
 
@@ -19,7 +20,6 @@ class AYTO:
     dmtuple: Optional[Tuple[str, str]]
     tm: Optional[str]
 
-    # cancellednight: int
     numepisodes: int
     knownnights: List[int]
     knownboxes: List[int]
@@ -97,7 +97,7 @@ class AYTO:
             return self.bonights
         return [bo for bo in self.bonights if bo <= self.knownnights[end]]
 
-    def get_knowpms(self, end: int) -> List[Tuple[str, str]]:
+    def get_pms(self, end: int) -> List[Tuple[str, str]]:
         mb = self.get_matchboxes(end)
         return list(set(mb.keys()) & set(self.knownpms))
 
@@ -108,23 +108,23 @@ class AYTO:
         nights = self.get_nights(end)
         mb = self.get_matchboxes(end)
         bon = self.get_bonights(end)
-        kpm = self.get_knowpms(end)
+        kpm = self.get_pms(end)
         hpm = [e for p in kpm for e in p]
 
         # pair in blackout night who is not known perfect match
         if any([(l, r) in nights[bo][0] and (l, r) not in kpm for bo in bon]):
             return True
-        
+
         # matchbox result was false
         if (l, r) in mb.keys() and not mb[(l, r)]:
             return True
-        
+
         # one is part of known perfect match
         # consider multiple seated lefts
         if (l, r) not in kpm and ((l in hpm) or (r in hpm)):
             mmls = [p for p in hpm if Counter(hpm)[p] > 1]
             if self.tm is not None and l in mmls and r not in hpm:
-                 # we only know two out of three of the multiple matches in Normalo 2024 at night 3
+                # we only know two out of three of the multiple matches in Normalo 2024 at episode 8
                 return False
             return True
 
@@ -163,51 +163,71 @@ class AYTO:
         return True
 
     def guess_possible(self, guess: Set[Tuple[str, str]], end) -> bool:
-        assert len(guess) <= self.nummatches, \
-            f"The guess has {len(guess)} instead of {self.nummatches}"
+        if len(guess) > self.nummatches:
+            return False
+        # assert len(guess) <= self.nummatches, \
+        #     f"The guess has {len(guess)} instead of {self.nummatches}"
 
         if not self.guess_correct_format(guess):
-            # print("Solution not correct format")
+            print("Solution not correct format")
             # print(guess)
             return False
 
         complete: bool = len(guess) == self.nummatches
-
-        nights = self.get_nights(end)
-        kpm = self.get_knowpms(end)
+        
+        kpm = self.get_pms(end)
 
         # no known no matches
         if any([self.no_match(*p, end) for p in guess]):
             ba: List = [self.no_match(*p, end) for p in guess]
             trueindex = ba.index(True)
-            print(f"guess has known no match: {list(guess)[trueindex]}")
+            # print(f"guess has known no match: {list(guess)[trueindex]}")
             return False
 
         # perfect matches of dmtuple must be the same person
         elif self.dmtuple is not None:
             dml = [l for (l, r) in guess if r in self.dmtuple]
             if len(dml) > 1 and dml[0] != dml[1]:
-                print(f"dmtuple does not have same pm {len(guess)}")
+                print(f"dmtuple rights do not have same pm {len(guess)}")
+                return False
+            
+        # check condition for double matches 
+        pdict = {l: [] for l in self.lefts}
+        for (l, r) in guess:
+            pdict[l].append(r)
+        g_lefts, g_rights = zip(*guess)
+
+        # lefts with multiple matches
+        mutiplels = [l for l in self.lefts if len(pdict[l]) > 1]
+        if len(mutiplels) > 1:
+            print("Only one double/tripple match")
+            return False
+        elif len(mutiplels) == 1:
+            mutiplel = mutiplels[0]
+            if self.tm in g_rights and self.tm not in pdict[mutiplel]:
+                return False
+            elif self.dmtuple is not None and len(pdict[mutiplel]) == 2 and set(self.dmtuple) != set(pdict[mutiplel]):
+                return False
+            elif self.dm is not None and len(pdict[mutiplel]) == 2 and self.dm not in pdict[mutiplel]:
                 return False
 
+
+        # if guess has nummatches matches
         if complete:
-            # if guess has self.nummatches matches, we must have all perfect matches
+            # we must have all perfect matches
             if not all([pm in guess for pm in kpm]):
-                print("complete and not all perfect matches")
+                print("complete and not all perfect matches in guess")
                 return False
-
+            
+            # we must have 10 seated lefts and nummatches rights
             g_lefts, g_rights = zip(*guess)
-            if not (len(set(g_lefts)) == 10 and len(set(g_rights)) == self.nummatches):
+            if len(set(g_lefts)) != 10 or len(set(g_rights)) != self.nummatches:
                 return False
-
-            pdict = {l: 0 for l in self.lefts}
-            for (l, r) in guess:
-                pdict[l] += 1
-            if not (set(pdict.values()) == {1, 3} or set(pdict.values()) == {1, 2}):
-                return False
+            
 
         # number of lights with pairs matching lights in nights
         # if we don't have self.nummatches pairs, we allow lesser lights
+        nights = self.get_nights(end)
         for pairs, lights in nights:
             intersection = set(pairs) & guess
             clights = len(intersection)
@@ -221,7 +241,10 @@ class AYTO:
         return True
 
     def mergeable_guesses_loop(self, g1: Set, g2: Set) -> bool:
-        '''misses some cases'''
+        # misses some cases if dm is unknown
+        if g1.issubset(g2) or g2.issubset(g1):
+            return True
+
         dmc = False
         dml = None
 
@@ -260,6 +283,9 @@ class AYTO:
         return True
 
     def mergeable_guesses(self, g1: Set, g2: Set) -> bool:
+        if g1.issubset(g2) or g2.issubset(g1):
+            return True
+
         g_union = g1.union(g2)
 
         # condition 1: must be no more than 11 pairs
@@ -308,6 +334,28 @@ class AYTO:
             return False
 
         return True
+
+    def merge_guesses_lists(self, gsl_1: List[Set], gsl_2: List[Set],end):
+        '''
+        Input: season, two list of assumptions (set of pairs)
+        Output: List of merged together assumptions 
+        '''
+
+        m_asm = []
+        for g1, g2 in itertools.product(gsl_1, gsl_2):
+            # self.mergeable_guesses_loop misses some cases when DM is not known or with TM, but is faster
+            if self.dm is None or self.tm is not None:
+                pred = self.mergeable_guesses(g1, g2)
+            else:
+                pred = self.mergeable_guesses_loop(g1, g2)
+
+            if self.guess_possible(g1.union(g2),end) != pred:
+                print("this case")
+
+            if pred and g1.union(g2) not in m_asm:
+                m_asm.append(g1.union(g2))
+
+        return m_asm
 
     def generate_solutions(self, end: int, asm: Set[Tuple[str, str]] = set()) -> List[Set[Tuple[str, str]]]:
         '''Generating solutions'''
@@ -468,14 +516,14 @@ class AYTO:
             # print("DM OF TM IN ASM")
             counter = Counter(a_lefts)
             tmleft = [l for l in self.lefts if counter[l] == 2][0]
-
+            # print(tmleft)
             solutions = []
             for othermatches in others_list:
                 elevenmatches = asm.union(othermatches)
                 _, crights = zip(*elevenmatches)
                 missingright = [r for r in self.rights if r not in crights][0]
                 # print(missingright)
-                # if we still have to add Mela: skip when we want somebody else
+                # if we still have to add Mela: skip when somebody else is missing
                 if not_tm_in_asm and missingright != self.tm:
                     print("not_tm_in_asm and missingright != self.tm")
                     continue
@@ -506,13 +554,14 @@ class AYTO:
                 mr1, mr2 = missingrights
                 if self.tm in missingrights:
                     # no multiple seatings, Mela not seated
-                    # print("true")
+                    # print("Mela not seated")
                     for l in self.lefts:
                         addmatches = [(l, mr1), (l, mr2)]
                         if all([not self.no_match(*p, end) for p in addmatches]):
                             solutions.append(tenmatches.union(addmatches))
                 else:
                     # no mutiple seatings, Mela seated
+                    # print("Mela seated")
                     dmleft = [l for (l, r) in tenmatches if r == self.tm][0]
                     addmatches = [(dmleft, mr1), (dmleft, mr2)]
                     if all([not self.no_match(*p, end) for p in addmatches]):
@@ -551,9 +600,6 @@ class AYTO:
         for sol in solutions:
             if sol not in solutions2:
                 solutions2.append(sol)
-            else:
-                # print(sol-asm)
-                duplicates += 1
 
             if len(sol) != self.nummatches:
                 raise ValueError
@@ -561,15 +607,11 @@ class AYTO:
             if 2 in Counter(rs).values():
                 raise ValueError
 
-        # print(duplicates)
-        # if duplicates > 0:
-        #     print("duplicates", duplicates)
-
         return solutions2
 
     def compute_guesses(self, end: int) -> List[Set[Tuple[str, str]]]:
         nights = self.get_nights(end)
-        kpm = self.get_knowpms(end)
+        kpm = self.get_pms(end)
 
         guesses_per_night = []
         for pairs, lights in nights:
@@ -583,7 +625,7 @@ class AYTO:
 
             guesses_per_night.append(combs)
 
-        merged_guesses = functools.reduce(lambda g1, a2: merge_guesses_lists(self, g1, a2),
+        merged_guesses = functools.reduce(lambda g1, g2: self.merge_guesses_lists(g1, g2,end),
                                           guesses_per_night)
 
         merged_guesses = list(filter(lambda a: self.guess_possible(a, end),
@@ -605,27 +647,7 @@ def find_solutions_slow(season: AYTO, end: int) -> List[Set[Tuple[str, str]]]:
     return solutions
 
 
-def merge_guesses_lists(season, gsl_1: List[Set], gsl_2: List[Set]):
-    '''
-    Input: season, two list of assumptions (set of pairs)
-    Output: List of merged together assumptions 
-    '''
-
-    m_asm = []
-    for g1, g2 in itertools.product(gsl_1, gsl_2):
-        # self.mergeable_guesses_loop misses some cases when DM is not known or with TM, but is faster
-        if season.dm is None or season.tm is not None:
-            pred = season.mergeable_guesses(g1, g2)
-        else:
-            pred = season.mergeable_guesses_loop(g1, g2)
-
-        if pred and g1.union(g2) not in m_asm:
-            m_asm.append(g1.union(g2))
-
-    return m_asm
-
-
-def find_solutions(season: AYTO, end: int = 9, old: bool = True) -> List[Set[Tuple[str, str]]]:
+def find_solutions(season: AYTO, end: int = 9, old: bool = False) -> List[Set[Tuple[str, str]]]:
     merged_guesses = season.compute_guesses(end)
 
     solutions = []
@@ -649,11 +671,8 @@ def find_solutions(season: AYTO, end: int = 9, old: bool = True) -> List[Set[Tup
 
 
 def analysize_solutions(season: AYTO, end: int, old: bool) -> None:
-    print(f"i: {end} \n")
-
     mbs = season.get_matchboxes(end)
     sols = find_solutions(season, end, old)
-    print(f"len(sols): {len(sols)}")
 
     pdict = {}
     for s in sols:
@@ -664,19 +683,24 @@ def analysize_solutions(season: AYTO, end: int, old: bool) -> None:
                 pdict[p] = 1
 
     pitems = sorted(pdict.items(), key=lambda x: x[1], reverse=True)
-    mostlikely = pitems[:season.nummatches]
-
-    print(f"{mostlikely}\n")
 
     allpairs = [(l, r) for l in season.lefts for r in season.rights]
-    impairs = [p for p in allpairs if p not in pdict and p not in mbs 
-               and not season.no_match(*p,end)]
-    pms = [p for p in allpairs if p in pdict and pdict[p] == len(sols)]
-    newpms = [p for p in allpairs if p in pdict and pdict[p]
-              == len(sols) and p not in mbs]
+    impairs = [p for p in allpairs if p not in pdict and p not in mbs
+               and not season.no_match(*p, end)]
+    pms = [p for p in pdict if pdict[p] == len(sols)]
+    newpms = [p for p in allpairs if p in pms and p not in mbs]
+    data = {l: pd.Series([round(pdict.get((l, r), 0)/len(sols)*100,1) for r in season.rights],
+                         index=season.rights) for l in season.lefts}
+    df = pd.DataFrame(data)
 
-    print(f"New pms: {len(newpms)} ({len(pms)}) {newpms}")
-    print(f"Impossible pairs: {len(impairs)} {impairs}\n")
+    print(f"Nach {end+1} Doppelfolgen")
+    print(f"Anzahl Möglichkeiten: {len(sols)}")
+    print(f"Bekannte Perfect Matches: {pms}")
+    if len(newpms) > 0:
+        print(f"Neue Perfect Matches: {newpms}")
+    if len(impairs) > 0:
+        print(f"Neue No-Matches: {len(impairs)}\n")
+    print(df)
 
     return
 
@@ -686,19 +710,24 @@ if __name__ == "__main__":
                   "vip2021", "vip2022", "vip2023",
                   "normalo2024"]
 
-    for seasonfn in allseasons[7:]:
+    for seasonfn in allseasons[0:1]:
         # with open(f"data/{seasonfn}.json", "r") as f:
         #     seasondata = json.loads(f.read())
 
         print(seasonfn)
         season: AYTO = utils.read_data(seasonfn)
 
-        i = 4
+        end = 6
         start = time.time()
+    
+        # sanity check for all past seasons
+        sols = find_solutions(season,end)
 
-        analysize_solutions(season, i, False)
-        # guesses = season.compute_guesses(i)
-        # solutions = find_solutions(season, i, False)
-        # print(len(guesses))
+        # with open(f"analytics/{seasonfn}_half.txt","r") as f:
+        #     sols2 = [eval(l) for l in f.readlines()]
+        #     sols2 = [s for s in sols2 if season.guess_possible(s,end)]
+        # print(len(sols),len(sols2))        
 
+        # analysize_solutions(season, end, False)
         print(time.time()-start, "s")
+        print()
