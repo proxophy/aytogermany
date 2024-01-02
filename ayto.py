@@ -52,13 +52,12 @@ class AYTO:
         self.tm = tm
 
         self.solution = solution
-
         # added for analyzing
         if cancellednight == -1:
-            self.numepisodes = len(self.nights)
+            self.numepisodes = max(max(boxesepisodes)+1, len(self.nights))
             self.knownnights = [i for i in range(self.numepisodes)]
         else:
-            self.numepisodes = len(self.nights) + 1
+            self.numepisodes = max(max(boxesepisodes)+1, len(self.nights)+1)
             self.knownnights = []
             for i in range(self.numepisodes):
                 if i < cancellednight:
@@ -123,7 +122,8 @@ class AYTO:
         # consider multiple seated lefts
         if (l, r) not in kpm and ((l in hpm) or (r in hpm)):
             mmls = [p for p in hpm if Counter(hpm)[p] > 1]
-            if self.tm is not None and l in mmls and r not in hpm:
+            if self.tm is not None and len(mmls) < 3 \
+                    and l in mmls and r not in hpm:
                 # we only know two out of three of the multiple matches in Normalo 2024 at episode 8
                 return False
             return True
@@ -247,7 +247,6 @@ class AYTO:
                     return False
 
         return True
-
 
     def merge_guesses_lists(self, gsl_1: List[Set], gsl_2: List[Set], end: int):
         '''
@@ -413,7 +412,7 @@ class AYTO:
             defcorrect = list(filter(lambda p: p in kpm, pairs))
             remaining = set(pairs) - set(defcorrect) - set(notcorrect)
 
-            combs = [set(comb).union(set(defcorrect))
+            combs = [set(comb).union(kpm)
                      for comb in itertools.combinations(remaining, lights - len(defcorrect))]
 
             guesses_per_night.append(combs)
@@ -440,15 +439,13 @@ def find_solutions_slow(season: AYTO, end: int) -> List[Set[Tuple[str, str]]]:
     return solutions
 
 
-def find_solutions(season: AYTO, end: int) -> List[Set[Tuple[str, str]]]:
+def find_solutions(season: AYTO, end: int, asm: List = []) -> List[Set[Tuple[str, str]]]:
     merged_guesses = season.compute_guesses(end)
 
     solutions = []
     for g in merged_guesses:
         sols_g = season.generate_solutions(g, end)
         solutions += sols_g
-        if len(sols_g) == 0:
-            print("len(sols_g) == 0")
 
     print("Generation done", len(solutions))
     # remove duplicates
@@ -457,13 +454,17 @@ def find_solutions(season: AYTO, end: int) -> List[Set[Tuple[str, str]]]:
     print(f"Number of generated solutions: {len(solutions)}")
     solutions = list(filter(lambda s: season.guess_possible(s, end),
                             solutions))
+    if len(asm) > 0:
+        # keep solutions that have at least one pair of assumption
+        solutions = [sol for sol in solutions
+                     if any([p in sol for p in asm])]
 
     return solutions
 
 
-def analysize_solutions(season: AYTO, end: int) -> None:
+def analysize_solutions(season: AYTO, end: int, asm: List = []) -> None:
     mbs = season.get_matchboxes(end)
-    sols = find_solutions(season, end)
+    sols = find_solutions(season, end, asm)
 
     pdict = {}
     for s in sols:
@@ -482,16 +483,25 @@ def analysize_solutions(season: AYTO, end: int) -> None:
     newpms = [p for p in allpairs if p in pms and p not in mbs]
     data = {l: pd.Series([round(pdict.get((l, r), 0)/len(sols)*100, 1) for r in season.rights],
                          index=season.rights) for l in season.lefts}
+    # data = {l: pd.Series([pdict.get((l, r), 0) for r in season.rights],
+    #                      index=season.rights) for l in season.lefts}
     df = pd.DataFrame(data)
 
-    print(f"Nach {end+1} Doppelfolgen")
+    print(f"Nach {end+2} Doppelfolgen")
     print(f"Anzahl Möglichkeiten: {len(sols)}")
+    print(df)
     print(f"Bekannte Perfect Matches: {pms}")
     if len(newpms) > 0:
         print(f"Neue Perfect Matches: {newpms}")
     if len(impairs) > 0:
-        print(f"Neue No-Matches: {len(impairs)}\n")
-    print(df)
+        impdict = {l: [] for l in season.lefts}
+        for l, r in impairs:
+            impdict[l].append(r)
+        print("Neue No-Matches durch Ausschlussprinzip:")
+        for l in impdict:
+            if len(impdict[l]) == 0:
+                continue
+            print(f"{l}: {impdict[l]}")
 
     return
 
@@ -501,24 +511,26 @@ if __name__ == "__main__":
                   "vip2021", "vip2022", "vip2023",
                   "normalo2024"]
 
-    for seasonfn in allseasons[:7]:
-        # with open(f"data/{seasonfn}.json", "r") as f:
-        #     seasondata = json.loads(f.read())
-
+    for seasonfn in allseasons[7:]:
         print(seasonfn)
         season: AYTO = utils.read_data(seasonfn)
 
         end = 5
+        assumption = []
         start = time.time()
 
-        sols = find_solutions(season, end)
-        print(len(sols))
+        # sols = find_solutions(season, end, assumption)
+        # print(len(sols))
+
         # sanity check for all past seasons
         # with open(f"analytics/{seasonfn}_half.txt", "r") as f:
         #     sols2 = [eval(l) for l in f.readlines()]
         #     sols2 = [s for s in sols2 if season.guess_possible(s, end)]
         # print(len(sols), len(sols2))
 
-        # analysize_solutions(season, end, False)
+        analysize_solutions(season, end, assumption)
+        # 2: 51701 - 39087
+        # 3: 2456 - 2528
+
         print(time.time()-start, "s")
         print()
