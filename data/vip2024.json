@@ -1,0 +1,46 @@
+{
+    "men": [
+        "Alex",
+        "Antonino",
+        "Chris",
+        "Kaan",
+        "Lars",
+        "Lukas",
+        "Marc-Robin",
+        "Nikola",
+        "Ozan",
+        "Tim"
+    ],
+    "women": [
+        "Anastasia",
+        "Asena",
+        "Dana",
+        "Emmy",
+        "Gabriela",
+        "Jennifer",
+        "Laura L.",
+        "Laura M.",
+        "Linda",
+        "Nadja",
+        "Tara"
+    ],
+    "dm": "Dana",
+    "bonights": [],
+    "matchboxes": [
+        [
+            [
+                "Marc-Robin",
+                "Laura L."
+            ],
+            false
+        ],
+        [
+            [
+                "Chris",
+                "Emmy"
+            ],
+            true
+        ]
+    ],
+    "boxesepisode": [0,1]
+}
