@@ -2,6 +2,7 @@ import json
 import pandas as pd
 from typing import List, Tuple, Dict, Set, Union, Optional
 from ayto import AYTO
+from aytonormalo24 import AYTONormalo2024
 
 
 def check_nights(nights: List, lefts: List, rights: List) -> bool:
@@ -35,7 +36,7 @@ def check_nights(nights: List, lefts: List, rights: List) -> bool:
     return True
 
 
-def read_data(fn: str) -> AYTO:
+def read_data(fn: str):
     with open(f"data/{fn}.json", "r") as f:
         jsondata: Dict = json.loads(f.read())
 
@@ -76,7 +77,7 @@ def read_data(fn: str) -> AYTO:
         elif l in rights and r in lefts:
             matchboxes[(r, l)] = result
         else:
-            print(l,r)
+            print(l, r)
             print(jsondata["matchboxes"])
             raise AssertionError(f"{l} or {r} is not a valid name")
 
@@ -86,8 +87,7 @@ def read_data(fn: str) -> AYTO:
     # do we know who is the second/third match to someone
     # besides normalo2023, yes
     dm = jsondata.get("dm", None)
-    tm = jsondata.get("tm", None)
-    assert (dm is None or dm in rights) and (tm is None or tm in rights)
+    assert dm is None or dm in rights
     # do we know which two share the same match
     # besides vip2023, no
     dmtuple = jsondata.get("dmtuple", None)
@@ -100,20 +100,20 @@ def read_data(fn: str) -> AYTO:
 
     # mapping from matchboxes to episode
     boxesepisodes = jsondata.get("boxesepisode", list(range(10)))
-    assert len(boxesepisodes) == len(matchboxes), f"{len(boxesepisodes),len(matchboxes)}"
+    assert len(boxesepisodes) == len(
+        matchboxes), f"{len(boxesepisodes),len(matchboxes)}"
 
     # solution
     solution = {(l, r) for l, r in jsondata.get("solution", [])}
 
-    return AYTO(lefts=lefts, rights=rights,
-                nights=nights, matchboxes=matchboxes,
-                bonights=bonights,
-                dm=dm, dmtuple=dmtuple, tm=tm,
-                cancellednight=cancellednight,
-                boxesepisodes=boxesepisodes,
-                solution=solution)
+    return lefts, rights, nights, matchboxes, bonights, dm, dmtuple, cancellednight, boxesepisodes, solution
 
 
-
-
-
+def read_data_normalo2024(fn: str):
+    with open(f"data/{fn}.json", "r") as f:
+        jsondata: Dict = json.loads(f.read())
+    lefts, rights, nights, matchboxes, bonights, _, _, cancellednight, boxesepisodes, solution = read_data(
+        fn)
+    tm = jsondata.get("tm", None)
+    assert tm in rights
+    return lefts, rights, nights, tm, matchboxes, bonights, cancellednight, boxesepisodes, solution
