@@ -54,6 +54,7 @@ class AYTO:
 
         self.dm = dm
         self.dmtuple = dmtuple
+        self.dmtupleknown = 7
         # self.tm = tm
 
         self.solution = solution
@@ -175,7 +176,8 @@ class AYTO:
             return False
         # assert len(guess) <= self.nummatches, \
         #     f"The guess has {len(guess)} instead of {self.nummatches}"
-        checknights: bool = options.get("checknights", False)
+        checknights: bool = options.get("checknights", True)
+        end: int = options.get("end", self.numepisodes-1)
 
         if not self.guess_correct_format(guess):
             return False
@@ -193,7 +195,7 @@ class AYTO:
 
         # VIP 23
         # perfect matches of dmtuple must be the same person
-        elif self.dmtuple is not None:
+        elif (self.dmtuple is not None and end >= self.dmtupleknown):
             dml = [l for (l, r) in guess if r in self.dmtuple]
             if len(dml) > 1 and dml[0] != dml[1]:
                 # print(f"dmtuple rights do not have same pm {len(guess)}")
@@ -214,7 +216,8 @@ class AYTO:
             mutiplel = mutiplels[0]
             mutiplers = pdict[mutiplel]
 
-            if self.dmtuple is not None and len(mutiplers) == 2 and set(self.dmtuple) != set(mutiplers):
+            if (self.dmtuple is not None and end >= self.dmtupleknown) \
+                    and len(mutiplers) == 2 and set(self.dmtuple) != set(mutiplers):
                 return False
             elif self.dm is not None and len(mutiplers) == 2 and self.dm not in pdict[mutiplel]:
                 return False
@@ -255,8 +258,6 @@ class AYTO:
         Input: season, two list of guesses (set of pairs)
         Output: list of merged together guesses 
         '''
-        options.update({"checknights": False})
-
         m_asm = []
         for g1, g2 in itertools.product(gsl_1, gsl_2):
             pred = self.guess_possible(
@@ -267,6 +268,8 @@ class AYTO:
         return m_asm
 
     def possible_matches_for_guess(self, guess: set[tuple[str, str]], options: dict) -> dict[str, list[str]]:
+        end: int = options.get("end", self.numepisodes-1)
+
         if len(guess) > 0:
             g_lefts, g_rights = zip(*guess)
             g_lefts, g_rights = list(g_lefts), list(g_rights)
@@ -274,7 +277,7 @@ class AYTO:
             g_lefts, g_rights = {}, {}
 
         dm_in_asm = self.dm is not None and self.dm in g_rights
-        dmt_in_asm = self.dmtuple is not None and (
+        dmt_in_asm = self.dmtuple is not None and end >= self.dmtupleknown and (
             self.dmtuple[0] in g_rights or self.dmtuple[1] in g_rights)
 
         nights = self.get_nights(options)
@@ -288,7 +291,7 @@ class AYTO:
                            if r not in g_rights and not self.no_match(l, r,  options)
                            and (l, r) not in sitting_nomatches and
                            (not dm_in_asm or r != self.dm) and
-                           (not dmt_in_asm or (self.dmtuple is not None and r not in self.dmtuple)) and
+                           (not dmt_in_asm or (self.dmtuple is not None and end >= self.dmtupleknown and r not in self.dmtuple)) and
                            (dmt_in_asm or r != self.dm)]  # type: ignore
                        for l in self.lefts if l not in g_lefts}
         return pos_matches
@@ -306,8 +309,17 @@ class AYTO:
         return []
 
     def merge_solutions_mm_not_in_sol(self, guess: set[tuple[str, str]],  others_list: list[set[tuple[str, str]]], options: dict):
+        end: int = options.get("end", self.numepisodes-1)
+
+        nights = self.get_nights(options)
+        sitting_nomatches = []
+        # Consider sitting matches as no matches if not in guess
+        for pairs, _ in nights:
+            sitting_nomatches += set(pairs) - guess
+
         solutions = []
-        addmatches_dict = {r: [(l, r) for l in self.lefts if not self.no_match(l, r,  options)]
+        addmatches_dict = {r: [(l, r) for l in self.lefts
+                               if not (self.no_match(l, r, options) or (l, r) in sitting_nomatches)]
                            for r in self.rights}
 
         for othermatches in others_list:
@@ -318,7 +330,7 @@ class AYTO:
             missingright = [r for r in self.rights if r not in crights][0]
 
             # VIP 2023: dmtuple
-            if self.dmtuple is not None:
+            if self.dmtuple is not None and end >= self.dmtupleknown:
                 if missingright not in self.dmtuple:
                     continue
 
@@ -333,15 +345,12 @@ class AYTO:
             # All other seasons
             else:
                 if missingright == self.dm:
-                    solutions += [tenmatches.union([(l, self.dm)])
-                                  for l in self.lefts
-                                  if not self.no_match(l, self.dm,  options)]
-
+                    solutions += [tenmatches.union([ap])
+                                  for ap in addmatches_dict[missingright]]
                 else:
                     dmleft = [
                         l for (l, r) in tenmatches if r == self.dm][0]
-
-                    if self.no_match(dmleft, missingright, options):
+                    if (dmleft, missingright) not in addmatches_dict[missingright]:
                         continue
                     solutions.append(tenmatches.union(
                         [(dmleft, missingright)]))
@@ -383,12 +392,11 @@ class AYTO:
         solutions = self.merge_solutions_mm_not_in_sol(
             guess, others_list, options)
 
-        # print(len(solutions))
-        solutions2 = []
+        unique_sols = []
 
         for sol in solutions:
-            if sol not in solutions2:
-                solutions2.append(sol)
+            if sol not in unique_sols:
+                unique_sols.append(sol)
 
             if len(sol) != self.nummatches:
                 raise ValueError
@@ -396,9 +404,9 @@ class AYTO:
             if 2 in Counter(rs).values():
                 raise ValueError
 
-        return solutions2
+        return unique_sols
 
-    def compute_guesses(self, options: dict) -> list[set[tuple[str, str]]]:
+    def generate_guesses(self, options: dict) -> list[set[tuple[str, str]]]:
         verbose: bool = options["verbose"]
 
         if verbose:
@@ -422,7 +430,6 @@ class AYTO:
         merged_guesses = functools.reduce(lambda g1, g2: self.merge_guesses_lists(g1, g2,  options),
                                           guesses_per_night)
 
-        options.update({"checknights": True})
         merged_guesses = list(filter(lambda a: self.guess_possible(a, options),
                                      merged_guesses))
 
@@ -436,7 +443,6 @@ class AYTO:
 def find_solutions_slow(season: AYTO, options: dict) -> list[set[tuple[str, str]]]:
     solutions = season.generate_solutions(set(),  options)
     print(f"Generated solutions: {len(solutions)}")
-    options.update({"checknights": True})
     solutions = list(
         filter(lambda s: season.guess_possible(s, options), solutions))
 
@@ -445,75 +451,66 @@ def find_solutions_slow(season: AYTO, options: dict) -> list[set[tuple[str, str]
 
 def find_solutions(season: AYTO,  options: dict, asm: list = []) -> list[set[tuple[str, str]]]:
     start = time.time()
-    verbose: bool = options["verbose"]
+    times = []
+    verbose: bool = options.get("verbose", False)
 
-    merged_guesses = season.compute_guesses(options)
-    if verbose:
-        print("compute_guesses", time.time()-start)
-        start = time.time()
+    merged_guesses = season.generate_guesses(options)
 
-    solutions = []
+    times.append(time.time()-start)
+    start = time.time()
+
+    solutions_unfiltered = []
     for g in merged_guesses:
         sols_g = season.generate_solutions(g,  options)
-        solutions += sols_g
+        solutions_unfiltered += sols_g
 
-    if verbose:
-        print("generate_solution", time.time()-start)
-        start = time.time()
+    times.append(time.time()-start)
+    start = time.time()
 
-    if verbose:
-        print(f"Number of generated solutions: {len(solutions)}")
-
-    options.update({"checknights": True})
+    # options.update({"checknights": True})
     solutions = list(filter(lambda s: season.guess_possible(s, options),
-                            solutions))
+                            solutions_unfiltered))
+    if len(solutions_unfiltered) - len(solutions) > 0:
+        print("len(solutions_unfiltered) - len(solutions) > 0")
+
+    times.append(time.time()-start)
     if verbose:
-        print("filtering", time.time()-start)
-        start = time.time()
+        print(f"Generating guesses: {times[0]:0.2f} s")
+        print(f"Generating solutions: {times[1]:0.2f} s")
+        print(f"Filtering solutions: {times[2]:0.2f} s")
+        print(
+            f"Before and after filtering: {len(solutions_unfiltered)} {len(solutions)}")
 
     if len(asm) > 0:
         # keep solutions that have at least one pair of assumption
-        solutions = [sol for sol in solutions
-                     if any([p in sol for p in asm])]
+        solutions_unfiltered = [sol for sol in solutions_unfiltered
+                                if any([p in sol for p in asm])]
 
     return solutions
 
 
-def analysize_solutions(season: AYTO, options: dict, asm: list = []) -> None:
+def analysize_solutions(season: AYTO, options: dict, asm: list = []):
     mbs = season.get_matchboxes(options)
     sols = find_solutions(season,  options, asm)
     end = options.get("end", season.numepisodes-1)
 
-    pdict = {}
-    for s in sols:
-        for p in s:
-            if p in pdict:
-                pdict[p] += 1
-            else:
-                pdict[p] = 1
+    pairs_counter = Counter([p for s in sols for p in s])
 
-    pitems = sorted(pdict.items(), key=lambda x: x[1], reverse=True)
-
-    allpairs = [(l, r) for l in season.lefts for r in season.rights]
-    impairs = [p for p in allpairs if p not in pdict and p not in mbs
-               and not season.no_match(*p,  options)]
-    pms = [p for p in pdict if pdict[p] == len(sols)]
-    newpms = [p for p in allpairs if p in pms and p not in mbs]
-    data = {l: pd.Series([round(pdict.get((l, r), 0)/len(sols)*100, 1) for r in season.rights],
-                         index=season.rights) for l in season.lefts}
-    # data = {l: pd.Series([pdict.get((l, r), 0) for r in season.rights],
-    #                      index=season.rights) for l in season.lefts}
-    df = pd.DataFrame(data)
+    allpairs = itertools.product(season.lefts, season.rights)
+    perfect_matches = [
+        p for p in pairs_counter if pairs_counter[p] == len(sols)]
+    new_nomatches = list(filter(lambda p: not (season.no_match(*p, options) or p in pairs_counter),
+                                allpairs))
+    new_pms = list(filter(lambda p: p not in mbs, perfect_matches))
 
     print(f"Nach {end+1} Doppelfolgen")
     print(f"Anzahl Möglichkeiten: {len(sols)}")
-    print(df)
-    print(f"Bekannte Perfect Matches: {pms}")
-    if len(newpms) > 0:
-        print(f"Neue Perfect Matches: {newpms}")
-    if len(impairs) > 0:
+    print(f"Bekannte Perfect Matches: {perfect_matches}")
+    if len(new_pms) > 0:
+        print(f"Neue Perfect Matches: {new_pms}")
+    if len(new_nomatches) > 0:
         impdict = {l: [] for l in season.lefts}
-        for l, r in impairs:
+        for l, r in new_nomatches:
             impdict[l].append(r)
         print("Neue No-Matches durch Ausschlussprinzip:")
         for l in impdict:
@@ -521,7 +518,28 @@ def analysize_solutions(season: AYTO, options: dict, asm: list = []) -> None:
                 continue
             print(f"{l}: {impdict[l]}")
 
-    return
+    data = {l: pd.Series([round(pairs_counter.get((l, r), 0)/len(sols)*100, 1) for r in season.rights],
+                         index=season.rights) for l in season.lefts}
+    df = pd.DataFrame(data)
+
+    return df
+
+
+def matching_night_probs(season: AYTO, episode: int):
+    options = {"end": episode,
+               "includenight": False,
+               "verbose": False}
+    beforenight = find_solutions(season, options)
+    night = season.get_nights({"end": episode,
+                               "includenight": True})[-1][0]
+    nightpossol = any([set(night).issubset(sol) for sol in beforenight])
+
+    print(night)
+    print(f"night possible solution: {nightpossol}")
+
+    poslights = Counter([len(set(night).intersection(sol))
+                        for sol in beforenight])
+    return [poslights.get(i, 0)/len(beforenight)*100 for i in range(0, 11)]
 
 
 if __name__ == "__main__":
@@ -532,15 +550,11 @@ if __name__ == "__main__":
     import utils
     from aytonormalo24 import AYTONormalo2024
 
-    season: AYTO = AYTO(*utils.read_data("vip2022"))
+    season: AYTO = AYTO(*utils.read_data("vip2024"))
     options = {"end": 3,
-               "includenight": True,
-               "verbose": True}
+               "includenight": True,  "verbose": True}
+    find_solutions(season, options)
 
-    sols = find_solutions(season,  options)
-    print(len(sols))
+    # analysize_solutions(season, options)
 
-    # seasonn2024: AYTONormalo2024 = AYTONormalo2024(*utils.read_data_normalo2024("normalo2024"))
-    # sols = find_solutions(seasonn2024, end, options)
-
-    # print(len(sols))
+    # print(matching_night_probs(season, 2))

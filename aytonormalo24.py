@@ -45,9 +45,9 @@ class AYTONormalo2024(AYTO):
 
         return nomatch
 
-    def compute_guesses(self,  options: dict) -> list[set[tuple[str, str]]]:
+    def generate_guesses(self,  options: dict) -> list[set[tuple[str, str]]]:
         # print("sub compute_guesses")
-        return super().compute_guesses(options)
+        return super().generate_guesses(options)
 
     def guess_possible(self, guess: set[tuple[str, str]], options: dict) -> bool:
         pdict = {l: [] for l in self.lefts}
