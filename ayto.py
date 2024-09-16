@@ -516,7 +516,7 @@ def analysize_solutions(season: AYTO, options: dict, asm: list = []):
         for l in impdict:
             if len(impdict[l]) == 0:
                 continue
-            print(f"{l}: {impdict[l]}")
+            print(f"{l}: {', '.join(impdict[l])}")
 
     data = {l: pd.Series([round(pairs_counter.get((l, r), 0)/len(sols)*100, 1) for r in season.rights],
                          index=season.rights) for l in season.lefts}
@@ -539,7 +539,7 @@ def matching_night_probs(season: AYTO, episode: int):
 
     poslights = Counter([len(set(night).intersection(sol))
                         for sol in beforenight])
-    return [poslights.get(i, 0)/len(beforenight)*100 for i in range(0, 11)]
+    return [round(poslights.get(i, 0)/len(beforenight)*100,2) for i in range(0, 11)]
 
 
 if __name__ == "__main__":
@@ -551,10 +551,22 @@ if __name__ == "__main__":
     from aytonormalo24 import AYTONormalo2024
 
     season: AYTO = AYTO(*utils.read_data("vip2024"))
-    options = {"end": 3,
+    options = {"end": 6,
                "includenight": True,  "verbose": True}
-    find_solutions(season, options)
+    sols = find_solutions(season, options)
+    table = []
+    sol = sols[0]
+    for l,r in sol:
+        print(f"{l} & {r}")
+    # for s in sols:
+    #     # unc_matches = set(s) - set([('Tim', 'Linda'), ('Nikola', 'Laura L.'), ('Chris', 'Emmy'), ('Ozan', 'Anastasia')])
+    #     unc_matches = {r:l for (l,r) in s}
+    #     table.append(unc_matches)
+    # print(pd.DataFrame(table))
+    # df = analysize_solutions(season, options)
+    # print(df)
+    # df.to_csv("data/ep14.csv")
+    # for lights,prob in enumerate(matching_night_probs(season,5)):
+    #     print(f"{lights} Lichter: {prob} %")
 
-    # analysize_solutions(season, options)
-
-    # print(matching_night_probs(season, 2))
+    # print(matching_night_probs(season, 6))
