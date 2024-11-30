@@ -1,5 +1,5 @@
 from typing import Optional, Union
-from pydantic import BaseModel
+# from pydantic import BaseModel
 from collections import Counter
 import itertools
 import functools
@@ -7,9 +7,6 @@ import time
 import pandas as pd
 # import utils
 
-
-class Solution (BaseModel):
-    pairs: list[tuple[str, str]]
 
 
 class AYTO:
@@ -555,9 +552,10 @@ if __name__ == "__main__":
                "includenight": True,  "verbose": True}
     sols = find_solutions(season, options)
     table = []
-    sol = sols[0]
-    for l,r in sol:
-        print(f"{l} & {r}")
+    if len(sols) == 1:
+        sol = sols[0]
+        for l,r in sol:
+            print(f"{l} & {r}")
     # for s in sols:
     #     # unc_matches = set(s) - set([('Tim', 'Linda'), ('Nikola', 'Laura L.'), ('Chris', 'Emmy'), ('Ozan', 'Anastasia')])
     #     unc_matches = {r:l for (l,r) in s}

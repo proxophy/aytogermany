@@ -1,17 +1,12 @@
 from ayto import AYTO, analysize_solutions
 
 from typing import Optional, Union
-from pydantic import BaseModel
 from collections import Counter
 import itertools
 import functools
 import time
 import pandas as pd
 import utils
-
-
-# defining class A
-
 
 class AYTONormalo2024(AYTO):
     tm: str
