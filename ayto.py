@@ -556,12 +556,12 @@ if __name__ == "__main__":
                   "vip2024"]
 
     import utils
-    from aytonormalo24 import AYTONormalo2024
 
-    for sn in allseasons:
-        season: AYTO = AYTO(*utils.read_data(sn))
-        options = {"end": 3,
-                "includenight": True,  "verbose": False}
-        sols = find_solutions(season, options)
-        df = analysize_solutions(season, options)
-        print("df here",  df)
+    sn = "normalo2025"
+
+    season: AYTO = AYTO(*utils.read_data(sn))
+    options = {"end": 3,
+            "includenight": True,  "verbose": False}
+    # sols = find_solutions(season, options)
+    # df = analysize_solutions(season, options)
+    # print("df here",  df)
