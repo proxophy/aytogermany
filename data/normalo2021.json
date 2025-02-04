@@ -27,73 +27,55 @@
     "dm": "Vanessa M.",
     "matchboxes": [
         [
-            [
-                "Maximilian",
-                "Sabrina"
-            ],
+            0,
+            "Maximilian",
+            "Sabrina",
             false
         ],
         [
-            [
-                "Aaron",
-                "Kathleen"
-            ],
+            2,
+            "Aaron",
+            "Kathleen",
             false
         ],
         [
-            [
-                "Marcel",
-                "Laura"
-            ],
+            3,
+            "Marcel",
+            "Laura",
             false
         ],
         [
-            [
-                "Marcel",
-                "Leonie"
-            ],
+            4,
+            "Marcel",
+            "Leonie",
             true
         ],
         [
-            [
-                "Dario",
-                "Laura"
-            ],
+            6,
+            "Dario",
+            "Laura",
             false
         ],
         [
-            [
-                "Marko",
-                "Sabrina"
-            ],
+            7,
+            "Marko",
+            "Sabrina",
             false
         ],
         [
-            [
-                "Aaron",
-                "Melissa"
-            ],
+            8,
+            "Aaron",
+            "Melissa",
             true
         ],
         [
-            [
-                "Marc",
-                "Mirjam"
-            ],
+            9,
+            "Marc",
+            "Mirjam",
             true
         ]
     ],
     "bonights": [
         7
-    ],
-    "boxesepisode": [
-        0,
-        2,
-        3,
-        4,
-        6,
-        7,
-        8,
-        9
     ]
 }

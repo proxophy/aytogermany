@@ -1,91 +1,82 @@
 {
-    "men": [
-        "Alex",
-        "Antonino",
-        "Chris",
-        "Kaan",
-        "Lars",
-        "Lukas",
-        "Marc-Robin",
-        "Nikola",
-        "Ozan",
-        "Tim"
+  "men": [
+    "Alex",
+    "Antonino",
+    "Chris",
+    "Kaan",
+    "Lars",
+    "Lukas",
+    "Marc-Robin",
+    "Nikola",
+    "Ozan",
+    "Tim"
+  ],
+  "women": [
+    "Anastasia",
+    "Asena",
+    "Dana",
+    "Emmy",
+    "Gabriela",
+    "Jennifer",
+    "Laura L.",
+    "Laura M.",
+    "Linda",
+    "Nadja",
+    "Tara"
+  ],
+  "dm": "Dana",
+  "bonights": [
+    3
+  ],
+  "matchboxes": [
+    [
+      0,
+      "Marc-Robin",
+      "Laura L.",
+      false
     ],
-    "women": [
-        "Anastasia",
-        "Asena",
-        "Dana",
-        "Emmy",
-        "Gabriela",
-        "Jennifer",
-        "Laura L.",
-        "Laura M.",
-        "Linda",
-        "Nadja",
-        "Tara"
+    [
+      1,
+      "Chris",
+      "Emmy",
+      true
     ],
-    "dm": "Dana",
-    "bonights": [
-        3
+    [
+      3,
+      "Marc-Robin",
+      "Asena",
+      false
     ],
-    "matchboxes": [
-        [
-            [
-                "Marc-Robin",
-                "Laura L."
-            ],
-            false
-        ],
-        [
-            [
-                "Chris",
-                "Emmy"
-            ],
-            true
-        ],
-        [
-            [
-                "Marc-Robin",
-                "Asena"
-            ],
-            false
-        ],
-        [
-            [
-                "Ozan",
-                "Anastasia"
-            ],
-            true
-        ],
-        [
-            [
-                "Lukas",
-                "Jennifer"
-            ],
-            false
-        ],
-        [
-            [
-                "Tim",
-                "Linda"
-            ],
-            true
-        ],
-        [
-            [
-                "Tim",
-                "Dana"
-            ],
-            true
-        ]
+    [
+      5,
+      "Ozan",
+      "Anastasia",
+      true
     ],
-    "boxesepisode": [
-        0,
-        1,
-        3,
-        5,
-        6,
-        7,
-        7
+    [
+      6,
+      "Lukas",
+      "Jennifer",
+      false
+    ],
+    [
+      7,
+      "Tim",
+      "Linda",
+      true
+    ],
+    [
+      7,
+      "Tim",
+      "Dana",
+      true
+    ],
+    [
+      8,
+      "Lars",
+      "Laura L.",
+      false
     ]
+   
+  ]
 }

@@ -1,120 +1,97 @@
 {
-    "men": [
-        "Mike",
-        "Teezy",
-        "Emanuell",
-        "Steffen",
-        "Danilo",
-        "Marvin",
-        "Elia",
-        "Paco",
-        "Fabio",
-        "Peter",
-        "Max"
+  "men": [
+    "Mike",
+    "Teezy",
+    "Emanuell",
+    "Steffen",
+    "Danilo",
+    "Marvin",
+    "Elia",
+    "Paco",
+    "Fabio",
+    "Peter",
+    "Max"
+  ],
+  "women": [
+    "Kim",
+    "Steffi",
+    "Sabrina",
+    "Paulina",
+    "Darya",
+    "Christina",
+    "Jennifer",
+    "Sandra",
+    "Marie",
+    "Alicia"
+  ],
+  "dm": "Max",
+  "dmtuple": [
+    "Peter",
+    "Max"
+  ],
+  "matchboxes": [
+    [
+      0,
+      "Jennifer",
+      "Danilo",
+      false
     ],
-    "women": [
-        "Kim",
-        "Steffi",
-        "Sabrina",
-        "Paulina",
-        "Darya",
-        "Christina",
-        "Jennifer",
-        "Sandra",
-        "Marie",
-        "Alicia"
+    [
+      1,
+      "Jennifer",
+      "Elia",
+      false
     ],
-    "dm": "Max",
-    "dmtuple": [
-        "Peter",
-        "Max"
+    [
+      2,
+      "Darya",
+      "Elia",
+      false
     ],
-    "matchboxes": [
-        [
-            [
-                "Jennifer",
-                "Danilo"
-            ],
-            false
-        ],
-        [
-            [
-                "Jennifer",
-                "Elia"
-            ],
-            false
-        ],
-        [
-            [
-                "Darya",
-                "Elia"
-            ],
-            false
-        ],
-        [
-            [
-                "Kim",
-                "Mike"
-            ],
-            false
-        ],
-        [
-            [
-                "Darya",
-                "Danilo"
-            ],
-            true
-        ],
-        [
-            [
-                "Alicia",
-                "Teezy"
-            ],
-            false
-        ],
-        [
-            [
-                "Sabrina",
-                "Max"
-            ],
-            false
-        ],
-        [
-            [
-                "Sabrina",
-                "Peter"
-            ],
-            false
-        ],
-        [
-            [
-                "Steffi",
-                "Emanuell"
-            ],
-            true
-        ],
-        [
-            [
-                "Alicia",
-                "Elia"
-            ],
-            true
-        ]
-
+    [
+      3,
+      "Kim",
+      "Mike",
+      false
     ],
-    "bonights": [
-        7
+    [
+      4,
+      "Darya",
+      "Danilo",
+      true
     ],
-    "boxesepisode": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        7,
-        7,
-        8,
-        8
+    [
+      5,
+      "Alicia",
+      "Teezy",
+      false
+    ],
+    [
+      7,
+      "Sabrina",
+      "Max",
+      false
+    ],
+    [
+      7,
+      "Sabrina",
+      "Peter",
+      false
+    ],
+    [
+      8,
+      "Steffi",
+      "Emanuell",
+      true
+    ],
+    [
+      8,
+      "Alicia",
+      "Elia",
+      true
     ]
+  ],
+  "bonights": [
+    7
+  ]
 }

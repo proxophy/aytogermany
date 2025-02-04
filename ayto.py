@@ -8,6 +8,15 @@ import pandas as pd
 # import utils
 
 
+def time_it(inner):
+    def c_inner(*args):
+        start = time.time()
+        res = inner(*args)
+        end = time.time()
+        print(f"=== time needed for {inner.__name__}: {(end-start):0.3f}s ===")
+        return res
+    return c_inner
+
 
 class AYTO:
 
@@ -424,13 +433,13 @@ class AYTO:
 
             guesses_per_night.append(combs)
 
-        merged_guesses = functools.reduce(lambda g1, g2: self.merge_guesses_lists(g1, g2,  options),
-                                          guesses_per_night)
+        merged_guesses: list[set[tuple[str, str]]] = functools.reduce(lambda g1, g2: self.merge_guesses_lists(g1, g2,  options),
+                                                                      guesses_per_night)
 
-        merged_guesses = list(filter(lambda a: self.guess_possible(a, options),
-                                     merged_guesses))
+        merged_guesses: list[set[tuple[str, str]]] = list(filter(lambda a: self.guess_possible(a, options),
+                                                                 merged_guesses))
 
-        guesses_lengths_counter = Counter(map(len, merged_guesses))
+        guesses_lengths_counter = Counter(list(map(len, merged_guesses)))
         if verbose:
             print(f"Guesses lengths: {guesses_lengths_counter}")
 
@@ -456,7 +465,7 @@ def find_solutions(season: AYTO,  options: dict, asm: list = []) -> list[set[tup
     times.append(time.time()-start)
     start = time.time()
 
-    solutions_unfiltered = []
+    solutions_unfiltered: list[set[tuple[str, str]]] = []
     for g in merged_guesses:
         sols_g = season.generate_solutions(g,  options)
         solutions_unfiltered += sols_g
@@ -486,6 +495,7 @@ def find_solutions(season: AYTO,  options: dict, asm: list = []) -> list[set[tup
     return solutions
 
 
+@time_it
 def analysize_solutions(season: AYTO, options: dict, asm: list = []):
     mbs = season.get_matchboxes(options)
     sols = find_solutions(season,  options, asm)
@@ -517,6 +527,7 @@ def analysize_solutions(season: AYTO, options: dict, asm: list = []):
 
     data = {l: pd.Series([round(pairs_counter.get((l, r), 0)/len(sols)*100, 1) for r in season.rights],
                          index=season.rights) for l in season.lefts}
+
     df = pd.DataFrame(data)
 
     return df
@@ -536,7 +547,7 @@ def matching_night_probs(season: AYTO, episode: int):
 
     poslights = Counter([len(set(night).intersection(sol))
                         for sol in beforenight])
-    return [round(poslights.get(i, 0)/len(beforenight)*100,2) for i in range(0, 11)]
+    return [round(poslights.get(i, 0)/len(beforenight)*100, 2) for i in range(0, 11)]
 
 
 if __name__ == "__main__":
@@ -547,24 +558,10 @@ if __name__ == "__main__":
     import utils
     from aytonormalo24 import AYTONormalo2024
 
-    season: AYTO = AYTO(*utils.read_data("vip2024"))
-    options = {"end": 6,
-               "includenight": True,  "verbose": True}
-    sols = find_solutions(season, options)
-    table = []
-    if len(sols) == 1:
-        sol = sols[0]
-        for l,r in sol:
-            print(f"{l} & {r}")
-    # for s in sols:
-    #     # unc_matches = set(s) - set([('Tim', 'Linda'), ('Nikola', 'Laura L.'), ('Chris', 'Emmy'), ('Ozan', 'Anastasia')])
-    #     unc_matches = {r:l for (l,r) in s}
-    #     table.append(unc_matches)
-    # print(pd.DataFrame(table))
-    # df = analysize_solutions(season, options)
-    # print(df)
-    # df.to_csv("data/ep14.csv")
-    # for lights,prob in enumerate(matching_night_probs(season,5)):
-    #     print(f"{lights} Lichter: {prob} %")
-
-    # print(matching_night_probs(season, 6))
+    for sn in allseasons:
+        season: AYTO = AYTO(*utils.read_data(sn))
+        options = {"end": 3,
+                "includenight": True,  "verbose": False}
+        sols = find_solutions(season, options)
+        df = analysize_solutions(season, options)
+        print("df here",  df)

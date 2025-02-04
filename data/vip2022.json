@@ -1,114 +1,92 @@
 {
-    "men": [
-        "Amadu",
-        "Calvin",
-        "Fabio",
-        "Luca",
-        "Lukas",
-        "Martin",
-        "Maurice",
-        "Max",
-        "Michael",
-        "Pharrell",
-        "Felix"
+  "men": [
+    "Amadu",
+    "Calvin",
+    "Fabio",
+    "Luca",
+    "Lukas",
+    "Martin",
+    "Maurice",
+    "Max",
+    "Michael",
+    "Pharrell",
+    "Felix"
+  ],
+  "women": [
+    "Anna",
+    "Cecilia",
+    "Celina",
+    "Franziska",
+    "Gina",
+    "Isabelle",
+    "Karina",
+    "Luisa",
+    "Ricarda",
+    "Zoe"
+  ],
+  "dm": "Felix",
+  "matchboxes": [
+    [
+      0,
+      "Martin",
+      "Zoe",
+      false
     ],
-    "women": [
-        "Anna",
-        "Cecilia",
-        "Celina",
-        "Franziska",
-        "Gina",
-        "Isabelle",
-        "Karina",
-        "Luisa",
-        "Ricarda",
-        "Zoe"
+    [
+      1,
+      "Karina",
+      "Pharrell",
+      false
     ],
-    "dm": "Felix",
-    "matchboxes": [
-        [
-            [
-                "Martin",
-                "Zoe"
-            ],
-            false
-        ],
-        [
-            [
-                "Karina",
-                "Pharrell"
-            ],
-            false
-        ],
-        [
-            [
-                "Celina",
-                "Lukas"
-            ],
-            false
-        ],
-        [
-            [
-                "Luisa",
-                "Lukas"
-            ],
-            true
-        ],
-        [
-            [
-                "Felix",
-                "Ricarda"
-            ],
-            false
-        ],
-        [
-            [
-                "Pharrell",
-                "Isabelle"
-            ],
-            false
-        ],
-        [
-            [
-                "Amadu",
-                "Cecilia"
-            ],
-            true
-        ],
-        [
-            [
-                "Michael",
-                "Anna"
-            ],
-            true
-        ],
-        [
-            [
-                "Ricarda",
-                "Pharrell"
-            ],
-            false
-        ],
-        [
-            [
-                "Franziska",
-                "Max"
-            ],
-            false
-        ]
+    [
+      2,
+      "Celina",
+      "Lukas",
+      false
     ],
-    "bonights": [],
-    "cancelled": 3,
-    "boxesepisode": [
-        0,
-        1,
-        2,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
+    [
+      3,
+      "Luisa",
+      "Lukas",
+      true
+    ],
+    [
+      4,
+      "Felix",
+      "Ricarda",
+      false
+    ],
+    [
+      5,
+      "Pharrell",
+      "Isabelle",
+      false
+    ],
+    [
+      6,
+      "Amadu",
+      "Cecilia",
+      true
+    ],
+    [
+      7,
+      "Michael",
+      "Anna",
+      true
+    ],
+    [
+      8,
+      "Ricarda",
+      "Pharrell",
+      false
+    ],
+    [
+      9,
+      "Franziska",
+      "Max",
+      false
     ]
+  ],
+  "bonights": [],
+  "cancelled": 3
 }

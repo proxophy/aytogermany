@@ -1,105 +1,85 @@
 {
-    "men": [
-        "Andre",
-        "Antonino",
-        "Dustin",
-        "Jordi",
-        "Leon",
-        "Marius",
-        "Max",
-        "Mike",
-        "Tim",
-        "William"
+  "men": [
+    "Andre",
+    "Antonino",
+    "Dustin",
+    "Jordi",
+    "Leon",
+    "Marius",
+    "Max",
+    "Mike",
+    "Tim",
+    "William"
+  ],
+  "women": [
+    "Dana",
+    "Estelle",
+    "Isabelle",
+    "Jessica",
+    "Joelina",
+    "Kerstin",
+    "Marie",
+    "Monami",
+    "Raphaela",
+    "Zaira",
+    "Desir\u00e9e"
+  ],
+  "dm": "Desir\u00e9e",
+  "matchboxes": [
+    [
+      0,
+      "Mike",
+      "Jessica",
+      false
     ],
-    "women": [
-        "Dana",
-        "Estelle",
-        "Isabelle",
-        "Jessica",
-        "Joelina",
-        "Kerstin",
-        "Marie",
-        "Monami",
-        "Raphaela",
-        "Zaira",
-        "Desir\u00e9e"
+    [
+      1,
+      "Leon",
+      "Monami",
+      false
     ],
-    "dm": "Desir\u00e9e",
-    "matchboxes": [
-        [
-            [
-                "Mike",
-                "Jessica"
-            ],
-            false
-        ],
-        [
-            [
-                "Leon",
-                "Monami"
-            ],
-            false
-        ],
-        [
-            [
-                "Andre",
-                "Raphaela"
-            ],
-            false
-        ],
-        [
-            [
-                "Antonino",
-                "Monami"
-            ],
-            false
-        ],
-        [
-            [
-                "Max",
-                "Jessica"
-            ],
-            false
-        ],
-        [
-            [
-                "Marius",
-                "Zaira"
-            ],
-            true
-        ],
-        [
-            [
-                "Jordi",
-                "Raphaela"
-            ],
-            false
-        ],
-        [
-            [
-                "Max",
-                "Kerstin"
-            ],
-            false
-        ],
-        [
-            [
-                "Dustin",
-                "Isabelle"
-            ],
-            false
-        ]
+    [
+      2,
+      "Andre",
+      "Raphaela",
+      false
     ],
-    "bonights": [],
-    "boxesepisode": [
-        0,
-        1,
-        2,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
+    [
+      4,
+      "Antonino",
+      "Monami",
+      false
+    ],
+    [
+      5,
+      "Max",
+      "Jessica",
+      false
+    ],
+    [
+      6,
+      "Marius",
+      "Zaira",
+      true
+    ],
+    [
+      7,
+      "Jordi",
+      "Raphaela",
+      false
+    ],
+    [
+      8,
+      "Max",
+      "Kerstin",
+      false
+    ],
+    [
+      9,
+      "Dustin",
+      "Isabelle",
+      false
     ]
+  ],
+  "bonights": []
 }

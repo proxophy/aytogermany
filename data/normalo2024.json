@@ -28,114 +28,83 @@
     "tm": "Mela",
     "matchboxes": [
         [
-            [
-                "Paulo",
-                "Jana"
-            ],
+            0,
+            "Paulo",
+            "Jana",
             false
         ],
         [
-            [
-                "Ryan",
-                "Lina"
-            ],
+            1,
+            "Ryan",
+            "Lina",
             false
         ],
         [
-            [
-                "Kevin",
-                "Maja"
-            ],
+            1,
+            "Kevin",
+            "Maja",
             false
         ],
         [
-            [
-                "Eti",
-                "Mela"
-            ],
+            2,
+            "Eti",
+            "Mela",
             false
         ],
         [
-            [
-                "Wilson",
-                "Shelly"
-            ],
+            2,
+            "Wilson",
+            "Shelly",
             true
         ],
         [
-            [
-                "Gerrit",
-                "Tais"
-            ],
+            3,
+            "Gerrit",
+            "Tais",
             true
         ],
         [
-            [
-                "Gerrit",
-                "Mela"
-            ],
+            3,
+            "Gerrit",
+            "Mela",
             true
         ],
         [
-            [
-                "Gerrit",
-                "Pia"
-            ],
+            4,
+            "Gerrit",
+            "Pia",
             true
         ],
         [
-            [
-                "Sandro",
-                "Sina"
-            ],
+            5,
+            "Sandro",
+            "Sina",
             false
         ],
         [
-            [
-                "Paulo",
-                "Julia"
-            ],
+            6,
+            "Paulo",
+            "Julia",
             false
         ],
         [
-            [
-                "Sandro",
-                "Afra"
-            ],
+            7,
+            "Sandro",
+            "Afra",
             false
         ],
         [
-            [
-                "Kevin",
-                "Lina"
-            ]
-            ,
+            8,
+            "Kevin",
+            "Lina",
             true
-        ]
-        ,
+        ],
         [
-            [
-                "Ryan",
-                "Jana"
-            ]
-            ,
+            9,
+            "Ryan",
+            "Jana",
             true
         ]
     ],
-    "bonights": [],
-    "boxesepisode": [
-        0,
-        1,
-        1,
-        2,
-        2,
-        3,
-        3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9
-    ]
+    "bonights": []
 }
