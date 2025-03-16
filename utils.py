@@ -1,7 +1,5 @@
 import json
 import pandas as pd
-from typing import List, Tuple, Dict, Set, Union, Optional
-from ayto import AYTO
 
 from jsonschema import validate
 
@@ -124,7 +122,7 @@ def read_data(sn: str):
         f"data/{sn}.xlsx", sheet_name="Nights",
         header=0, index_col=0)
     leftsh = nightsdf.columns.values.tolist()
-    nights = [(list(zip(leftsh, row[:-1])), row[-1])
+    nights = [(list(zip(leftsh, row[:-1])), int(row[-1]))
               for row in nightsdf.values.tolist()]
     # check nights
     assert check_nights(nights, lefts, rights)

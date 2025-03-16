@@ -1,11 +1,9 @@
 from typing import Optional, Union
-# from pydantic import BaseModel
 from collections import Counter
 import itertools
 import functools
 import time
 import pandas as pd
-# import utils
 
 
 def time_it(inner):
@@ -455,7 +453,7 @@ def find_solutions_slow(season: AYTO, options: dict) -> list[set[tuple[str, str]
     return solutions
 
 
-def find_solutions(season: AYTO,  options: dict, asm: list = []) -> list[set[tuple[str, str]]]:
+def find_solutions(season: AYTO, options: dict, asm: list = []) -> list[set[tuple[str, str]]]:
     start = time.time()
     times = []
     verbose: bool = options.get("verbose", False)
@@ -542,26 +540,9 @@ def matching_night_probs(season: AYTO, episode: int):
                                "includenight": True})[-1][0]
     nightpossol = any([set(night).issubset(sol) for sol in beforenight])
 
-    print(night)
-    print(f"night possible solution: {nightpossol}")
+    print(f"Pairs of nights are possible solution: {nightpossol}")
 
     poslights = Counter([len(set(night).intersection(sol))
                         for sol in beforenight])
     return [round(poslights.get(i, 0)/len(beforenight)*100, 2) for i in range(0, 11)]
 
-
-if __name__ == "__main__":
-    allseasons = ["normalo2020", "normalo2021", "normalo2022", "normalo2023",
-                  "vip2021", "vip2022", "vip2023",
-                  "vip2024"]
-
-    import utils
-
-    sn = "normalo2025"
-
-    season: AYTO = AYTO(*utils.read_data(sn))
-    options = {"end": 3,
-            "includenight": True,  "verbose": False}
-    # sols = find_solutions(season, options)
-    # df = analysize_solutions(season, options)
-    # print("df here",  df)
