@@ -11,21 +11,23 @@ def plot_df(df):
 
 
 if __name__ == "__main__":
-    allseasons = ["normalo2020", "normalo2021", "normalo2022", "normalo2023",
-                  "vip2021", "vip2022", "vip2023",
-                  "vip2024"]
+    allseasons = ["normalo2020", "normalo2021", "normalo2022", "normalo2023", "normalo2025"
+                  "vip2021", "vip2022", "vip2023",  "vip2024"]
 
     import utils
 
-    sn = "normalo2025"
+    sn = "vip2023"
 
     season: AYTO = AYTO(*utils.read_data(sn))
-    options = {"end": 4,
+    options = {"end": 3,
                "includenight": True,  "verbose": False}
-    # sols = find_solutions(season, options)
+
     # df = analysize_solutions(season, options)
     # print(df)
 
-    probs = matching_night_probs(season,3)
-    print(list(enumerate(probs)))
+    sols1 = find_solutions(season, options, True)
+    print(len(sols1))
+
+    # probs = matching_night_probs(season,5)
+    # print(list(enumerate(probs)))
     # plot_df(df)

@@ -40,11 +40,11 @@ class AYTONormalo2024(AYTO):
 
         return nomatch
 
-    def generate_guesses(self,  options: dict) -> list[set[tuple[str, str]]]:
+    def generate_parsols(self,  options: dict) -> list[set[tuple[str, str]]]:
         # print("sub compute_guesses")
-        return super().generate_guesses(options)
+        return super().generate_parsols(options)
 
-    def guess_possible(self, guess: set[tuple[str, str]], options: dict) -> bool:
+    def parsol_possible(self, guess: set[tuple[str, str]], options: dict) -> bool:
         pdict = {l: [] for l in self.lefts}
         for (l, r) in guess:
             pdict[l].append(r)
@@ -60,10 +60,10 @@ class AYTONormalo2024(AYTO):
 
             if len(mutiplers) == 3 and self.tm not in mutiplers:
                 return False
-        return super().guess_possible(guess, options)
+        return super().parsol_possible(guess, options)
 
-    def possible_matches_for_guess(self, guess: set[tuple[str, str]], options: dict) -> dict[str, list[str]]:
-        possible_matches = super().possible_matches_for_guess(guess,  options)
+    def possible_matches_for_parsol(self, guess: set[tuple[str, str]], options: dict) -> dict[str, list[str]]:
+        possible_matches = super().possible_matches_for_parsol(guess,  options)
         if len(guess) > 0:
             g_lefts, g_rights = zip(*guess)
             g_lefts, g_rights = list(g_lefts), list(g_rights)
@@ -81,7 +81,7 @@ class AYTONormalo2024(AYTO):
 
         return possible_matches
 
-    def merge_solutions_mm_in_sol(self, guess: set[tuple[str, str]],  others_list: list[set[tuple[str, str]]],
+    def merge_mm_in_parsol(self, guess: set[tuple[str, str]],  others_list: list[set[tuple[str, str]]],
                                   options: dict):
         if len(guess) > 0:
             g_lefts, g_rights = zip(*guess)
@@ -118,7 +118,7 @@ class AYTONormalo2024(AYTO):
             return solutions
         return []
 
-    def merge_solutions_mm_not_in_sol(self, guess: set[tuple[str, str]], others_list: list[set[tuple[str, str]]], options: dict):
+    def merge_mm_not_in_parsol(self, guess: set[tuple[str, str]], others_list: list[set[tuple[str, str]]], options: dict):
         solutions = []
         addmatches_dict = {r: [(l, r) for l in self.lefts if not self.no_match(l, r, options)]
                            for r in self.rights}
@@ -155,4 +155,3 @@ class AYTONormalo2024(AYTO):
 if __name__ == "__main__":
 
     season = utils.read_data("normalo2024")
-    season.__class__ = AYTONormalo2024
