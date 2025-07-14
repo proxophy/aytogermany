@@ -42,12 +42,35 @@
             "Danish",
             "Nadja",
             true
-        ]
-        ,
+        ],
         [
             4,
             "Dino",
             "Deisy",
+            true
+        ],
+        [
+            6,
+            "Kaan",
+            "Sophia",
+            false
+        ],
+        [
+            7,
+            "Joshua",
+            "Joanna",
+            false
+        ],
+        [
+            8,
+            "Sinan",
+            "Nasti",
+            true
+        ],
+        [
+            9,
+            "Josh",
+            "Camelia",
             true
         ]
     ],
