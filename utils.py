@@ -11,7 +11,7 @@ schema = {
             "men": {"type": "array",
                     "items": {"type": "string"},
                     "minItems": 10,
-                    "maxItems": 11,
+                    "maxItems": 12,
                     "uniqueItems": True
                     },
             "women": {"type": "array",
@@ -35,6 +35,7 @@ schema = {
                 "maxItems": 12,
             },
         "dm": {"type": "string"},
+        "tm": {"type": "string"},
         "bonights": {"type": "array",
                      "items": {"type": "integer",
                                "minimum": 0,
@@ -51,7 +52,7 @@ schema = {
                 ],
                 "maxItems": 2,
                 "minItems": 2
-        },
+                },
         "solution": {
                 "type": "array",
                 "items": {
@@ -63,7 +64,7 @@ schema = {
                     "maxItems": 2,
                     "minItems": 2
                 }
-        }
+                }
     }
 }
 
@@ -178,7 +179,7 @@ def read_data_normalo2024(sn: str):
         jsondata: dict = json.loads(f.read())
     lefts, rights, nights, matchboxes, bonights, _, _, cancellednight, boxesepisodes, solution = read_data(
         sn)
-    tm = jsondata.get("tm", None)
+    tm: str = jsondata.get("tm", "")
     assert tm in rights
     return lefts, rights, nights, tm, matchboxes, bonights, cancellednight, boxesepisodes, solution
 

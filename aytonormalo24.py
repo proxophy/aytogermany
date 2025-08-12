@@ -8,6 +8,9 @@ import time
 import pandas as pd
 import utils
 
+PartialSol = set[tuple[str, str]]
+
+
 class AYTONormalo2024(AYTO):
     tm: str
 
@@ -28,63 +31,60 @@ class AYTONormalo2024(AYTO):
 
         kpm = self.get_pms(options)
         hpm = [e for p in kpm for e in p]
+        print(hpm)
 
-        if (l, r) not in kpm and ((l in hpm) or (r in hpm)):
+        if (l, r) not in kpm and l in hpm:
+            # lefts with multiple matches from matchboxes, appear x times
+            # for x perfect matches
             mmls = [p for p in hpm if Counter(hpm)[p] > 1]
+            print(mmls)
             # Normalo 24
-            if self.tm is not None and len(mmls) < 3 \
+            if len(mmls) < 3 \
                     and l in mmls and r not in hpm:
-                # we only know two out of three of the multiple matches in Normalo 2024 at episode 8
+                # we only know two out of three of the multiple matches in Normalo 2024 at episode 10
                 return False
             return True
 
         return nomatch
 
     def generate_parsols(self,  options: dict) -> list[set[tuple[str, str]]]:
-        # print("sub compute_guesses")
         return super().generate_parsols(options)
 
-    def parsol_possible(self, guess: set[tuple[str, str]], options: dict) -> bool:
+    def parsol_possible(self, parsol: PartialSol, options: dict) -> bool:
         pdict = {l: [] for l in self.lefts}
-        for (l, r) in guess:
+        tm_in_parsol = False
+        for (l, r) in parsol:
             pdict[l].append(r)
-        g_lefts, g_rights = zip(*guess)
+            if r == self.tm:
+                tm_in_parsol = True
 
         # lefts with multiple matches
         multls = [l for l in self.lefts if len(pdict[l]) > 1]
-        if len(multls) == 1:
+        if len(multls) > 1: 
+            return False
+        elif len(multls) == 1:
             multl = multls[0]
-            mutiplers = pdict[multl]
-            if self.tm in g_rights and self.tm not in pdict[multl]:
+            multr = pdict[multl]
+            # self.tm has to be one of multiple matches
+            if tm_in_parsol and (multl, self.tm) not in parsol:
                 return False
-
-            if len(mutiplers) == 3 and self.tm not in mutiplers:
+            elif len(multr) == 3 and self.tm not in multr:
                 return False
-        return super().parsol_possible(guess, options)
+        return super().parsol_possible(parsol, options)
 
     def possible_matches_for_parsol(self, guess: set[tuple[str, str]], options: dict) -> dict[str, list[str]]:
         possible_matches = super().possible_matches_for_parsol(guess,  options)
-        if len(guess) > 0:
-            g_lefts, g_rights = zip(*guess)
-            g_lefts, g_rights = list(g_lefts), list(g_rights)
-        else:
-            g_lefts, g_rights = {}, {}
-
-        not_tm_in_asm = self.tm is not None and self.tm not in g_rights
+        # Filter out tm
         possible_matches = {
-            l: [r
-                for r in possible_matches[l]
-                if (not (not_tm_in_asm) or r != self.tm)
-                ]
+            l: list(filter(lambda r: r != self.tm, possible_matches[l]))
             for l in possible_matches
         }
-
         return possible_matches
 
-    def merge_mm_in_parsol(self, guess: set[tuple[str, str]],  others_list: list[set[tuple[str, str]]],
+    def merge_mm_in_parsol(self, parsol: PartialSol, others_list: list[PartialSol],
                                   options: dict):
-        if len(guess) > 0:
-            g_lefts, g_rights = zip(*guess)
+        if len(parsol) > 0:
+            g_lefts, g_rights = zip(*parsol)
             g_lefts, g_rights = list(g_lefts), list(g_rights)
         else:
             g_lefts, g_rights = {}, {}
@@ -96,7 +96,7 @@ class AYTONormalo2024(AYTO):
                 print("tm must be part of tripple match")
                 return []
             # print("TM IN ASM")
-            return [guess.union(set(othermatches)) for othermatches in others_list]
+            return [parsol.union(set(othermatches)) for othermatches in others_list]
 
         elif len(g_lefts) - len(set(g_lefts)) == 1:
             # print("DM OF TM IN ASM")
@@ -104,7 +104,7 @@ class AYTONormalo2024(AYTO):
             tmleft = [l for l in self.lefts if counter[l] == 2][0]
             solutions = []
             for othermatches in others_list:
-                elevenmatches = guess.union(othermatches)
+                elevenmatches = parsol.union(othermatches)
                 _, crights = zip(*elevenmatches)
                 missingright = [r for r in self.rights if r not in crights][0]
                 # if we still have to add Mela: skip when somebody else is missing
@@ -118,13 +118,13 @@ class AYTONormalo2024(AYTO):
             return solutions
         return []
 
-    def merge_mm_not_in_parsol(self, guess: set[tuple[str, str]], others_list: list[set[tuple[str, str]]], options: dict):
+    def merge_mm_not_in_parsol(self, parsol: PartialSol, others_list: list[PartialSol], options: dict):
         solutions = []
         addmatches_dict = {r: [(l, r) for l in self.lefts if not self.no_match(l, r, options)]
                            for r in self.rights}
 
         for othermatches in others_list:
-            tenmatches = guess.union(othermatches)
+            tenmatches = parsol.union(othermatches)
             assert len(tenmatches) == 10
 
             _, crights = zip(*tenmatches)

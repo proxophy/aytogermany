@@ -1,0 +1,38 @@
+{
+  "men": [
+    "Calvin O.",
+    "Calvin S.",
+    "Jonny",
+    "Kevin",
+    "Leandro",
+    "Lennert",
+    "Nico",
+    "Olli",
+    "Rob",
+    "Sidar",
+    "Xander"
+  ],
+  "women": [
+    "Antonia",
+    "Ariel",
+    "Beverly",
+    "Elli",
+    "Hati",
+    "Henna",
+    "Joanna",
+    "Nelly",
+    "Sandra",
+    "Viki"
+  ],
+  "bonights": [
+  ],
+  "matchboxes": [
+    [
+      0,
+      "Antonia",
+      "Calvin O.",
+      false
+    ]
+   
+  ]
+}

@@ -96,7 +96,8 @@ class AYTO:
 
     def get_nights(self, options: dict) -> list[Night]:
         """Retrieve nights based on episode limits."""
-        end = min(self.numepisodes - 1, options.get("end", self.numepisodes - 1))
+        end = min(self.numepisodes - 1,
+                  options.get("end", self.numepisodes - 1))
         nights = self.nights[: self.knownnights[end] + 1]
         return nights if options.get("includenight", True) else nights[:-1]
 
@@ -110,7 +111,8 @@ class AYTO:
     def get_bonights(self, options: dict) -> list[int]:
         end = min(self.numepisodes-1,
                   options.get("end", self.numepisodes - 1))
-        return [bo for bo in self.bonights if bo <= self.knownnights[end]]
+        bon = [bo for bo in self.bonights if bo <= self.knownnights[end]]
+        return bon if options.get("includenight", True) else bon[:-1]
 
     def get_pms(self,  options: dict) -> list[tuple[str, str]]:
         mb = self.get_matchboxes(options)
@@ -128,6 +130,7 @@ class AYTO:
         hpm = [e for p in kpm for e in p]
 
         # pair in blackout night who is not known perfect match
+        # /*len(bon) > 0 and
         if any([(l, r) in nights[bo][0] and (l, r) not in kpm for bo in bon]):
             return True
 
@@ -350,7 +353,7 @@ class AYTO:
                         [(dmleft, missingright)]))
         return solutions
 
-    def generate_complete_solutions(self, psol: PartialSol, options: dict, flag: bool) -> list[CompleteSol]:
+    def generate_complete_solutions(self, psol: PartialSol, options: dict) -> list[CompleteSol]:
         '''Generating solutions'''
         if len(psol) == self.nummatches:
             return [psol]
@@ -402,7 +405,7 @@ class AYTO:
         parsols_per_night = []
         for pairs, lights in nights:
             notcorrect = list(filter(lambda p: self.no_match(*p, options) or p in kpm,
-                                     pairs)) 
+                                     pairs))
             defcorrect = list(filter(lambda p: p in kpm, pairs))
             remaining = set(pairs) - set(defcorrect) - set(notcorrect)
 
@@ -425,15 +428,15 @@ class AYTO:
 
 
 def find_solutions_slow(season: AYTO, options: dict) -> list[CompleteSol]:
-    solutions = season.generate_complete_solutions(set(),  options, False)
+    solutions = season.generate_complete_solutions(set(),  options)
     print(f"Generated solutions: {len(solutions)}")
     solutions = list(
         filter(lambda s: season.parsol_possible(s, options), solutions))
 
     return solutions
 
-
-def find_solutions(season: AYTO, options: dict, flag: bool, asm: list = []) -> list[CompleteSol]:
+@time_it
+def find_solutions(season: AYTO, options: dict, asm: list = []) -> list[CompleteSol]:
     start = time.time()
     times = []
     verbose: bool = options.get("verbose", False)
@@ -445,7 +448,7 @@ def find_solutions(season: AYTO, options: dict, flag: bool, asm: list = []) -> l
 
     solutions_unfiltered: list[CompleteSol] = []
     for g in merged_parsols:
-        sols_g = season.generate_complete_solutions(g,  options, flag)
+        sols_g = season.generate_complete_solutions(g,  options)
         solutions_unfiltered += sols_g
 
     times.append(time.time()-start)
@@ -476,13 +479,13 @@ def find_solutions(season: AYTO, options: dict, flag: bool, asm: list = []) -> l
 def dm_left(sol: CompleteSol) -> str:
     '''Which of lefts has double match'''
     lefts = list(zip(*sol))[0]
-    return [l for (l, r) in Counter(lefts).items() if r == 2][0]
+    return [l for (l, r) in Counter(lefts).items() if r >= 2][0]
 
 
 @time_it
 def analysize_solutions(season: AYTO, options: dict, asm: list = []):
     mbs = season.get_matchboxes(options)
-    sols = find_solutions(season,  options, False, asm)
+    sols = find_solutions(season, options, asm)
     end = options.get("end", season.numepisodes-1)
 
     pairs_counter = Counter([p for s in sols for p in s])
@@ -494,7 +497,7 @@ def analysize_solutions(season: AYTO, options: dict, asm: list = []):
                                 allpairs))
     new_pms = list(filter(lambda p: p not in mbs, perfect_matches))
 
-    print(f"Nach {end+1} Doppelfolgen")
+    print(f"Nach Folgen {2*end+3} & {2*end+4}")
     print(f"Anzahl Möglichkeiten: {len(sols)}")
     print(f"Bekannte Perfect Matches: {perfect_matches}")
     if len(new_pms) > 0:
@@ -526,7 +529,7 @@ def matching_night_probs(season: AYTO, episode: int):
     options = {"end": episode,
                "includenight": False,
                "verbose": False}
-    beforenight = find_solutions(season, options, False)
+    beforenight = find_solutions(season, options)
     night = season.get_nights({"end": episode,
                                "includenight": True})[-1][0]
     nightpossol = any([set(night).issubset(sol) for sol in beforenight])
