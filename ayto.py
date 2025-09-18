@@ -3,6 +3,7 @@ import itertools
 import functools
 import time
 import pandas as pd
+from tqdm import tqdm
 
 
 def time_it(inner):
@@ -65,6 +66,7 @@ class AYTO:
         self.dm = dm
         self.dmtuple = dmtuple
         self.dmtupleknown = 7
+        self.two_dms = False
         # self.tm = tm
 
         self.solution = solution
@@ -140,7 +142,9 @@ class AYTO:
 
         # one is part of known perfect match
         # consider multiple seated lefts
-        if (l, r) not in kpm and ((l in hpm) or (r in hpm)) and r != self.dm:
+        # assumption: if dm is not known and you get double match,
+        # you find the double match in the same episode
+        if (l, r) not in kpm and (l in hpm or r in hpm) and r != self.dm:
             return True
 
         return False
@@ -162,14 +166,15 @@ class AYTO:
             if l in leftseated:
                 if dml is None:
                     dml = l
-                elif l != dml:
-                    # print(f"we cannot have more than one double match: {l} {dml}")
+                elif l != dml and not self.two_dms:
+                    print(
+                        f"we cannot have more than one double match: {l} {dml}")
                     return False
             else:
                 leftseated.add(l)
 
             if r in rightseated:
-                # print("no double matches for rights possible")
+                # print(f"no double matches for rights possible: {r} {parsol}")
                 return False
             else:
                 rightseated.add(r)
@@ -193,14 +198,14 @@ class AYTO:
 
         # no known no matches
         if any([self.no_match(*p,  options) for p in parsol]):
-            # ba: list = [self.no_match(*p,  options) for p in parsol]
-            # trueindex = ba.index(True)
+            ba: list = [self.no_match(*p,  options) for p in parsol]
+            trueindex = ba.index(True)
             # print(f"parsol has known no match: {list(parsol)[trueindex]}")
             return False
 
         # VIP 23
         # perfect matches of dmtuple must be the same person
-        elif (self.dmtuple is not None and end >= self.dmtupleknown):
+        elif self.dmtuple is not None and end >= self.dmtupleknown:
             dml = [l for (l, r) in parsol if r in self.dmtuple]
             if len(dml) > 1 and dml[0] != dml[1]:
                 # print(f"dmtuple rights do not have same pm {len(parsol)}")
@@ -214,26 +219,30 @@ class AYTO:
 
         # lefts with multiple matches
         mutiplels = [l for l in self.lefts if len(pdict[l]) > 1]
-        if len(mutiplels) > 1:
-            print("Only one double/tripple match")
-            return False
+        if len(mutiplels) == 2:
+            if not self.two_dms:
+                # print("Only one double/tripple match")
+                return False
+            else:
+                # VIP 2025: two double matches
+                multiplers = [e for l in mutiplels for e in pdict[l]]
+                if not self.dm in multiplers: 
+                    return False
         elif len(mutiplels) == 1:
             mutiplel = mutiplels[0]
-            mutiplers = pdict[mutiplel]
+            multiplers = pdict[mutiplel]
 
             if (self.dmtuple is not None and end >= self.dmtupleknown) \
-                    and len(mutiplers) == 2 and set(self.dmtuple) != set(mutiplers):
+                    and len(multiplers) == 2 and set(self.dmtuple) != set(multiplers):
                 return False
-            elif self.dm is not None and len(mutiplers) == 2 and self.dm not in pdict[mutiplel]:
+            elif self.dm is not None and len(multiplers) == 2 and self.dm not in pdict[mutiplel] \
+                    and not self.two_dms:
                 return False
+        elif len(mutiplels) > 2:
+            return False
 
         # if parsol has nummatches matches
         if complete:
-            # we must have all perfect matches
-            if not all([pm in parsol for pm in kpm]):
-                print("complete and not all perfect matches in partial sol")
-                return False
-
             # we must have 10 seated lefts and nummatches rights
             g_lefts, g_rights = zip(*parsol)
             if len(set(g_lefts)) != 10 or len(set(g_rights)) != self.nummatches:
@@ -245,11 +254,13 @@ class AYTO:
         # number of lights with pairs matching lights in nights
         # if we don't have self.nummatches pairs, we allow lesser lights
         nights = self.get_nights(options)
+        i = 0
         for pairs, lights in nights:
             intersection = set(pairs) & parsol
             clights = len(intersection)
-
+            i += 1
             if clights > lights:
+                # print("line 263", i)
                 return False
             elif clights < lights:
                 if complete:
@@ -297,14 +308,12 @@ class AYTO:
                        for l in self.lefts if l not in g_lefts}
         return pos_matches
 
-    def merge_mm_in_parsol(self, psol: PartialSol, others_list: list[PartialSol], options: dict):
+    def merge_mm_in_parsol(self, psol: PartialSol, other_matches_list: list[PartialSol], options: dict):
         _, _, dm_in_parsol = self.get_parsol_leftrights(psol)
+        assert dm_in_parsol, "merge_mm_in_parsol shouldn't be called if muliple match(es) are not in parsol"
+        return [psol.union(set(othermatches)) for othermatches in other_matches_list]
 
-        if dm_in_parsol:
-            return [psol.union(set(othermatches)) for othermatches in others_list]
-        return []
-
-    def merge_mm_not_in_parsol(self, psol: PartialSol, others_list: list[PartialSol], options: dict):
+    def merge_mm_not_in_parsol(self, psol: PartialSol, other_matches_list: list[PartialSol], options: dict):
         end: int = options.get("end", self.numepisodes-1)
 
         nights = self.get_nights(options)
@@ -319,38 +328,38 @@ class AYTO:
                                if not (self.no_match(l, r, options) or sitting_nomatches.get((l, r), False))]
                            for r in self.rights}
 
-        for othermatches in others_list:
+        for othermatches in other_matches_list:
             tenmatches = psol.union(othermatches)
             assert len(tenmatches) == 10
 
             _, crights = zip(*tenmatches)
-            missingright = [r for r in self.rights if r not in crights][0]
+            mr = [r for r in self.rights if r not in crights][0]
 
             # VIP 2023: dmtuple
             if self.dmtuple is not None and end >= self.dmtupleknown:
-                if missingright not in self.dmtuple:
+                if mr not in self.dmtuple:
                     continue
 
                 dmleft = [l for (l, r) in tenmatches if r in self.dmtuple][0]
-                solutions.append(tenmatches.union([(dmleft, missingright)]))
+                solutions.append(tenmatches.union([(dmleft, mr)]))
 
             # Normalo 2023: dm not known
             elif self.dm is None:
                 solutions += [tenmatches.union([ap])
-                              for ap in addmatches_dict[missingright]]
+                              for ap in addmatches_dict[mr]]
 
             # All other seasons
             else:
-                if missingright == self.dm:
+                if mr == self.dm:
                     solutions += [tenmatches.union([ap])
-                                  for ap in addmatches_dict[missingright]]
+                                  for ap in addmatches_dict[mr]]
                 else:
                     dmleft = [
                         l for (l, r) in tenmatches if r == self.dm][0]
-                    if (dmleft, missingright) not in addmatches_dict[missingright]:
+                    if (dmleft, mr) not in addmatches_dict[mr]:
                         continue
                     solutions.append(tenmatches.union(
-                        [(dmleft, missingright)]))
+                        [(dmleft, mr)]))
         return solutions
 
     def generate_complete_solutions(self, psol: PartialSol, options: dict) -> list[CompleteSol]:
@@ -369,15 +378,14 @@ class AYTO:
 
         products = [list(ps) for ps in itertools.product(*pos_matches.values())
                     if len(set(ps)) == len(ps)]
-        others_list = list(map(lambda p: zip_product(pos_matches.keys(), p),
-                               products))
-
+        other_matches_list = list(map(lambda p: zip_product(pos_matches.keys(), p),
+                                      products))
         if dm_in_parsol > 0:
-            # DM is already in parsol
-            return self.merge_mm_in_parsol(psol, others_list, options)
-
+            # Multiple match is already in parsol
+            return self.merge_mm_in_parsol(psol, other_matches_list, options)
+        
         solutions = self.merge_mm_not_in_parsol(
-            psol, others_list, options)
+            psol, other_matches_list, options)
 
         unique_sols = []
 
@@ -435,6 +443,7 @@ def find_solutions_slow(season: AYTO, options: dict) -> list[CompleteSol]:
 
     return solutions
 
+
 @time_it
 def find_solutions(season: AYTO, options: dict, asm: list = []) -> list[CompleteSol]:
     start = time.time()
@@ -445,14 +454,18 @@ def find_solutions(season: AYTO, options: dict, asm: list = []) -> list[Complete
 
     times.append(time.time()-start)
     start = time.time()
+    if verbose:
+        print(f"generate_parsols done after {times[0]}")
 
     solutions_unfiltered: list[CompleteSol] = []
-    for g in merged_parsols:
+    for g in tqdm(merged_parsols):
         sols_g = season.generate_complete_solutions(g,  options)
         solutions_unfiltered += sols_g
 
     times.append(time.time()-start)
     start = time.time()
+    if verbose:
+        print(f"generate_parsols done after {times[1]}")
 
     # options.update({"checknights": True})
     solutions = list(filter(lambda s: season.parsol_possible(s, options),

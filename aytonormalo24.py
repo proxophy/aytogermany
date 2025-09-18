@@ -2,9 +2,6 @@ from ayto import AYTO, analysize_solutions
 
 from typing import Optional, Union
 from collections import Counter
-import itertools
-import functools
-import time
 import pandas as pd
 import utils
 
@@ -131,7 +128,6 @@ class AYTONormalo2024(AYTO):
             missingright = [r for r in self.rights if r not in crights][0]
 
         # Normalo 2024
-
             missingrights = [r for r in self.rights if r not in crights]
             mr1, mr2 = missingrights
             if self.tm in missingrights:
