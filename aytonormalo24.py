@@ -28,13 +28,11 @@ class AYTONormalo2024(AYTO):
 
         kpm = self.get_pms(options)
         hpm = [e for p in kpm for e in p]
-        print(hpm)
 
         if (l, r) not in kpm and l in hpm:
             # lefts with multiple matches from matchboxes, appear x times
             # for x perfect matches
             mmls = [p for p in hpm if Counter(hpm)[p] > 1]
-            print(mmls)
             # Normalo 24
             if len(mmls) < 3 \
                     and l in mmls and r not in hpm:
