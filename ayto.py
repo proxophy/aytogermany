@@ -167,8 +167,8 @@ class AYTO:
                 if dml is None:
                     dml = l
                 elif l != dml and not self.two_dms:
-                    print(
-                        f"we cannot have more than one double match: {l} {dml}")
+                    # print(
+                    #     f"we cannot have more than one double match: {l} {dml} {parsol}")
                     return False
             else:
                 leftseated.add(l)
@@ -200,7 +200,7 @@ class AYTO:
         if any([self.no_match(*p,  options) for p in parsol]):
             ba: list = [self.no_match(*p,  options) for p in parsol]
             trueindex = ba.index(True)
-            # print(f"parsol has known no match: {list(parsol)[trueindex]}")
+            print(f"parsol has known no match: {list(parsol)[trueindex]}")
             return False
 
         # VIP 23
@@ -208,7 +208,7 @@ class AYTO:
         elif self.dmtuple is not None and end >= self.dmtupleknown:
             dml = [l for (l, r) in parsol if r in self.dmtuple]
             if len(dml) > 1 and dml[0] != dml[1]:
-                # print(f"dmtuple rights do not have same pm {len(parsol)}")
+                print(f"dmtuple rights do not have same pm {len(parsol)}")
                 return False
 
         # check condition for double matches
@@ -221,7 +221,7 @@ class AYTO:
         mutiplels = [l for l in self.lefts if len(pdict[l]) > 1]
         if len(mutiplels) == 2:
             if not self.two_dms:
-                # print("Only one double/tripple match")
+                print("Only one double/tripple match")
                 return False
             else:
                 # VIP 2025: two double matches
@@ -260,7 +260,7 @@ class AYTO:
             clights = len(intersection)
             i += 1
             if clights > lights:
-                # print("line 263", i)
+                # print("line 264", i)
                 return False
             elif clights < lights:
                 if complete:
@@ -532,7 +532,6 @@ def analysize_solutions(season: AYTO, options: dict, asm: list = []):
 
     data = {l: pd.Series([round(pairs_counter.get((l, r), 0)/len(sols)*100, 1) for r in season.rights],
                          index=season.rights) for l in season.lefts}
-
     df = pd.DataFrame(data)
 
     return df
