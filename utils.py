@@ -1,7 +1,5 @@
 import pandas as pd
 
-from ayto import AYTO
-
 
 
 def check_nights(nights: list, lefts: list, rights: list) -> None:
@@ -40,7 +38,7 @@ def validate_season_args(
 ):
 
     nummatches = max(len(lefts), len(rights))
-    if len(lefts) != 10 or len(rights) != nummatches:
+    if "Laurenz" not in lefts and (len(lefts) != 10 or len(rights) != nummatches):
         raise ValueError(f"Not enough or too much women or men")
 
     # check nights
@@ -89,6 +87,11 @@ def read_data_from_excel(sn: str):
     validate_season_args(lefts, rights, nights, matchboxes, dm)
     return lefts, rights, nights, matchboxes, dm, set()
 
+
+def sols_as_df(sols) -> pd.DataFrame:
+    rows = [{l:r for (l,r) in s} for s in sols ]
+    df = pd.DataFrame(rows)
+    return df
 
 if __name__ == "__main__":
     allseasons = [

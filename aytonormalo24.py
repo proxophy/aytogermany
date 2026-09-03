@@ -156,4 +156,4 @@ class AYTONormalo2024(AYTO):
 
 if __name__ == "__main__":
 
-    season = utils.read_data("normalo2024")
+    season = utils.read_data_from_excel("normalo2024")

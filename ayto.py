@@ -36,7 +36,6 @@ class AYTO:
     dm: str | None
     dmtuple: tuple[str, str] | None
 
-
     knownboxes: list[int]
     knownpms: list[tuple[str, str]]
 
@@ -62,7 +61,7 @@ class AYTO:
 
         self.nights = nights
         self.matchboxes = {(l, r): enmatchboxes[(e, l, r)] for e, l, r in enmatchboxes}
-       
+
         self.dm = dm
         self.dmtuple = None
         self.dmtupleknown = 7
@@ -72,8 +71,7 @@ class AYTO:
         self.solution = solution
         # added for analyzing
         self.boxesepisodes = [e for e, _, _ in enmatchboxes]
-        self.numepisodes = max(max(self.boxesepisodes)+1, len(self.nights))
-       
+        self.numepisodes = max(max(self.boxesepisodes) + 1, len(self.nights))
 
         self.knownboxes = [0 for _ in range(self.numepisodes)]
         for i, e in enumerate(self.boxesepisodes):
@@ -135,29 +133,16 @@ class AYTO:
             print("len(solution) > self.nummatches")
             return False
 
-        leftseated = set()
-        rightseated = set()
-        dml = None
-
-        for l, r in psol:
-            if l not in self.lefts or r not in self.rights:
-                print(f"name of {l} or {r} is wrong", l in self.lefts, r in self.rights)
-                return False
-            if l in leftseated:
-                if dml is None:
-                    dml = l
-                elif l != dml and not self.two_dms:
-                    # print(
-                    #     f"we cannot have more than one double match: {l} {dml} {partialsol}")
-                    return False
-            else:
-                leftseated.add(l)
-
-            if r in rightseated:
-                # print(f"no double matches for rights possible: {r} {partialsol}")
-                return False
-            else:
-                rightseated.add(r)
+        ls, rs = zip(*psol)
+        if 2 in Counter(rs).values():
+            # print(f"No double matches for a right")
+            return False
+        if any(l not in self.lefts for l in ls):
+            print(f"Wrongly written names: {[c for c in ls if c not in self.lefts]}")
+            return False
+        if any(r not in self.rights for r in rs):
+            print(f"Wrongly written names: {[c for c in rs if c not in self.rights]}")
+            return False
 
         return True
 
@@ -185,10 +170,10 @@ class AYTO:
 
         # VIP 23
         # perfect matches of dmtuple must be the same person
-        elif self.dmtuple is not None and end >= self.dmtupleknown:
+        if self.dmtuple is not None and end >= self.dmtupleknown:
             dml = [l for (l, r) in psol if r in self.dmtuple]
             if len(dml) > 1 and dml[0] != dml[1]:
-                print(f"dmtuple rights do not have same pm {len(psol)}")
+                print(f"dmtuple rights do not have same pm {len(psol)} {dml}")
                 return False
 
         # check condition for double matches
@@ -201,7 +186,7 @@ class AYTO:
         mutiplels = [l for l in self.lefts if len(pdict[l]) > 1]
         if len(mutiplels) == 2:
             if not self.two_dms:
-                print("Only one double/tripple match")
+                # print("Only one double/tripple match")
                 return False
             else:
                 # VIP 2025: two double matches
@@ -232,7 +217,9 @@ class AYTO:
         if complete:
             # we must have 10 seated lefts and nummatches rights
             g_lefts, g_rights = zip(*psol)
-            if len(set(g_lefts)) != 10 or len(set(g_rights)) != self.nummatches:
+            if len(set(g_lefts)) != len(self.lefts) or len(set(g_rights)) != len(
+                self.rights
+            ):
                 return False
 
         if not checknights:
@@ -307,7 +294,7 @@ class AYTO:
 
     def merge_mm_in_partialsol(
         self, psol: PartialSol, other_matches_list: list[PartialSol], options: dict
-    ):
+    ) -> list[PartialSol]:
         _, _, dm_in_psol = self.get_partialsol_leftrights(psol)
         assert (
             dm_in_psol
@@ -316,13 +303,20 @@ class AYTO:
 
     def merge_mm_not_in_partialsol(
         self, psol: PartialSol, other_matches_list: list[PartialSol], options: dict
-    ):
+    ) -> list[PartialSol]:
         end: int = options.get("end", self.numepisodes - 1)
 
         nights = self.get_nights(options)
         sitting_nomatches = {}
-        # Consider sitting matches as no matches if not in partialsol
-        for pairs, _ in nights:
+        # Consider sitting matches as no matches if not in partialsol and we have the right
+        # amount of lights
+        for pairs, lights in nights:
+            pl = len(set(pairs) & psol)
+            if pl > lights:
+                print("line 330")
+                return []
+            elif pl < lights:
+                continue
             for p in set(pairs) - psol:
                 sitting_nomatches[p] = True
 
@@ -343,7 +337,7 @@ class AYTO:
             assert len(tenmatches) == 10
 
             _, crights = zip(*tenmatches)
-            mr = [r for r in self.rights if r not in crights][0]
+            mr = [r for r in self.rights if r not in crights][0]  # missing right
 
             # VIP 2023: dmtuple
             if self.dmtuple is not None and end >= self.dmtupleknown:
@@ -372,7 +366,7 @@ class AYTO:
         self, psol: PartialSol, options: dict
     ) -> list[CompleteSol]:
         """Generating solutions"""
-        if len(psol) == self.nummatches:
+        if len(psol) == self.nummatches and self.partialsol_possible(psol, options):
             return [psol]
 
         def zip_product(clefts, ordering):
@@ -392,6 +386,7 @@ class AYTO:
         other_matches_list = list(
             map(lambda p: zip_product(pos_matches.keys(), p), products)
         )
+
         if dm_in_psol > 0:
             # Multiple match is already in partialsol
             return self.merge_mm_in_partialsol(psol, other_matches_list, options)
@@ -401,14 +396,20 @@ class AYTO:
         unique_sols = []
 
         for sol in solutions:
-            if len(sol) != self.nummatches:
-                raise ValueError
+            assert (
+                len(sol) == self.nummatches
+            ), f"Complete solutions with {self.nummatches} pairs, not {len(sol)} pairs "
             _, rs = zip(*sol)
-            if 2 in Counter(rs).values():
-                raise ValueError
+
+            assert (
+                2 not in Counter(rs).values()
+            ), f"No double matches for rights possible"
 
             if sol not in unique_sols:
                 unique_sols.append(sol)
+
+        if len(unique_sols) != len(solutions):
+            print("423")
 
         return unique_sols
 
@@ -437,7 +438,8 @@ class AYTO:
             partialsols_per_night.append(combs)
 
         merged_partialsols: list[PartialSol] = functools.reduce(
-            lambda g1, g2: self.merge_partialsols_lists(g1, g2, options), partialsols_per_night
+            lambda g1, g2: self.merge_partialsols_lists(g1, g2, options),
+            partialsols_per_night,
         )
 
         merged_partialsols: list[PartialSol] = list(
@@ -454,7 +456,9 @@ class AYTO:
 def find_solutions_slow(season: AYTO, options: dict) -> list[CompleteSol]:
     solutions = season.generate_complete_solutions(set(), options)
     print(f"Generated solutions: {len(solutions)}")
-    solutions = list(filter(lambda s: season.partialsol_possible(s, options), solutions))
+    solutions = list(
+        filter(lambda s: season.partialsol_possible(s, options), solutions)
+    )
 
     return solutions
 
