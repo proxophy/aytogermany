@@ -1,12 +1,9 @@
-from ayto import *
-from aytonormalo24 import AYTONormalo2024
-from aytovip25 import AYTOVIP2025
-from aytovip23 import AYTOVIP2023
-from aytovip26 import AYTOVIP2026
+from ayto import AYTO, AYTONormalo2024, AYTOVIP2023, AYTOVIP2025, AYTOVIP2026
+from ayto import find_solutions, sol_probs
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
-import utils
+import ayto.utils as utils
 
 
 def plot_df(df):
@@ -34,17 +31,47 @@ def appendsol(sn: str, tsol: set[tuple[str, str]]):
 
 
 if __name__ == "__main__":
-    sn = "vip2026"
-    options = {"end": 3, "includenight": True, "verbose": False}
-    season: AYTO = AYTOVIP2026(*utils.read_data_from_excel(sn))
-    season: AYTO = AYTO(*utils.read_data_from_excel("vip2024")) # 103
-    
+    sn = "vip2021"
+    options = {"end": 2, "includenight": True, "verbose": True}
+    season: AYTO = AYTO(*utils.read_data_from_excel(sn))
     sols = find_solutions(season, options)
+    print(len(sols))
+
+    # season: AYTO = AYTO(*utils.read_data_from_excel("vip2024")) # 103
+    # print(matching_night_probs(season, 3))
+    nums = []
+    # for i in range(2, 10):
+    #     options["end"] = i
+    #     sols = find_solutions(season, options)
+    #     nums.append(len(sols))
+    # print(nums)
+    # print(sols[0])
+    # print("number of solutions", len(sols))
 
     # df = analysize_solutions(season, options)
-   
-    print("number of solutions", len(sols))
     # plot_df(df)
+
+    exit()
+
+    psol = {('Johannes', 'Janice'), ('Marwin', 'Michelle'), ('Germain', 'Emma'), ('Cansin', 'Julia'), ('Bennet', 'Christin'), ('Johannes', 'Marta'), ('Brian', 'Francesca'), ('Fabian', 'Alexandra'), ('Laurenz', 'Alexandra'), ('Robin', 'Joena'), ('Daymian', 'Zoe'), ('Raúl', 'Jenny')}
+
+    # mathematical solution analysis stuff
+    arr = []
+    mins = []
+    maxs = []
+    for s in sols:
+        _, m1, m2 = sol_probs(sols, s, options)
+        mins.append(m1)
+        maxs.append(m2)
+    print(min(mins), max(mins))
+    print(min(maxs), max(maxs))
+
+    for s in sols:
+        probs, m1, m2 = sol_probs(sols, s, options)
+        if m1 <= min(mins):
+            print("Found:", s, list(enumerate(probs)))
+    
+    
     # print(sols[0])
 
     # res = season.partialsol_possible(tsol, options)

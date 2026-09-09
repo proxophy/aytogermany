@@ -1,6 +1,17 @@
 import pandas as pd
+import functools
+import time
 
+def time_it(inner):
+    @functools.wraps(inner)
+    def c_inner(*args):
+        start = time.time()
+        res = inner(*args)
+        end = time.time()
+        print(f"=== time needed for {inner.__name__}: {(end-start):0.3f}s ===")
+        return res
 
+    return c_inner
 
 def check_nights(nights: list, lefts: list, rights: list) -> None:
     """Check if nights are fine"""

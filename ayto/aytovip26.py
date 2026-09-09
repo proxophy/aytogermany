@@ -1,9 +1,9 @@
-from ayto import AYTO, time_it
+from .ayto import AYTO
 
 from typing import Optional, Union
 from collections import Counter
 import pandas as pd
-import utils
+import ayto.utils as utils
 import itertools
 
 PartialSol = set[tuple[str, str]]

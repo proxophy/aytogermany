@@ -1,9 +1,9 @@
-from ayto import AYTO, analysize_solutions
+from ayto import AYTO
 
 from typing import Optional, Union
 from collections import Counter
 import pandas as pd
-import utils
+import ayto.utils as utils
 
 PartialSol = set[tuple[str, str]]
 
@@ -153,7 +153,3 @@ class AYTONormalo2024(AYTO):
 
         return solutions
 
-
-if __name__ == "__main__":
-
-    season = utils.read_data_from_excel("normalo2024")

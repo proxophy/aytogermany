@@ -1,21 +1,9 @@
 from collections import Counter
 import itertools
 import functools
-import time
-import pandas as pd
-from tqdm import tqdm
 
 
-def time_it(inner):
-    @functools.wraps(inner)
-    def c_inner(*args):
-        start = time.time()
-        res = inner(*args)
-        end = time.time()
-        print(f"=== time needed for {inner.__name__}: {(end-start):0.3f}s ===")
-        return res
 
-    return c_inner
 
 
 PartialSol = set[tuple[str, str]]
@@ -408,8 +396,8 @@ class AYTO:
             if sol not in unique_sols:
                 unique_sols.append(sol)
 
-        if len(unique_sols) != len(solutions):
-            print("423")
+        # if len(unique_sols) != len(solutions):
+        #     print("423")
 
         return unique_sols
 
@@ -453,62 +441,9 @@ class AYTO:
         return merged_partialsols
 
 
-def find_solutions_slow(season: AYTO, options: dict) -> list[CompleteSol]:
-    solutions = season.generate_complete_solutions(set(), options)
-    print(f"Generated solutions: {len(solutions)}")
-    solutions = list(
-        filter(lambda s: season.partialsol_possible(s, options), solutions)
-    )
+class SolutionSpace:
+    sols: list[CompleteSol]
 
-    return solutions
-
-
-@time_it
-def find_solutions(season: AYTO, options: dict, asm: list = []) -> list[CompleteSol]:
-    start = time.time()
-    times = []
-    verbose: bool = options.get("verbose", False)
-
-    merged_partialsols = season.generate_partialsols(options)
-
-    times.append(time.time() - start)
-    start = time.time()
-    if verbose:
-        print(f"generate_partialsols done after {times[0]}")
-
-    solutions_unfiltered: list[CompleteSol] = []
-    for g in tqdm(merged_partialsols):
-        sols_g = season.generate_complete_solutions(g, options)
-        solutions_unfiltered += sols_g
-
-    times.append(time.time() - start)
-    start = time.time()
-    if verbose:
-        print(f"generate_partialsols done after {times[1]}")
-
-    # options.update({"checknights": True})
-    solutions = list(
-        filter(lambda s: season.partialsol_possible(s, options), solutions_unfiltered)
-    )
-    if len(solutions_unfiltered) - len(solutions) > 0:
-        print("len(solutions_unfiltered) - len(solutions) > 0")
-
-    times.append(time.time() - start)
-    if verbose:
-        print(f"Generating partialsols: {times[0]:0.2f} s")
-        print(f"Generating solutions: {times[1]:0.2f} s")
-        print(f"Filtering solutions: {times[2]:0.2f} s")
-        print(
-            f"Before and after filtering: {len(solutions_unfiltered)} {len(solutions)}"
-        )
-
-    if len(asm) > 0:
-        # keep solutions that have at least one pair of assumption
-        solutions_unfiltered = [
-            sol for sol in solutions_unfiltered if any([p in sol for p in asm])
-        ]
-
-    return solutions
 
 
 def dm_left(sol: CompleteSol) -> str:
@@ -516,71 +451,3 @@ def dm_left(sol: CompleteSol) -> str:
     lefts = list(zip(*sol))[0]
     return [l for (l, r) in Counter(lefts).items() if r >= 2][0]
 
-
-@time_it
-def analysize_solutions(season: AYTO, options: dict, asm: list = []):
-    mbs = season.get_matchboxes(options)
-    sols = find_solutions(season, options, asm)
-    end = options.get("end", season.numepisodes - 1)
-    end = min(end, season.numepisodes - 1)
-
-    pairs_counter = Counter([p for s in sols for p in s])
-
-    allpairs = itertools.product(season.lefts, season.rights)
-    perfect_matches = [p for p in pairs_counter if pairs_counter[p] == len(sols)]
-    new_nomatches = list(
-        filter(
-            lambda p: not (season.no_match(*p, options) or p in pairs_counter), allpairs
-        )
-    )
-    new_pms = list(filter(lambda p: p not in mbs, perfect_matches))
-    # todo: max end with num episodes
-    print(f"Nach Folgen {2*end+3} & {2*end+4}")
-    print(f"Anzahl Möglichkeiten: {len(sols)}")
-    print(f"Bekannte Perfect Matches: {perfect_matches}")
-    if len(new_pms) > 0:
-        print(f"Neue Perfect Matches: {new_pms}")
-    if len(new_nomatches) > 0:
-        impdict = {l: [] for l in season.lefts}
-        for l, r in new_nomatches:
-            impdict[l].append(r)
-        print("Neue No-Matches durch Ausschlussprinzip:")
-        for l in impdict:
-            if len(impdict[l]) == 0:
-                continue
-            print(f"{l}: {', '.join(impdict[l])}")
-    # Wie wahrscheinlich hat ein left ein Doppelmatch
-    dm_lefts = [
-        (l, round(r / len(sols) * 100, 1))
-        for (l, r) in Counter([dm_left(s) for s in sols]).items()
-    ]
-    dm_lefts.sort(key=(lambda a: a[1]), reverse=True)
-    print(f"Person mit Doppelmatch: {dm_lefts}")
-
-    data = {
-        l: pd.Series(
-            [
-                round(pairs_counter.get((l, r), 0) / len(sols) * 100, 1)
-                for r in season.rights
-            ],
-            index=season.rights,
-        )
-        for l in season.lefts
-    }
-    df = pd.DataFrame(data)
-
-    return df
-
-
-def matching_night_probs(season: AYTO, episode: int):
-    options = {"end": episode, "includenight": False, "verbose": False}
-    beforenight = find_solutions(season, options)
-    night = season.get_nights({"end": episode, "includenight": True})[-1][0]
-    nightpossol = any([set(night).issubset(sol) for sol in beforenight])
-
-    print(f"Pairs of nights are possible solution: {nightpossol}")
-
-    poslights = Counter([len(set(night).intersection(sol)) for sol in beforenight])
-    return [
-        round(poslights.get(i, 0) / len(beforenight) * 100, 2) for i in range(0, 11)
-    ]
