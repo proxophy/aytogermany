@@ -3,7 +3,7 @@ import functools
 import time
 from typing import Sequence
 
-from .models import Pair, Night, Matchboxes, Solution
+from .models import *
 
 
 def time_it(inner):
@@ -116,7 +116,7 @@ def read_data_from_excel(
     try:
         dfsolution = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Solution", header=0)
         solution: Solution = Solution(
-            make_pair_list(dfsolution["left"].to_list(), dfsolution["right"].to_list())
+            set(make_pair_list(dfsolution["left"].to_list(), dfsolution["right"].to_list()))
         )
     except:
         solution: Solution = Solution()

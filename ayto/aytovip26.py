@@ -1,15 +1,7 @@
 from .ayto import AYTO
+from .models import *
 
-from typing import Optional, Union
-from collections import Counter
-import pandas as pd
-import ayto.utils as utils
 import itertools
-
-PartialSol = set[tuple[str, str]]
-CompleteSol = set[tuple[str, str]]
-Night = tuple[list[tuple[str, str]], int]
-Matchboxes = dict[tuple[str, str], bool]
 
 
 class AYTOVIP2026(AYTO):
@@ -17,24 +9,24 @@ class AYTOVIP2026(AYTO):
         self,
         lefts: list[str],
         rights: list[str],
-        nights: list[tuple[list[tuple[str, str]], int]],
-        enmatchboxes: dict[tuple[int, str, str], bool] = {},
+        nights: list[Night],
+        matchboxes: Matchboxes = Matchboxes(),
         dm: str | None = None,
-        solution: Optional[set[tuple[str, str]]] = None,
+        solution: Solution | None = None,
     ) -> None:
-        super().__init__(lefts, rights, nights, enmatchboxes, dm, solution)
+        super().__init__(lefts, rights, nights, matchboxes, dm, solution)
         self.sm = "Laurenz"
         self.nummatches = 12
 
-    def no_match(self, l: str, r: str, options: dict[str, bool]) -> bool:
-        return super().no_match(l, r, options)
+    def no_match(self, p: Pair, options: dict[str, bool]) -> bool:
+        return super().no_match(p, options)
 
-    def partialsol_correct_format(self, psol: PartialSol) -> bool:
-        if len(psol) > self.nummatches:
+    def solution_correct_format(self, sol: Solution) -> bool:
+        if len(sol) > self.nummatches:
             print("len(solution) > self.nummatches")
             return False
 
-        ls, rs = zip(*psol)
+        ls, rs = zip(*sol)
         if any(l not in self.lefts for l in ls):
             print(f"Wrongly written names: {[c for c in ls if c not in self.lefts]}")
             return False
@@ -44,13 +36,13 @@ class AYTOVIP2026(AYTO):
        
         return True
 
-    def partialsol_possible(self, psol: PartialSol, options: dict) -> bool:
+    def solution_possible(self, sol: Solution, options: dict) -> bool:
 
-        if not super().partialsol_possible(psol, options):
+        if not super().solution_possible(sol, options):
             return False
 
         pdict = {r: [] for r in self.rights}
-        for l, r in psol:
+        for l, r in sol:
             pdict[r].append(l)
 
         mutiplers = [
@@ -69,39 +61,39 @@ class AYTOVIP2026(AYTO):
         return True
 
 
-    def possible_matches_for_partialsol(
-        self, psol: PartialSol, options: dict
+    def possible_matches_for_solution(
+        self, sol: Solution, options: dict
     ) -> dict[str, list[str]]:
-        return super().possible_matches_for_partialsol(psol, options)
+        return super().possible_matches_for_solution(sol, options)
 
-    def merge_mm_not_in_partialsol(
-        self, psol: PartialSol, other_matches_list: list[PartialSol], options: dict
+    def merge_mm_not_in_solution(
+        self, sol: Solution, other_matches_list: list[Solution], options: dict
     ):
-        return super().merge_mm_not_in_partialsol(psol, other_matches_list, options)
+        return super().merge_mm_not_in_solution(sol, other_matches_list, options)
 
     def generate_complete_solutions(
-        self, psol: PartialSol, options: dict
-    ) -> list[CompleteSol]:
+        self, sol: Solution, options: dict
+    ) -> list[Solution]:
         pass
 
-        if len(psol) == self.nummatches and self.partialsol_possible(psol, options):
-            return [psol]
+        if len(sol) == self.nummatches and self.solution_possible(sol, options):
+            return [sol]
         # print("in aytovip26")
 
         def zip_product(clefts, ordering):
-            return set(zip(clefts, ordering))
+            return set(Pair(*p) for p in zip(clefts, ordering))
 
-        glefts, _, dm_in_psol = self.get_partialsol_leftrights(psol)
-        pos_matches = self.possible_matches_for_partialsol(psol, options)
+        glefts, _, dm_in_psol = self.get_solution_leftrights(sol)
+        pos_matches = self.possible_matches_for_solution(sol, options)
         pos_matches.pop(self.sm)
         smr = None
         if self.sm in glefts:
             # remove pair with self.sm if necessary
-            smmatches = [r for l, r in psol if l == self.sm][0]
-            psol.remove((self.sm, smmatches[0]))
+            smmatches = [r for l, r in sol if l == self.sm][0]
+            sol.remove(Pair(self.sm, smmatches[0]))
         else:
             smmatches = [
-                r for r in self.rights if not self.no_match(self.sm, r, options)
+                r for r in self.rights if not self.no_match(Pair(self.sm, r), options)
             ]
 
         # print(smmatches)
@@ -112,19 +104,17 @@ class AYTOVIP2026(AYTO):
             if len(set(ps)) == len(ps)
         ]
         other_matches_list = list(
-            map(lambda p: zip_product(pos_matches.keys(), p), products)
+            map(lambda p: Solution(zip_product(pos_matches.keys(), p)), products)
         )
 
-        # print("dm_in_psol", dm_in_psol)
-        # print("len(products)", len(products))
-        # print("len(other_matches_list)", len(other_matches_list))
+
 
         if dm_in_psol > 0:
-            isols = self.merge_mm_in_partialsol(psol, other_matches_list, options)
+            isols = self.merge_mm_in_solution(sol, other_matches_list, options)
         else:
-            isols = self.merge_mm_not_in_partialsol(psol, other_matches_list, options)
+            isols = self.merge_mm_not_in_solution(sol, other_matches_list, options)
             # add self.sm as double_match
-        solutions = [s.union({(self.sm, r)}) for r in smmatches for s in isols]
+        solutions = [s.addpair(Pair(self.sm, r)) for r in smmatches for s in isols]
         unique_sols = []
 
         for sol in solutions:
@@ -141,7 +131,7 @@ class AYTOVIP2026(AYTO):
 if __name__ == "__main__":
     sn = "vip2026"
     options = {"end": 2, "includenight": True, "verbose": False}
-    season: AYTO = AYTOVIP2026(*utils.read_data_from_excel(sn))
+    # season: AYTO = AYTOVIP2026(*utils.read_data_from_excel(sn))
 
     psol = {
         ("Robin", "Christin"),
@@ -168,10 +158,10 @@ if __name__ == "__main__":
         ("Laurenz", "Joena"),
     }
 
-    sols = season.generate_complete_solutions(psol, options)
-    print("tsol in sols", tsol in sols)
-    print("subset", psol.issubset(tsol))
-    print(season.partialsol_correct_format(tsol))
+    # sols = season.generate_complete_solutions(psol, options)
+    # print("tsol in sols", tsol in sols)
+    # print("subset", psol.issubset(tsol))
+    # print(season.partialsol_correct_format(tsol))
 
     # csols = season.generate_complete_solutions(psol, options)
     # print("len(csols)", len(csols))

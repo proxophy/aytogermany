@@ -2,8 +2,7 @@ from collections import Counter
 import itertools
 import functools
 
-
-from .models import Pair, Night, Solution, Matchboxes
+from .models import *
 
 
 class AYTO:
@@ -74,6 +73,7 @@ class AYTO:
     def get_matchboxes(self, options: dict) -> Matchboxes:
         # change this to match Maxbox class
         end = min(self.numepisodes - 1, options.get("end", self.numepisodes - 1))
+        # print("end", end, self.matchboxes.get_matchboxes_until_episode(end))
         # usedmbkeys = list(self.matchboxes.keys())[: (self.knownboxes[end] + 1)]
         # usedmb = {k: self.matchboxes[k] for k in usedmbkeys}
         return self.matchboxes.get_matchboxes_until_episode(end)
@@ -97,7 +97,7 @@ class AYTO:
         # todo: reimplement blackout pairs
 
         # matchbox result was false
-        if p in self.matchboxes and not self.matchboxes[p]:
+        if p in mb and not mb[p]:
             return True
 
         # one is part of known perfect match
@@ -116,7 +116,7 @@ class AYTO:
             print("len(solution) > self.nummatches")
             return False
 
-        ls, rs = sol.get_candidates()
+        ls, rs = zip(*sol)
         if 2 in Counter(rs).values():
             # print(f"No double matches for a right")
             return False
@@ -149,7 +149,7 @@ class AYTO:
         if any([self.no_match(p, options) for p in sol]):
             ba: list = [self.no_match(p, options) for p in sol]
             trueindex = ba.index(True)
-            print(f"Solution has known no match: {list(sol)[trueindex]}")
+            print(f"Solution has known no match: {list(sol)[trueindex]} {options}")
             return False
 
         # VIP 23
@@ -237,13 +237,13 @@ class AYTO:
         """
         m_asm = []
         for g1, g2 in itertools.product(psl_1, psl_2):
-            pred = self.solution_possible(g1 | g2, options)
-            if pred and g1 | g2 not in m_asm:
-                m_asm.append(g1 | g2)
+            pred = self.solution_possible(g1.union(g2), options)
+            if pred and g1.union(g2) not in m_asm:
+                m_asm.append(g1.union(g2))
 
         return m_asm
 
-    def get_Solution_leftrights(self, sol: Solution):
+    def get_solution_leftrights(self, sol: Solution):
         assert isinstance(sol, Solution)
         if len(sol) > 0:
             g_lefts, g_rights = zip(*sol)
@@ -252,11 +252,11 @@ class AYTO:
             g_lefts, g_rights = set(), set()
         return set(g_lefts), set(g_rights), len(g_lefts) - len(set(g_lefts)) > 0
 
-    def possible_matches_for_Solution(
+    def possible_matches_for_solution(
         self, sol: Solution, options: dict
     ) -> dict[str, list[str]]:
         assert isinstance(sol, Solution)
-        g_lefts, g_rights, _ = self.get_Solution_leftrights(sol)
+        g_lefts, g_rights, _ = self.get_solution_leftrights(sol)
 
         nights = self.get_nights(options)
         sitting_nomatches = {}
@@ -282,11 +282,12 @@ class AYTO:
         self, sol: Solution, other_matches_list: list[Solution], options: dict
     ) -> list[Solution]:
         assert isinstance(sol, Solution)
-        _, _, dm_in_psol = self.get_Solution_leftrights(sol)
+        _, _, dm_in_psol = self.get_solution_leftrights(sol)
         assert (
             dm_in_psol
         ), "merge_mm_in_Solution shouldn't be called if muliple match(es) are not in Solution"
-        return [sol | set(othermatches) for othermatches in other_matches_list]
+        sols = [sol.union(othermatches) for othermatches in other_matches_list]
+        return sols
 
     def merge_mm_not_in_solution(
         self, sol: Solution, other_matches_list: list[Solution], options: dict
@@ -321,9 +322,8 @@ class AYTO:
             for r in self.rights
         }
 
-
         for othermatches in other_matches_list:
-            tenmatches = sol | othermatches
+            tenmatches = sol.union(othermatches)
             assert len(tenmatches) == 10
 
             _, crights = zip(*tenmatches)
@@ -335,22 +335,22 @@ class AYTO:
                     continue
 
                 dmleft = [l for (l, r) in tenmatches if r in self.dmtuple][0]
-                solutions.append(tenmatches | [Pair(dmleft, mr)])
+                solutions.append(tenmatches.addpair(Pair(dmleft, mr)))
 
             # Normalo 2023: dm not known
             elif self.dm is None:
-                solutions += [tenmatches | {ap} for ap in addmatches_dict[mr]]
+                solutions += [tenmatches.addpair(ap) for ap in addmatches_dict[mr]]
 
             # All other seasons
             else:
                 if mr == self.dm:
-                    solutions += [tenmatches | {ap} for ap in addmatches_dict[mr]]
+                    solutions += [tenmatches.addpair(ap) for ap in addmatches_dict[mr]]
                 else:
                     dmleft = [l for (l, r) in tenmatches if r == self.dm][0]
                     if Pair(dmleft, mr) not in addmatches_dict[mr]:
                         # print("continue here?", (dmleft, mr))
                         continue
-                    solutions.append(tenmatches | {Pair(dmleft, mr)})
+                    solutions.append(tenmatches.addpair(Pair(dmleft, mr)))
             assert all(isinstance(x, Solution) for x in solutions)
         return solutions
 
@@ -363,14 +363,15 @@ class AYTO:
             return [sol]
 
         def zip_product(clefts, ordering):
-            return tuple(Pair(*p) for p in zip(clefts, ordering))
+            return set(Pair(*p) for p in zip(clefts, ordering))
 
-        _, _, dm_in_psol = self.get_Solution_leftrights(sol)
-        pos_matches = self.possible_matches_for_Solution(sol, options)
+        _, _, dm_in_psol = self.get_solution_leftrights(sol)
+        pos_matches = self.possible_matches_for_solution(sol, options)
 
         # for l in pos_matches:
         #     print(l, pos_matches[l])
 
+        # todo: maybe optimize this
         products = [
             list(ps)
             for ps in itertools.product(*pos_matches.values())
@@ -379,7 +380,6 @@ class AYTO:
         other_matches_list = list(
             map(lambda p: Solution(zip_product(pos_matches.keys(), p)), products)
         )
-
 
         if dm_in_psol > 0:
             # Multiple match is already in Solution
@@ -405,7 +405,6 @@ class AYTO:
 
         # if len(unique_sols) != len(solutions):
         #     print("423")
-       
 
         return unique_sols
 
@@ -425,11 +424,12 @@ class AYTO:
             )
             defcorrect = list(filter(lambda p: p in kpm, night.pairs))
             remaining = set(night.pairs) - set(defcorrect) - set(notcorrect)
-            assert all(isinstance(x, Pair) for x in kpm), \
-                list(kpm) + list(map(type, kpm))
+            assert all(isinstance(x, Pair) for x in kpm), list(kpm) + list(
+                map(type, kpm)
+            )
 
             combs = [
-                Solution(tuple(set(comb).union(kpm)))
+                Solution(set(comb).union(kpm))
                 for comb in itertools.combinations(
                     remaining, night.lights - len(defcorrect)
                 )

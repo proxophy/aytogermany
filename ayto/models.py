@@ -8,15 +8,17 @@ class Pair:
     r: str
 
     def __repr__(self) -> str:
-        return f"Pair(\'{self.l}\', \'{self.r}\')"
+        return f"Pair('{self.l}', '{self.r}')"
 
     def __iter__(self):
         return iter((self.l, self.r))
 
 
-@dataclass(frozen=True)
 class Solution:
-    pairs: tuple[Pair, ...] = ()
+    pairs: set[Pair] = set()
+
+    def __init__(self, pairs: set[Pair] = set()):
+        self.pairs = pairs
 
     def __repr__(self) -> str:
         return "(" + ", ".join(map(str, self.pairs)) + ")"
@@ -27,9 +29,14 @@ class Solution:
     def __iter__(self):
         return iter(self.pairs)
 
-    def get_candidates(self) -> tuple[tuple[str, ...], tuple[tuple[str, ...]]]:
-        ls, rs = zip(*self.pairs)
-        return ls, rs
+    def __eq__(self, other):
+        if isinstance(other, Solution):
+            return self.pairs == other.pairs
+        return False
+
+    # def get_candidates(self) -> tuple[tuple[str, ...], tuple[tuple[str, ...]]]:
+    #     ls, rs = zip(*self.pairs)
+    #     return ls, rs
 
     def intersectionlength(self, other) -> int:
         if isinstance(other, Solution):
@@ -39,21 +46,23 @@ class Solution:
         else:
             raise NotImplementedError
 
-    def __and__(self, other):
-        if isinstance(other, Solution):
-            return set(self.pairs) & set(other.pairs)
-        elif isinstance(other, set):
-            return set(self.pairs) & other
-        else:
-            raise NotImplementedError
+    def intersection(self, other: "Solution"):
+        return Solution(self.pairs & other.pairs)
 
-    def __or__(self, other):
-        if isinstance(other, Solution):
-            return Solution(tuple(set(self.pairs) | set(other.pairs)))
-        elif isinstance(other, set):
-            return Solution(tuple(set(self.pairs) | other))
-        else:
-            raise NotImplementedError
+    def union(self, other: "Solution"):
+        return Solution(self.pairs | other.pairs)
+
+    def issubset(self, other: "Solution"):  # type: ignore
+        return set(self.pairs).issubset(set(other.pairs))
+
+    def difference(self, other: "Solution"):
+        return set(self.pairs).difference(set(other.pairs))
+
+    def addpair(self, pair: Pair):
+        return Solution(self.pairs | {pair})
+
+    def remove(self, pair: Pair):
+        self.pairs.remove(pair)
 
 
 @dataclass(frozen=True)
@@ -81,15 +90,18 @@ class Matchboxes:
     def get_perfect_matches(self, end: int = -1) -> list[Pair]:
         if end == -1:
             end = max(self.episodes)
-        return [self.pairs[i] for i in range(len(self.results)) 
-                if self.results[i] and self.episodes[i] <= end]
+        return [
+            self.pairs[i]
+            for i in range(len(self.results))
+            if self.results[i] and self.episodes[i] <= end
+        ]
 
-    def get_matchboxes_until_episode(self, end : int):
+    def get_matchboxes_until_episode(self, end: int):
         c = sum(1 for e in self.episodes if e <= end)
         return Matchboxes(self.episodes[:c], self.pairs[:c], self.results[:c])
 
     def __contains__(self, key: Pair):
-       return key in self.pairs
+        return key in self.pairs
 
 
 @dataclass(frozen=True)
@@ -103,11 +115,10 @@ class GameState:
 if __name__ == "__main__":
     p1 = Pair("Laurenz", "Joena")
     p2 = Pair("Raul", "Michelle")
-    sol = Solution((p1, p2))
+    sol = Solution({p1, p2})
     myset = {p1, Pair("Raul", "Emma")}
     myset2 = {p1, p2}
     print(myset | myset2)
-    print(sol | myset)
     mb = Matchboxes([0, 1], [p1, p2], [True, False])
     for s in sol:
         print(s)
