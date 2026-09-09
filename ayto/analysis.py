@@ -1,12 +1,10 @@
-
 import pandas as pd
 
 from .ayto import *
-
+from .models import Night, Solution
 from .solver import find_solutions
-from .ayto import AYTO, PartialSol, CompleteSol
+from .ayto import AYTO
 from .utils import time_it
-
 
 
 @time_it
@@ -18,11 +16,11 @@ def analysize_solutions(season: AYTO, options: dict):
 
     pairs_counter = Counter([p for s in sols for p in s])
 
-    allpairs = itertools.product(season.lefts, season.rights)
+    allpairs = [Pair(l,r) for l in season.lefts for r in season.rights]
     perfect_matches = [p for p in pairs_counter if pairs_counter[p] == len(sols)]
     new_nomatches = list(
         filter(
-            lambda p: not (season.no_match(*p, options) or p in pairs_counter), allpairs
+            lambda p: not (season.no_match(p, options) or p in pairs_counter), allpairs
         )
     )
     new_pms = list(filter(lambda p: p not in mbs, perfect_matches))
@@ -52,7 +50,7 @@ def analysize_solutions(season: AYTO, options: dict):
     data = {
         l: pd.Series(
             [
-                round(pairs_counter.get((l, r), 0) / len(sols) * 100, 1)
+                round(pairs_counter.get(Pair(l, r), 0) / len(sols) * 100, 1)
                 for r in season.rights
             ],
             index=season.rights,
@@ -67,27 +65,29 @@ def analysize_solutions(season: AYTO, options: dict):
 def matching_night_probs(season: AYTO, episode: int):
     options = {"end": episode, "includenight": False, "verbose": False}
     beforenight = find_solutions(season, options)
-    night = season.get_nights({"end": episode, "includenight": True})[-1][0]
+    night = season.get_nights({"end": episode, "includenight": True})[-1].pairs
     nightpossol = any([set(night).issubset(sol) for sol in beforenight])
 
     print(f"Pairs of nights are possible solution: {nightpossol}")
 
     poslights = Counter([len(set(night).intersection(sol)) for sol in beforenight])
     return [
-        (i, round(poslights.get(i, 0) / len(beforenight) * 100, 2)) for i in range(0, 11)
+        (i, round(poslights.get(i, 0) / len(beforenight) * 100, 2))
+        for i in range(0, 11)
     ]
 
 
-
-def sol_probs(sols: list[CompleteSol], sol: CompleteSol, options: dict):
+def sol_probs(sols: list[Solution], sol: Solution, options: dict):
     # sols = find_solutions(season, options)
     nightpossol = any([set(sol).issubset(sol) for sol in sols])
-    
+
     # print(f"Solution possible at this point: {nightpossol}")
     lights = Counter([len(s & sol) for s in sols])
-    probs = [
-        round(lights.get(i, 0) / len(sols) * 100, 2) for i in range(12+ 1)
-    ]
+    probs = [round(lights.get(i, 0) / len(sols) * 100, 2) for i in range(12 + 1)]
     import statistics
 
-    return probs, statistics.median(filter(lambda x: x > 0,probs )), max(filter(lambda x: x > 0,probs ))
+    return (
+        probs,
+        statistics.median(filter(lambda x: x > 0, probs)),
+        max(filter(lambda x: x > 0, probs)),
+    )

@@ -3,13 +3,7 @@ import itertools
 import functools
 
 
-
-
-
-PartialSol = set[tuple[str, str]]
-CompleteSol = set[tuple[str, str]]
-Night = tuple[list[tuple[str, str]], int]
-Matchboxes = dict[tuple[str, str], bool]
+from .models import Pair, Night, Solution, Matchboxes
 
 
 class AYTO:
@@ -25,18 +19,18 @@ class AYTO:
     dmtuple: tuple[str, str] | None
 
     knownboxes: list[int]
-    knownpms: list[tuple[str, str]]
+    knownpms: list[Pair]
 
-    solution: CompleteSol | None
+    solution: Solution | None
 
     def __init__(
         self,
         lefts: list[str],
         rights: list[str],
         nights: list[Night],
-        enmatchboxes: dict[tuple[int, str, str], bool] = {},
+        matchboxes: Matchboxes = Matchboxes(),
         dm: str | None = None,
-        solution: CompleteSol | None = None,
+        solution: Solution | None = None,
     ) -> None:
 
         self.count = 0
@@ -48,7 +42,9 @@ class AYTO:
             print("MORE THAN 11 MATCHES")
 
         self.nights = nights
-        self.matchboxes = {(l, r): enmatchboxes[(e, l, r)] for e, l, r in enmatchboxes}
+        self.matchboxes = (
+            matchboxes  # {(l, r): enmatchboxes[(e, l, r)] for e, l, r in enmatchboxes}
+        )
 
         self.dm = dm
         self.dmtuple = None
@@ -58,7 +54,7 @@ class AYTO:
 
         self.solution = solution
         # added for analyzing
-        self.boxesepisodes = [e for e, _, _ in enmatchboxes]
+        self.boxesepisodes = [e for e, _, _ in matchboxes]
         self.numepisodes = max(max(self.boxesepisodes) + 1, len(self.nights))
 
         self.knownboxes = [0 for _ in range(self.numepisodes)]
@@ -69,11 +65,6 @@ class AYTO:
             if self.knownboxes[i] == 0:
                 self.knownboxes[i] = self.knownboxes[i - 1]
 
-        # known perfect matches
-        self.knownpms = [p for p in self.matchboxes.keys() if self.matchboxes[p]]
-        # people who have known perfect match
-        self.haspm = [e for p in self.knownpms for e in p]
-
     def get_nights(self, options: dict) -> list[Night]:
         """Retrieve nights based on episode limits."""
         end = min(self.numepisodes - 1, options.get("end", self.numepisodes - 1))
@@ -81,47 +72,51 @@ class AYTO:
         return nights if options.get("includenight", True) else nights[:-1]
 
     def get_matchboxes(self, options: dict) -> Matchboxes:
+        # change this to match Maxbox class
         end = min(self.numepisodes - 1, options.get("end", self.numepisodes - 1))
-        usedmbkeys = list(self.matchboxes.keys())[: (self.knownboxes[end] + 1)]
-        usedmb = {k: self.matchboxes[k] for k in usedmbkeys}
-        return usedmb
+        # usedmbkeys = list(self.matchboxes.keys())[: (self.knownboxes[end] + 1)]
+        # usedmb = {k: self.matchboxes[k] for k in usedmbkeys}
+        return self.matchboxes.get_matchboxes_until_episode(end)
 
-    def get_pms(self, options: dict) -> list[tuple[str, str]]:
-        mb = self.get_matchboxes(options)
-        return list(set(mb.keys()) & set(self.knownpms))
+    def get_pms(self, options: dict) -> list[Pair]:
+        end = min(self.numepisodes - 1, options.get("end", self.numepisodes - 1))
+        return self.matchboxes.get_perfect_matches(end)
 
-    def no_match(self, l: str, r: str, options: dict[str, bool]) -> bool:
+    def no_match(self, p: Pair, options: dict[str, bool]) -> bool:
         """(l,r) are definitely no match"""
         self.count += 1
-        assert l in self.lefts and r in self.rights, f"l: {l}, r: {r}"
+        assert isinstance(p, Pair)
+        assert p.l in self.lefts and p.r in self.rights, f"l: {p.l}, r: {p.r}"
 
         nights = self.get_nights(options)
         mb = self.get_matchboxes(options)
         kpm = self.get_pms(options)
-        hpm = [e for p in kpm for e in p]
+        hpm = [e for pp in kpm for e in pp]
 
         # pair in blackout night who is not known perfect match
         # todo: reimplement blackout pairs
 
         # matchbox result was false
-        if not mb.get((l, r), True):
+        if p in self.matchboxes and not self.matchboxes[p]:
             return True
 
         # one is part of known perfect match
         # consider multiple seated lefts
         # assumption: if dm is not known and you get double match,
         # you find the double match in the same episode
-        if (l, r) not in kpm and (l in hpm or r in hpm) and r != self.dm:
+        if p not in kpm and (p.l in hpm or p.r in hpm) and p.r != self.dm:
             return True
 
         return False
 
-    def partialsol_correct_format(self, psol: PartialSol) -> bool:
-        if len(psol) > self.nummatches:
+    def solution_correct_format(self, sol: Solution) -> bool:
+        assert isinstance(sol, Solution)
+
+        if len(sol) > self.nummatches:
             print("len(solution) > self.nummatches")
             return False
 
-        ls, rs = zip(*psol)
+        ls, rs = sol.get_candidates()
         if 2 in Counter(rs).values():
             # print(f"No double matches for a right")
             return False
@@ -134,41 +129,42 @@ class AYTO:
 
         return True
 
-    def partialsol_possible(self, psol: PartialSol, options: dict) -> bool:
-        if len(psol) > self.nummatches:
+    def solution_possible(self, sol: Solution, options: dict) -> bool:
+        assert isinstance(sol, Solution)
+        if len(sol) > self.nummatches:
             return False
         # assert len(psol) <= self.nummatches, \
         #     f"The partial solution has {len(psol)} instead of {self.nummatches}"
         checknights: bool = options.get("checknights", True)
         end: int = options.get("end", self.numepisodes - 1)
 
-        if not self.partialsol_correct_format(psol):
+        if not self.solution_correct_format(sol):
             return False
 
-        complete: bool = len(psol) == self.nummatches
+        complete: bool = len(sol) == self.nummatches
 
         kpm = self.get_pms(options)
 
         # no known no matches
-        if any([self.no_match(*p, options) for p in psol]):
-            ba: list = [self.no_match(*p, options) for p in psol]
+        if any([self.no_match(p, options) for p in sol]):
+            ba: list = [self.no_match(p, options) for p in sol]
             trueindex = ba.index(True)
-            print(f"partialsol has known no match: {list(psol)[trueindex]}")
+            print(f"Solution has known no match: {list(sol)[trueindex]}")
             return False
 
         # VIP 23
         # perfect matches of dmtuple must be the same person
         if self.dmtuple is not None and end >= self.dmtupleknown:
-            dml = [l for (l, r) in psol if r in self.dmtuple]
+            dml = [l for (l, r) in sol if r in self.dmtuple]
             if len(dml) > 1 and dml[0] != dml[1]:
-                print(f"dmtuple rights do not have same pm {len(psol)} {dml}")
+                print(f"dmtuple rights do not have same pm {len(sol)} {dml}")
                 return False
 
         # check condition for double matches
         pdict = {l: [] for l in self.lefts}
-        for l, r in psol:
+        for l, r in sol:
             pdict[l].append(r)
-        g_lefts, g_rights = zip(*psol)
+        g_lefts, g_rights = zip(*sol)
 
         # lefts with multiple matches
         mutiplels = [l for l in self.lefts if len(pdict[l]) > 1]
@@ -201,10 +197,10 @@ class AYTO:
         elif len(mutiplels) > 2:
             return False
 
-        # if partialsol has nummatches matches
+        # if Solution has nummatches matches
         if complete:
             # we must have 10 seated lefts and nummatches rights
-            g_lefts, g_rights = zip(*psol)
+            g_lefts, g_rights = zip(*sol)
             if len(set(g_lefts)) != len(self.lefts) or len(set(g_rights)) != len(
                 self.rights
             ):
@@ -216,24 +212,24 @@ class AYTO:
         # if we don't have self.nummatches pairs, we allow lesser lights
         nights = self.get_nights(options)
         i = 0
-        for pairs, lights in nights:
-            intersection = set(pairs) & psol
-            clights = len(intersection)
-            # print(f"checking night {i} with {lights} lights, partialsol has {clights} lights")
+        for night in nights:
+            clights = sol.intersectionlength(night.pairs)
+            # print(f"checking night {i} with {lights} lights, Solution has {clights} lights")
             # print(intersection)
             # print(len(pairs), pairs)
             i += 1
-            if clights > lights:
-                # print("line 264", i)
+            if clights > night.lights:
+                # print(clights, ">", night.lights)
                 return False
-            elif clights < lights:
+            elif clights < night.lights:
+                # print(clights, "<", night.lights)
                 if complete:
                     return False
 
         return True
 
-    def merge_partialsols_lists(
-        self, psl_1: list[PartialSol], psl_2: list[PartialSol], options: dict
+    def merge_Solutions_lists(
+        self, psl_1: list[Solution], psl_2: list[Solution], options: dict
     ):
         """
         Input: season, two list of partial sols (set of pairs)
@@ -241,37 +237,39 @@ class AYTO:
         """
         m_asm = []
         for g1, g2 in itertools.product(psl_1, psl_2):
-            pred = self.partialsol_possible(g1.union(g2), options)
-            if pred and g1.union(g2) not in m_asm:
-                m_asm.append(g1.union(g2))
+            pred = self.solution_possible(g1 | g2, options)
+            if pred and g1 | g2 not in m_asm:
+                m_asm.append(g1 | g2)
 
         return m_asm
 
-    def get_partialsol_leftrights(self, psol: PartialSol):
-        if len(psol) > 0:
-            g_lefts, g_rights = zip(*psol)
+    def get_Solution_leftrights(self, sol: Solution):
+        assert isinstance(sol, Solution)
+        if len(sol) > 0:
+            g_lefts, g_rights = zip(*sol)
             g_lefts, g_rights = list(g_lefts), list(g_rights)
         else:
             g_lefts, g_rights = set(), set()
         return set(g_lefts), set(g_rights), len(g_lefts) - len(set(g_lefts)) > 0
 
-    def possible_matches_for_partialsol(
-        self, psol: PartialSol, options: dict
+    def possible_matches_for_Solution(
+        self, sol: Solution, options: dict
     ) -> dict[str, list[str]]:
-        g_lefts, g_rights, _ = self.get_partialsol_leftrights(psol)
+        assert isinstance(sol, Solution)
+        g_lefts, g_rights, _ = self.get_Solution_leftrights(sol)
 
         nights = self.get_nights(options)
         sitting_nomatches = {}
         # Consider sitting matches as no matches if not in partial sol
-        for pairs, _ in nights:
-            for p in set(pairs) - psol:
+        for night in nights:
+            for p in set(night.pairs) - set(sol.pairs):
                 sitting_nomatches[p] = True
 
         pos_matches = {
             l: [
                 r
                 for r in set(self.rights) - g_rights
-                if not self.no_match(l, r, options)
+                if not self.no_match(Pair(l, r), options)
                 and not sitting_nomatches.get((l, r), False)
                 and r != self.dm
             ]
@@ -280,48 +278,52 @@ class AYTO:
         }
         return pos_matches
 
-    def merge_mm_in_partialsol(
-        self, psol: PartialSol, other_matches_list: list[PartialSol], options: dict
-    ) -> list[PartialSol]:
-        _, _, dm_in_psol = self.get_partialsol_leftrights(psol)
+    def merge_mm_in_solution(
+        self, sol: Solution, other_matches_list: list[Solution], options: dict
+    ) -> list[Solution]:
+        assert isinstance(sol, Solution)
+        _, _, dm_in_psol = self.get_Solution_leftrights(sol)
         assert (
             dm_in_psol
-        ), "merge_mm_in_partialsol shouldn't be called if muliple match(es) are not in partialsol"
-        return [psol.union(set(othermatches)) for othermatches in other_matches_list]
+        ), "merge_mm_in_Solution shouldn't be called if muliple match(es) are not in Solution"
+        return [sol | set(othermatches) for othermatches in other_matches_list]
 
-    def merge_mm_not_in_partialsol(
-        self, psol: PartialSol, other_matches_list: list[PartialSol], options: dict
-    ) -> list[PartialSol]:
+    def merge_mm_not_in_solution(
+        self, sol: Solution, other_matches_list: list[Solution], options: dict
+    ) -> list[Solution]:
+        assert isinstance(sol, Solution)
         end: int = options.get("end", self.numepisodes - 1)
 
         nights = self.get_nights(options)
         sitting_nomatches = {}
-        # Consider sitting matches as no matches if not in partialsol and we have the right
+        # Consider sitting matches as no matches if not in Solution and we have the right
         # amount of lights
-        for pairs, lights in nights:
-            pl = len(set(pairs) & psol)
-            if pl > lights:
+        for night in nights:
+            pl = sol.intersectionlength(night.pairs)
+            if pl > night.lights:
                 print("line 330")
                 return []
-            elif pl < lights:
+            elif pl < night.lights:
                 continue
-            for p in set(pairs) - psol:
+            for p in set(night.pairs) - set(sol.pairs):
                 sitting_nomatches[p] = True
 
         solutions = []
         addmatches_dict = {
             r: [
-                (l, r)
+                Pair(l, r)
                 for l in self.lefts
                 if not (
-                    self.no_match(l, r, options) or sitting_nomatches.get((l, r), False)
+                    self.no_match(Pair(l, r), options)
+                    or sitting_nomatches.get((l, r), False)
                 )
             ]
             for r in self.rights
         }
 
+
         for othermatches in other_matches_list:
-            tenmatches = psol.union(othermatches)
+            tenmatches = sol | othermatches
             assert len(tenmatches) == 10
 
             _, crights = zip(*tenmatches)
@@ -333,35 +335,38 @@ class AYTO:
                     continue
 
                 dmleft = [l for (l, r) in tenmatches if r in self.dmtuple][0]
-                solutions.append(tenmatches.union([(dmleft, mr)]))
+                solutions.append(tenmatches | [Pair(dmleft, mr)])
 
             # Normalo 2023: dm not known
             elif self.dm is None:
-                solutions += [tenmatches.union([ap]) for ap in addmatches_dict[mr]]
+                solutions += [tenmatches | {ap} for ap in addmatches_dict[mr]]
 
             # All other seasons
             else:
                 if mr == self.dm:
-                    solutions += [tenmatches.union([ap]) for ap in addmatches_dict[mr]]
+                    solutions += [tenmatches | {ap} for ap in addmatches_dict[mr]]
                 else:
                     dmleft = [l for (l, r) in tenmatches if r == self.dm][0]
-                    if (dmleft, mr) not in addmatches_dict[mr]:
+                    if Pair(dmleft, mr) not in addmatches_dict[mr]:
+                        # print("continue here?", (dmleft, mr))
                         continue
-                    solutions.append(tenmatches.union([(dmleft, mr)]))
+                    solutions.append(tenmatches | {Pair(dmleft, mr)})
+            assert all(isinstance(x, Solution) for x in solutions)
         return solutions
 
     def generate_complete_solutions(
-        self, psol: PartialSol, options: dict
-    ) -> list[CompleteSol]:
+        self, sol: Solution, options: dict
+    ) -> list[Solution]:
         """Generating solutions"""
-        if len(psol) == self.nummatches and self.partialsol_possible(psol, options):
-            return [psol]
+        assert isinstance(sol, Solution)
+        if len(sol) == self.nummatches and self.solution_possible(sol, options):
+            return [sol]
 
         def zip_product(clefts, ordering):
-            return set(zip(clefts, ordering))
+            return tuple(Pair(*p) for p in zip(clefts, ordering))
 
-        _, _, dm_in_psol = self.get_partialsol_leftrights(psol)
-        pos_matches = self.possible_matches_for_partialsol(psol, options)
+        _, _, dm_in_psol = self.get_Solution_leftrights(sol)
+        pos_matches = self.possible_matches_for_Solution(sol, options)
 
         # for l in pos_matches:
         #     print(l, pos_matches[l])
@@ -372,14 +377,15 @@ class AYTO:
             if len(set(ps)) == len(ps)
         ]
         other_matches_list = list(
-            map(lambda p: zip_product(pos_matches.keys(), p), products)
+            map(lambda p: Solution(zip_product(pos_matches.keys(), p)), products)
         )
 
-        if dm_in_psol > 0:
-            # Multiple match is already in partialsol
-            return self.merge_mm_in_partialsol(psol, other_matches_list, options)
 
-        solutions = self.merge_mm_not_in_partialsol(psol, other_matches_list, options)
+        if dm_in_psol > 0:
+            # Multiple match is already in Solution
+            return self.merge_mm_in_solution(sol, other_matches_list, options)
+
+        solutions = self.merge_mm_not_in_solution(sol, other_matches_list, options)
 
         unique_sols = []
 
@@ -395,59 +401,63 @@ class AYTO:
 
             if sol not in unique_sols:
                 unique_sols.append(sol)
+            assert all(isinstance(x, Pair) for x in sol)
 
         # if len(unique_sols) != len(solutions):
         #     print("423")
+       
 
         return unique_sols
 
-    def generate_partialsols(self, options: dict) -> list[PartialSol]:
+    def generate_partial_solutions(self, options: dict) -> list[Solution]:
         verbose: bool = options["verbose"]
 
         if verbose:
-            print("generate_partialsols")
+            print("generate_partial_solutions")
 
         nights = self.get_nights(options)
         kpm = self.get_pms(options)
 
-        partialsols_per_night = []
-        for pairs, lights in nights:
+        Solutions_per_night = []
+        for night in nights:
             notcorrect = list(
-                filter(lambda p: self.no_match(*p, options) or p in kpm, pairs)
+                filter(lambda p: self.no_match(p, options) or p in kpm, night.pairs)
             )
-            defcorrect = list(filter(lambda p: p in kpm, pairs))
-            remaining = set(pairs) - set(defcorrect) - set(notcorrect)
+            defcorrect = list(filter(lambda p: p in kpm, night.pairs))
+            remaining = set(night.pairs) - set(defcorrect) - set(notcorrect)
+            assert all(isinstance(x, Pair) for x in kpm), \
+                list(kpm) + list(map(type, kpm))
 
             combs = [
-                set(comb).union(kpm)
-                for comb in itertools.combinations(remaining, lights - len(defcorrect))
+                Solution(tuple(set(comb).union(kpm)))
+                for comb in itertools.combinations(
+                    remaining, night.lights - len(defcorrect)
+                )
             ]
 
-            partialsols_per_night.append(combs)
+            Solutions_per_night.append(combs)
 
-        merged_partialsols: list[PartialSol] = functools.reduce(
-            lambda g1, g2: self.merge_partialsols_lists(g1, g2, options),
-            partialsols_per_night,
+        merged_Solutions: list[Solution] = functools.reduce(
+            lambda g1, g2: self.merge_Solutions_lists(g1, g2, options),
+            Solutions_per_night,
         )
 
-        merged_partialsols: list[PartialSol] = list(
-            filter(lambda a: self.partialsol_possible(a, options), merged_partialsols)
+        merged_Solutions: list[Solution] = list(
+            filter(lambda a: self.solution_possible(a, options), merged_Solutions)
         )
 
         if verbose:
-            partialsols_lengths_counter = Counter(list(map(len, merged_partialsols)))
-            print(f"Parsols lengths: {partialsols_lengths_counter}")
+            Solutions_lengths_counter = Counter(list(map(len, merged_Solutions)))
+            print(f"Parsols lengths: {Solutions_lengths_counter}")
 
-        return merged_partialsols
+        return merged_Solutions
 
 
 class SolutionSpace:
-    sols: list[CompleteSol]
+    sols: list[Solution]
 
 
-
-def dm_left(sol: CompleteSol) -> str:
+def dm_left(sol: Solution) -> str:
     """Which of lefts has double match"""
     lefts = list(zip(*sol))[0]
     return [l for (l, r) in Counter(lefts).items() if r >= 2][0]
-

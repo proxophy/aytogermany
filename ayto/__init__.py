@@ -1,4 +1,4 @@
-from .ayto import AYTO, PartialSol, CompleteSol, Night, Matchboxes
+from .ayto import AYTO, Pair, Night, Matchboxes, Solution
 from .aytonormalo24 import AYTONormalo2024
 from .aytovip25 import AYTOVIP2025
 from .aytovip23 import AYTOVIP2023
@@ -16,8 +16,8 @@ __all__ = [
     "AYTOVIP2023",
     "AYTOVIP2026",
     "find_solutions",
-    "PartialSol",
-    "CompleteSol",
+    "Pair",
+    "Solution",
     "Night",
     "Matchboxes",
 ]

@@ -1,4 +1,4 @@
-from ayto import AYTO, AYTONormalo2024, AYTOVIP2023, AYTOVIP2025, AYTOVIP2026
+from ayto import AYTO, AYTONormalo2024, AYTOVIP2023, AYTOVIP2025, AYTOVIP2026, Solution
 from ayto import find_solutions, sol_probs
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -31,10 +31,16 @@ def appendsol(sn: str, tsol: set[tuple[str, str]]):
 
 
 if __name__ == "__main__":
-    sn = "vip2021"
-    options = {"end": 2, "includenight": True, "verbose": True}
+    sn = "vip2022"
+    options = {"end": 7, "includenight": True, "verbose": True}
+    lefts, rights, nights, matchboxes, dm, solution = utils.read_data_from_excel(sn)
+    # print(matchboxes.get_perfect_matches(7))
     season: AYTO = AYTO(*utils.read_data_from_excel(sn))
+    from ayto import Pair
+
+   
     sols = find_solutions(season, options)
+    # print(set(sol.pairs) - set(ps.pairs))
     print(len(sols))
 
     # season: AYTO = AYTO(*utils.read_data_from_excel("vip2024")) # 103
@@ -53,7 +59,20 @@ if __name__ == "__main__":
 
     exit()
 
-    psol = {('Johannes', 'Janice'), ('Marwin', 'Michelle'), ('Germain', 'Emma'), ('Cansin', 'Julia'), ('Bennet', 'Christin'), ('Johannes', 'Marta'), ('Brian', 'Francesca'), ('Fabian', 'Alexandra'), ('Laurenz', 'Alexandra'), ('Robin', 'Joena'), ('Daymian', 'Zoe'), ('Raúl', 'Jenny')}
+    psol = {
+        ("Johannes", "Janice"),
+        ("Marwin", "Michelle"),
+        ("Germain", "Emma"),
+        ("Cansin", "Julia"),
+        ("Bennet", "Christin"),
+        ("Johannes", "Marta"),
+        ("Brian", "Francesca"),
+        ("Fabian", "Alexandra"),
+        ("Laurenz", "Alexandra"),
+        ("Robin", "Joena"),
+        ("Daymian", "Zoe"),
+        ("Raúl", "Jenny"),
+    }
 
     # mathematical solution analysis stuff
     arr = []
@@ -70,8 +89,7 @@ if __name__ == "__main__":
         probs, m1, m2 = sol_probs(sols, s, options)
         if m1 <= min(mins):
             print("Found:", s, list(enumerate(probs)))
-    
-    
+
     # print(sols[0])
 
     # res = season.partialsol_possible(tsol, options)
