@@ -1,32 +1,13 @@
-from .ayto import AYTO
+from .ayto import Solver
 from .models import *
 
 from typing import Optional, Union
 from collections import Counter
 
 
-class AYTOVIP2025(AYTO):
+class VIP2025Solver(Solver):
 
-    def __init__(
-        self,
-        lefts: list[str],
-        rights: list[str],
-        nights: list[Night],
-        matchboxes: Matchboxes = Matchboxes(),
-        dm: str | None = None,
-        solution: Solution | None = None,
-    ) -> None:
-        super().__init__(lefts, rights, nights, matchboxes, dm, solution)
-        self.two_dms = True
-        # TODO: fix this
-
-    def no_match(self, p: Pair, options: dict[str, bool]) -> bool:
-        return super().no_match(p, options)
-
-    def generate_partial_solutions(self, options: dict) -> list[Solution]:
-        return super().generate_partial_solutions(options)
-
-    def solution_possible(self, sol: Solution, options: dict) -> bool:
+    def solution_possible(self, sol: Solution, end: int) -> bool:
         if len(sol) == 0:
             return False
         p_lefts, p_rights = zip(*sol)
@@ -34,85 +15,65 @@ class AYTOVIP2025(AYTO):
         # no tripple matches
         if any([v > 2 for v in r_counter.values()]):
             return False
-        return super().solution_possible(sol, options)
-
-    def possible_matches_for_solution(
-        self, sol: Solution, options: dict
-    ) -> dict[str, list[str]]:
-        return super().possible_matches_for_solution(sol, options)
-
-    def merge_mm_in_solution(
-        self, sol: Solution, other_matches_list: list[Solution], options: dict
-    ):
-        return super().merge_mm_in_solution(sol, other_matches_list, options)
+        return super().solution_possible(sol, end)
 
     def merge_mm_not_in_solution(
-        self, sol: Solution, other_matches_list: list[Solution], options: dict
+        self, sol: Solution, other_matches_list: list[Solution], end:int
     ):
         solutions = []
         addmatches_dict = {
             r: [
-                Pair(l, r) for l in self.lefts if not self.no_match(Pair(l, r), options)
+                Pair(l, r) for l in self.season.lefts if not self.no_match(Pair(l, r), end)
             ]
-            for r in self.rights
+            for r in self.season.rights
         }
         for othermatches in other_matches_list:
             tenplusmatches = sol.union(othermatches)
             _, crights = zip(*tenplusmatches)
-            missingrights = [r for r in self.rights if r not in crights]
+            missingrights = [r for r in self.season.rights if r not in crights]
 
             if len(missingrights) == 2:
                 # add two matches
                 r1, r2 = missingrights
-                if r1 == self.dm or r2 == self.dm:
+                if r1 == self.season.dm or r2 == self.season.dm:
                     for l1, _ in addmatches_dict[r1]:
                         for l2, _ in addmatches_dict[r2]:
                             if l1 == l2:
                                 continue
                             solutions.append(
                                 tenplusmatches.union(
-                                    Solution({Pair(l1, r1), Pair(l2, r2)})
+                                    Solution(frozenset({Pair(l1, r1), Pair(l2, r2)}))
                                 )
                             )
                 else:
-                    dmleft = [l for (l, r) in tenplusmatches if r == self.dm][0]
-                    if not self.no_match(Pair(dmleft, r1), options):
+                    dmleft = [l for (l, r) in tenplusmatches if r == self.season.dm][0]
+                    if not self.no_match(Pair(dmleft, r1), end):
                         solutions += [
-                            tenplusmatches.union(Solution({Pair(dmleft, r1), ap}))
+                            tenplusmatches.union(
+                                Solution(frozenset({Pair(dmleft, r1), ap}))
+                            )
                             for ap in addmatches_dict[r2]
                             if ap.l != dmleft
                         ]
-                    if not self.no_match(Pair(dmleft, r2), options):
+                    if not self.no_match(Pair(dmleft, r2), end):
                         solutions += [
-                            tenplusmatches.union(Solution({Pair(dmleft, r2), ap}))
+                            tenplusmatches.union(
+                                Solution(frozenset({Pair(dmleft, r2), ap}))
+                            )
                             for ap in addmatches_dict[r1]
                             if ap.l != dmleft
                         ]
             else:
                 mr = missingrights[0]
-                if mr == self.dm:
+                if mr == self.season.dm:
                     solutions += [
                         tenplusmatches.addpair(ap) for ap in addmatches_dict[mr]
                     ]
                 else:
-                    dmleft = [l for (l, r) in tenplusmatches if r == self.dm][0]
+                    dmleft = [l for (l, r) in tenplusmatches if r == self.season.dm][0]
                     if (dmleft, mr) not in addmatches_dict[mr]:
                         continue
                     solutions.append(tenplusmatches.addpair(Pair(dmleft, mr)))
         return solutions
 
-    # def get_solution_leftrights(self, sol: Solution):
-    #     """Is the multiple match in the partial sol"""
-    #     if len(sol) == 0:
-    #         return set(), set(), False
-    #     p_lefts, p_rights = zip(*sol)
-    #     multiplels = {l for l in p_lefts if Counter(p_lefts)[l] == 2}
-    #     return set(p_lefts), set(p_rights), len(multiplels) == 2
-
-    def generate_complete_solutions(
-        self, sol: Solution, options: dict
-    ) -> list[Solution]:
-        """Generating solutions"""
-        return super().generate_complete_solutions(sol, options)
-
-
+    

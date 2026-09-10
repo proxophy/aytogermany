@@ -1,63 +1,49 @@
 import time
 import tqdm
 
-from .ayto import AYTO
+from .ayto import Solver
 from .utils import time_it
 from .models import Solution
 
 
-def find_solutions_slow(season: AYTO, options: dict) -> list[Solution]:
-    solutions = season.generate_complete_solutions(Solution(), options)
+def find_solutions_slow(season: Solver, end: int) -> list[Solution]:
+    solutions = season.generate_complete_solutions(Solution(), end)
     print(f"Generated solutions: {len(solutions)}")
-    solutions = list(
-        filter(lambda s: season.solution_possible(s, options), solutions)
-    )
+    solutions = list(filter(lambda s: season.solution_possible(s, end), solutions))
 
     return solutions
 
 
 @time_it
-def find_solutions(season: AYTO, options: dict) -> list[Solution]:
+def find_solutions(solver: Solver, end: int) -> list[Solution]:
     start = time.time()
     times = []
-    verbose: bool = options.get("verbose", False)
 
-    merged_partialsols = season.generate_partial_solutions(options)
+    merged_partialsols = solver.generate_partial_solutions(end)
+    print("merged_partialsols",len( merged_partialsols))
 
     times.append(time.time() - start)
     start = time.time()
-    if verbose:
-        print(f"generate_partialsols done after {times[0]}")
 
     solutions_unfiltered: list[Solution] = []
     
-    for g in tqdm.tqdm(merged_partialsols):
-        sols_g = season.generate_complete_solutions(g, options)
-        solutions_unfiltered += sols_g
 
-    for s in solutions_unfiltered:
-        assert isinstance(s, Solution)
+    for g in tqdm.tqdm(merged_partialsols):
+        sols_g = solver.generate_complete_solutions(g, end)
+        solutions_unfiltered += sols_g
+    print("solutions_unfiltered", len(solutions_unfiltered))
 
     times.append(time.time() - start)
     start = time.time()
-    if verbose:
-        print(f"generate_complete_solutions done after {times[1]}")
 
     # options.update({"checknights": True})
     solutions = list(
-        filter(lambda s: season.solution_possible(s, options), solutions_unfiltered)
+        filter(lambda s: solver.solution_possible(s, end), solutions_unfiltered)
     )
+    print(solutions_unfiltered[0])
     if len(solutions_unfiltered) - len(solutions) > 0:
         print("len(solutions_unfiltered) - len(solutions) > 0")
 
     times.append(time.time() - start)
-    if verbose:
-        print(f"Generating partialsols: {times[0]:0.2f} s")
-        print(f"Generating solutions: {times[1]:0.2f} s")
-        print(f"Filtering solutions: {times[2]:0.2f} s")
-        print(
-            f"Before and after filtering: {len(solutions_unfiltered)} {len(solutions)}"
-        )
 
     return solutions
-

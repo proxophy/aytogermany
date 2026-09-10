@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Sequence
+from collections import Counter
 
 
 @dataclass(frozen=True)
@@ -13,12 +14,16 @@ class Pair:
     def __iter__(self):
         return iter((self.l, self.r))
 
+    def tuplerep(self):
+        return (self.l, self.r)
 
+
+@dataclass(frozen=True)
 class Solution:
-    pairs: set[Pair] = set()
+    pairs: frozenset[Pair] = frozenset()
 
-    def __init__(self, pairs: set[Pair] = set()):
-        self.pairs = pairs
+    # def __init__(self, pairs: set[Pair] = set()):
+    #     self.pairs = frozenset(pairs)
 
     def __repr__(self) -> str:
         return "(" + ", ".join(map(str, self.pairs)) + ")"
@@ -62,13 +67,21 @@ class Solution:
         return Solution(self.pairs | {pair})
 
     def remove(self, pair: Pair):
-        self.pairs.remove(pair)
+        return Solution(self.pairs.difference(pair))
+
+    def mm_left(self) -> str:
+        ls, rs = zip(*self.pairs)
+        return [l for (l, v) in Counter(ls).items() if v >= 2][0]
 
 
 @dataclass(frozen=True)
 class Night:
     pairs: tuple[Pair, ...]
     lights: int
+
+    def __post_init__(self):
+        if not 0 <= self.lights <= len(self.pairs):
+            raise ValueError("Invalid number of lights")
 
 
 # Matchboxes = dict[Pair, bool]
@@ -78,6 +91,11 @@ class Matchboxes:
     pairs: Sequence[Pair] = ()
     results: Sequence[bool] = ()
 
+    def __post_init__(self):
+        if not (len(self.episodes) == len(self.pairs) == len(self.results)):
+            raise ValueError
+        pass
+
     def __getitem__(self, key: Pair) -> bool:
         if key not in self.pairs:
             raise KeyError
@@ -86,6 +104,9 @@ class Matchboxes:
 
     def __iter__(self):
         return zip(self.episodes, self.pairs, self.results)
+
+    def __len__(self):
+        return len(self.episodes)
 
     def get_perfect_matches(self, end: int = -1) -> list[Pair]:
         if end == -1:
@@ -105,20 +126,51 @@ class Matchboxes:
 
 
 @dataclass(frozen=True)
-class GameState:
-    lefts: tuple[str]
-    rights: tuple[str]
-    nights: tuple[Night]
+class Season:
+    lefts: Sequence[str]
+    rights: Sequence[str]
+    nights: Sequence[Night]
     matchboxes: Matchboxes
+    solution: Solution | None = None
+    mm: str | None = None
+    dmtuple: tuple[str, str] | None = None
+    dmtupleknown: int = 7
+    two_dms: bool = False
+    ldm: bool = False
+
+    def __post_init__(self):
+        if not (0 <= len(self.nights) <= 10 and 0 <= len(self.matchboxes)):
+            raise ValueError(
+                f"Invalid number of nights or matchboxes {len(self.nights)} {len(self.matchboxes)}"
+            )
+
+    @property
+    def nummatches(self) -> int:
+        return max(len(self.lefts), len(self.rights)) + (1 if self.ldm else 0)
+
+    @property
+    def numepisodes(self) -> int:
+        return len(self.nights)
+
+    def get_nights(self, end: int = 10) -> Sequence[Night]:
+        end = max(0, min(end, 10))
+        return self.nights[: (end + 1)]
+
+    def get_matchboxes(self, end: int = 10) -> Matchboxes:
+        end = max(0, min(end, 10))
+        return self.matchboxes.get_matchboxes_until_episode(end)
+
+    def get_pms(self, end: int = 10) -> list[Pair]:
+        end = max(0, min(end, 10))
+        return self.matchboxes.get_perfect_matches(end)
 
 
 if __name__ == "__main__":
     p1 = Pair("Laurenz", "Joena")
     p2 = Pair("Raul", "Michelle")
-    sol = Solution({p1, p2})
+    sol = Solution(frozenset((p1, p2)))
     myset = {p1, Pair("Raul", "Emma")}
     myset2 = {p1, p2}
     print(myset | myset2)
     mb = Matchboxes([0, 1], [p1, p2], [True, False])
-    for s in sol:
-        print(s)
+    print(sol.mm_left())

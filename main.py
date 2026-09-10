@@ -1,5 +1,7 @@
-from ayto import AYTO, Solution
-from ayto import find_solutions, sol_probs
+from ayto import Solver, VIP2026Solver
+from ayto.analysis import SolutionSpace,  analyze_solutions
+from ayto.models import Season, Solution, Pair
+from ayto.solver import find_solutions
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -32,15 +34,21 @@ def appendsol(sn: str, tsol: set[tuple[str, str]]):
 
 if __name__ == "__main__":
     sn = "vip2026"
-    options = {"end": 5, "includenight": True, "verbose": False}
+    options = {"end": 8, "includenight": True, "verbose": True}
     lefts, rights, nights, matchboxes, dm, solution = utils.read_data_from_excel(sn)
     # print(matchboxes.get_perfect_matches(7))
-    season: AYTO = AYTO(*utils.read_data_from_excel(sn))
-    from ayto import Pair
-
+    psol = Solution(frozenset((Pair('Bennet', 'Francesca'), Pair('Fabian', 'Christin'), Pair('Johannes', 'Marta'), Pair('Cansin', 'Zoe'), Pair('Germain', 'Alexandra'), Pair('Raúl', 'Michelle'), Pair('Johannes', 'Janice'), Pair('Robin', 'Joena'), Pair('Daymian', 'Jenny'), Pair('Brian', 'Julia'), Pair('Laurenz', 'Alexandra'), Pair('Marwin', 'Emma'))))
     
-    sols = find_solutions(season, options)
-    # print("sol in generated", sol in  sols)
-    print(len(sols))
+    from ayto import Pair
+    season: Season = Season(lefts, rights, nights, matchboxes, solution=solution, ldm=True)
+    solver: Solver = VIP2026Solver(season)
+    print(solver.sm)
+    
+    res = solver.solution_possible(psol, 8)
+    print(res)
+    
+
+    # df = pd.Series(probs).unstack(fill_value=0)
+   
 
    

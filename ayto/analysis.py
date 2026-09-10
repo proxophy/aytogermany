@@ -1,71 +1,78 @@
 import pandas as pd
+from collections import Counter
 
-from .ayto import *
-from .models import Night, Solution
+from .models import Night, Solution, Pair
 from .solver import find_solutions
-from .ayto import AYTO
+from .ayto import Solver
 from .utils import time_it
 
 
-@time_it
-def analysize_solutions(season: AYTO, options: dict):
-    mbs = season.get_matchboxes(options)
-    sols = find_solutions(season, options)
-    end = options.get("end", season.numepisodes - 1)
-    end = min(end, season.numepisodes - 1)
+class SolutionSpace:
+    sols: list[Solution]
+    numsols: int
+    lefts: list[str]
+    rights: list[str]
 
-    pairs_counter = Counter([p for s in sols for p in s])
+    def __init__(self, sols: list[Solution]):
+        self.sols = sols
+        self.numsols = len(sols)
+        clefts, crights = zip(*sols[0])
+        self.lefts = list(set(clefts))
+        self.rights = list(set(crights))
+        self.allpairs = [(l, r) for l in self.lefts for r in self.rights]
+        self.pairs_counter = Counter([p.tuplerep() for s in self.sols for p in s])
+        for l, r in self.allpairs:
+            if (l, r) not in self.pairs_counter:
+                self.pairs_counter[(l, r)] = 0
 
-    allpairs = [Pair(l,r) for l in season.lefts for r in season.rights]
-    perfect_matches = [p for p in pairs_counter if pairs_counter[p] == len(sols)]
-    new_nomatches = list(
-        filter(
-            lambda p: not (season.no_match(p, options) or p in pairs_counter), allpairs
-        )
-    )
-    new_pms = list(filter(lambda p: p not in mbs, perfect_matches))
-    # todo: max end with num episodes
-    print(f"Nach Folgen {2*end+3} & {2*end+4}")
-    print(f"Anzahl Möglichkeiten: {len(sols)}")
-    print(f"Bekannte Perfect Matches: {perfect_matches}")
-    if len(new_pms) > 0:
-        print(f"Neue Perfect Matches: {new_pms}")
-    if len(new_nomatches) > 0:
-        impdict = {l: [] for l in season.lefts}
-        for l, r in new_nomatches:
-            impdict[l].append(r)
-        print("Neue No-Matches durch Ausschlussprinzip:")
-        for l in impdict:
-            if len(impdict[l]) == 0:
-                continue
-            print(f"{l}: {', '.join(impdict[l])}")
-    # Wie wahrscheinlich hat ein left ein Doppelmatch
-    dm_lefts = [
-        (l, round(r / len(sols) * 100, 1))
-        for (l, r) in Counter([dm_left(s) for s in sols]).items()
-    ]
-    dm_lefts.sort(key=(lambda a: a[1]), reverse=True)
-    print(f"Person mit Doppelmatch: {dm_lefts}")
+    def get_pair_probs_dict(self):
+        return {
+            (l, r): round(self.pairs_counter[(l, r)] / self.numsols * 100, 1)
+            for (l, r) in self.pairs_counter
+        }
 
-    data = {
-        l: pd.Series(
-            [
-                round(pairs_counter.get(Pair(l, r), 0) / len(sols) * 100, 1)
-                for r in season.rights
-            ],
-            index=season.rights,
-        )
-        for l in season.lefts
-    }
-    df = pd.DataFrame(data)
+    def get_no_matches(self) -> list[tuple[str, str]]:
+        return [p for p in self.pairs_counter if self.pairs_counter[p] == 0]
 
-    return df
+    def get_perfect_matches(self) -> list[tuple[str, str]]:
+        return [p for p in self.pairs_counter if self.pairs_counter[p] == self.numsols]
+
+    def get_no_matches_for_l(self, l: str) -> list[str]:
+        if l not in self.lefts:
+            raise ValueError(f"{l} is not a candidate in these solutions")
+        return [r for r in self.rights if self.pairs_counter[(l, r)] == 0]
+
+    def get_no_matches_for_r(self, r: str) -> list[str]:
+        if r not in self.rights:
+            raise ValueError(f"{r} is not a candidate in these solutions")
+        return [l for l in self.lefts if self.pairs_counter[(l, r)] == 0]
+
+    def get_mm_probs(self):
+        mm = [s.mm_left() for s in self.sols]
+        return [
+            (l, round(v / len(self.sols) * 100, 1)) for (l, v) in Counter(mm).items()
+        ]
 
 
-def matching_night_probs(season: AYTO, episode: int):
+def analyze_solutions(sols: list[Solution]):
+    solspace = SolutionSpace(sols)
+
+    print(f"Anzahl Möglichkeiten: {solspace.numsols}")
+    print("Perfect Matches")
+    print(solspace.get_perfect_matches())
+    print("No-Matches:")
+    for l in solspace.lefts:
+        print(f"{l}: {solspace.get_no_matches_for_l(l)}")
+
+    print("Person mit Doppelmatch:", solspace.get_mm_probs())
+
+    return solspace.get_pair_probs_dict()
+
+
+def matching_night_probs(solver: Solver, episode: int):
     options = {"end": episode, "includenight": False, "verbose": False}
-    beforenight = find_solutions(season, options)
-    night = season.get_nights({"end": episode, "includenight": True})[-1].pairs
+    beforenight = find_solutions(solver, episode)
+    night = solver.season.get_nights(episode)[-1].pairs
     nightpossol = any([set(night).issubset(sol) for sol in beforenight])
 
     print(f"Pairs of nights are possible solution: {nightpossol}")
@@ -82,7 +89,7 @@ def sol_probs(sols: list[Solution], sol: Solution, options: dict):
     nightpossol = any([set(sol).issubset(sol) for sol in sols])
 
     # print(f"Solution possible at this point: {nightpossol}")
-    lights = Counter([len(s & sol) for s in sols])
+    lights = Counter([len(s.union(sol)) for s in sols])
     probs = [round(lights.get(i, 0) / len(sols) * 100, 2) for i in range(12 + 1)]
     import statistics
 

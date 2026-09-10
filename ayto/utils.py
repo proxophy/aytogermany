@@ -116,7 +116,11 @@ def read_data_from_excel(
     try:
         dfsolution = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Solution", header=0)
         solution: Solution = Solution(
-            set(make_pair_list(dfsolution["left"].to_list(), dfsolution["right"].to_list()))
+            frozenset(
+                make_pair_list(
+                    dfsolution["left"].to_list(), dfsolution["right"].to_list()
+                )
+            )
         )
     except:
         solution: Solution = Solution()
@@ -128,6 +132,40 @@ def sols_as_df(sols) -> pd.DataFrame:
     rows = [{l: r for (l, r) in s} for s in sols]
     df = pd.DataFrame(rows)
     return df
+
+
+def product_without_reps(arr: list[list]) :
+    used = set()
+    current = []
+
+    def rec(i):
+        if i == len(arr):
+            yield current.copy()
+            return
+
+        for x in arr[i]:
+            if x in used:
+                continue
+
+            used.add(x)
+            current.append(x)
+
+            yield from rec(i + 1)
+
+            current.pop()
+            used.remove(x)
+
+    yield from rec(0)
+
+
+def listeq(l1, l2):
+    for l in l1:
+        if l not in l2:
+            return False
+    for l in l2:
+        if l not in l1:
+            return False
+    return True
 
 
 if __name__ == "__main__":

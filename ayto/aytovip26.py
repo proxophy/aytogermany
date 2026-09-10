@@ -1,52 +1,38 @@
-from .ayto import AYTO
+from .ayto import Solver
 from .models import *
 
 import itertools
 
 
-class AYTOVIP2026(AYTO):
-    def __init__(
-        self,
-        lefts: list[str],
-        rights: list[str],
-        nights: list[Night],
-        matchboxes: Matchboxes = Matchboxes(),
-        dm: str | None = None,
-        solution: Solution | None = None,
-    ) -> None:
-        super().__init__(lefts, rights, nights, matchboxes, dm, solution)
-        self.sm = "Laurenz"
-        self.nummatches = 12
-
-    def no_match(self, p: Pair, options: dict[str, bool]) -> bool:
-        return super().no_match(p, options)
+class VIP2026Solver(Solver):
+    sm: str = "Laurenz"
 
     def solution_correct_format(self, sol: Solution) -> bool:
-        if len(sol) > self.nummatches:
+        if len(sol) > self.season.nummatches:
             print("len(solution) > self.nummatches")
             return False
 
         ls, rs = zip(*sol)
-        if any(l not in self.lefts for l in ls):
-            print(f"Wrongly written names: {[c for c in ls if c not in self.lefts]}")
+        if any(l not in self.season.lefts for l in ls):
+            print(f"Wrongly written names: {[c for c in ls if c not in self.season.lefts]}")
             return False
-        if any(r not in self.rights for r in rs):
-            print(f"Wrongly written names: {[c for c in rs if c not in self.rights]}")
+        if any(r not in self.season.rights for r in rs):
+            print(f"Wrongly written names: {[c for c in rs if c not in self.season.rights]}")
             return False
-       
+
         return True
 
-    def solution_possible(self, sol: Solution, options: dict) -> bool:
+    def solution_possible(self, sol: Solution, end:int) -> bool:
 
-        if not super().solution_possible(sol, options):
+        if not super().solution_possible(sol, end):
             return False
 
-        pdict = {r: [] for r in self.rights}
+        pdict = {r: [] for r in self.season.rights}
         for l, r in sol:
             pdict[r].append(l)
 
         mutiplers = [
-            r for r in self.rights if len(pdict[r]) > 1
+            r for r in self.season.rights if len(pdict[r]) > 1
         ]  # rights with multiple matches
         if len(mutiplers) > 1:
             # print(f"more than one right has multiple matches: {mutiplers}")
@@ -60,40 +46,29 @@ class AYTOVIP2026(AYTO):
 
         return True
 
-
-    def possible_matches_for_solution(
-        self, sol: Solution, options: dict
-    ) -> dict[str, list[str]]:
-        return super().possible_matches_for_solution(sol, options)
-
-    def merge_mm_not_in_solution(
-        self, sol: Solution, other_matches_list: list[Solution], options: dict
-    ):
-        return super().merge_mm_not_in_solution(sol, other_matches_list, options)
-
-    def generate_complete_solutions(
-        self, sol: Solution, options: dict
-    ) -> list[Solution]:
+    def generate_complete_solutions(self, sol: Solution, end: int) -> list[Solution]:
         pass
 
-        if len(sol) == self.nummatches and self.solution_possible(sol, options):
+        if len(sol) == self.season.nummatches and self.solution_possible(sol, end):
             return [sol]
         # print("in aytovip26")
 
         def zip_product(clefts, ordering):
-            return set(Pair(*p) for p in zip(clefts, ordering))
+            return frozenset(Pair(*p) for p in zip(clefts, ordering))
 
         glefts, _, dm_in_psol = self.get_solution_leftrights(sol)
-        pos_matches = self.possible_matches_for_solution(sol, options)
-        pos_matches.pop(self.sm)
+        pos_matches = self.possible_matches_for_solution(sol, end)
+        pos_matches.pop(self.sm) # type:ignore
         smr = None
         if self.sm in glefts:
             # remove pair with self.sm if necessary
             smmatches = [r for l, r in sol if l == self.sm][0]
-            sol.remove(Pair(self.sm, smmatches[0]))
+            sol = sol.remove(Pair(self.sm, smmatches[0])) # type:ignore
         else:
             smmatches = [
-                r for r in self.rights if not self.no_match(Pair(self.sm, r), options)
+                r
+                for r in self.season.rights
+                if not self.no_match(Pair(self.sm, r), end) # type:ignore
             ]
 
         # print(smmatches)
@@ -107,20 +82,16 @@ class AYTOVIP2026(AYTO):
             map(lambda p: Solution(zip_product(pos_matches.keys(), p)), products)
         )
 
-
-
         if dm_in_psol > 0:
-            isols = self.merge_mm_in_solution(sol, other_matches_list, options)
+            isols = self.merge_mm_in_solution(sol, other_matches_list, end)
         else:
-            isols = self.merge_mm_not_in_solution(sol, other_matches_list, options)
+            isols = self.merge_mm_not_in_solution(sol, other_matches_list, end)
             # add self.sm as double_match
-        solutions = [s.addpair(Pair(self.sm, r)) for r in smmatches for s in isols]
+        solutions = [s.addpair(Pair(self.sm, r)) for r in smmatches for s in isols] # type:ignore
         unique_sols = []
 
         for sol in solutions:
-            assert (
-                len(sol) == self.nummatches
-            ), f"Complete solutions with {self.nummatches} pairs, not {len(sol)} pairs "
+            assert len(sol) == 12
 
             if sol not in unique_sols:
                 unique_sols.append(sol)
