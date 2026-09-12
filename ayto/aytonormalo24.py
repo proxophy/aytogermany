@@ -6,18 +6,18 @@ from .models import *
 
 class Normalo2024Solver(Solver):
 
-    def no_match(self, p: Pair, end: int) -> bool:
-        nomatch = super().no_match(p, end)
+    def no_match(self, l: str, r: str, end: int) -> bool:
+        nomatch = super().no_match(l, r, end)
 
         kpm = self.season.get_pms(end)
         hpm = [e for p in kpm for e in p]
 
-        if p not in kpm and p.l in hpm:
+        if (l,r) not in kpm and l in hpm:
             # lefts with multiple matches from matchboxes, appear x times
             # for x perfect matches
             mmls = [p for p in hpm if Counter(hpm)[p] > 1]
             # Normalo 24
-            if len(mmls) < 3 and p.l in mmls and p.r not in hpm:
+            if len(mmls) < 3 and l in mmls and r not in hpm:
                 # Removed for simplicity
                 # we only know two out of three of the multiple matches in Normalo 2024 at episode 10
                 return False
@@ -25,8 +25,7 @@ class Normalo2024Solver(Solver):
 
         return nomatch
 
-
-    def solution_possible(self, sol: Solution, end:int) -> bool:
+    def solution_possible(self, sol: Solution, end: int) -> dict:
         pdict = {l: [] for l in self.season.lefts}
         sm_in_partialsol = False
         for l, r in sol:
@@ -37,19 +36,19 @@ class Normalo2024Solver(Solver):
         # lefts with multiple matches
         multls = [l for l in self.season.lefts if len(pdict[l]) > 1]
         if len(multls) > 1:
-            return False
+            return {"res": False, "reason": f"more_than_one_multiple_match"}
         elif len(multls) == 1:
             multl = multls[0]
             multr = pdict[multl]
             # sm has to be one of multiple matches
-            if sm_in_partialsol and Pair(multl, self.season.mm) not in sol:  # type: ignore
-                return False
+            if sm_in_partialsol and (multl, self.season.mm) not in sol:  # type: ignore
+                return {"res": False, "reason": "tripple_match_not_possiblee"}
             elif len(multr) == 3 and self.season.mm not in multr:
-                return False
+                return {"res": False, "reason": "Mela_not_in_tripple_match"}
         return super().solution_possible(sol, end)
 
     def possible_matches_for_solution(
-        self, sol: Solution, end:int
+        self, sol: Solution, end: int
     ) -> dict[str, list[str]]:
         possible_matches = super().possible_matches_for_solution(sol, end)
         # Filter out sm
@@ -60,7 +59,7 @@ class Normalo2024Solver(Solver):
         return possible_matches
 
     def merge_mm_in_solution(
-        self, sol: Solution, other_matches_list: list[Solution], end:int
+        self, sol: Solution, other_matches_list: list[Solution], end: int
     ) -> list[Solution]:
         if len(sol) > 0:
             g_lefts, g_rights = zip(*sol)
@@ -86,20 +85,22 @@ class Normalo2024Solver(Solver):
                 # if we still have to add Mela: skip when somebody else is missing
                 if not_sm_in_asm and missingright != self.season.mm:
                     continue
-                elif self.no_match(Pair(smleft, missingright), end):
+                elif self.no_match(smleft, missingright, end):
                     continue
-                solutions.append(elevenmatches.addpair(Pair(smleft, missingright)))
+                solutions.append(elevenmatches.addpair((smleft, missingright)))
 
             return solutions
         return []
 
     def merge_mm_not_in_solution(
-        self, sol: Solution, other_matches_list: list[Solution], end:int
+        self, sol: Solution, other_matches_list: list[Solution], end: int
     ):
         solutions = []
         addmatches_dict = {
             r: [
-                Pair(l, r) for l in self.season.lefts if not self.no_match(Pair(l, r), end)
+                (l, r)
+                for l in self.season.lefts
+                if not self.no_match(l, r, end)
             ]
             for r in self.season.rights
         }
@@ -117,14 +118,14 @@ class Normalo2024Solver(Solver):
             if self.season.mm in missingrights:
                 # no multiple seatings, Mela not seated
                 for l in self.season.lefts:
-                    addmatches = Solution(frozenset((Pair(l, mr1), Pair(l, mr2))))
-                    if all([not self.no_match(p, end) for p in addmatches]):
+                    addmatches = Solution(frozenset(((l, mr1), (l, mr2))))
+                    if all([not self.no_match(*p, end) for p in addmatches]):
                         solutions.append(tenmatches.union(addmatches))
             else:
                 # no mutiple seatings, Mela seated
                 dmleft = [l for (l, r) in tenmatches if r == self.season.mm][0]
-                addmatches = Solution(frozenset((Pair(dmleft, mr1), Pair(dmleft, mr2))))
-                if all([not self.no_match(p, end) for p in addmatches]):
+                addmatches = Solution(frozenset(((dmleft, mr1), (dmleft, mr2))))
+                if all([not self.no_match(*p, end) for p in addmatches]):
                     solutions.append(tenmatches.union(addmatches))
 
         return solutions

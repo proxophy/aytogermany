@@ -1,11 +1,11 @@
-from ayto import Solver, VIP2026Solver
-from ayto.analysis import SolutionSpace,  analyze_solutions
+from ayto import Solver, VIP2026Solver, VIP2025Solver
+from ayto.analysis import SolutionSpace, analyze_solutions
 from ayto.models import Season, Solution, Pair
-from ayto.solver import find_solutions
+from ayto.solver import find_solutions, find_solutions_slow
+from ayto.utils import get_season, get_solver
 import seaborn as sns
 import matplotlib.pyplot as plt
 import pandas as pd
-import ayto.utils as utils
 
 
 def plot_df(df):
@@ -32,23 +32,97 @@ def appendsol(sn: str, tsol: set[tuple[str, str]]):
         dfsol.to_excel(writer, sheet_name="Solution", index=False)
 
 
+def comparetoao(sols, end):
+    with open("aodata.txt", "r") as f:
+        lines = map(eval, f.readlines())
+
+    def parse_sol(ld):
+        pairs = set()
+        for l, rs in ld.items():
+            for r in rs:
+                pairs.add((l, r))
+        return Solution(frozenset(pairs))
+
+    solsao = list(map(parse_sol, lines))
+
+    print("lengths", len(solsao), len(sols))
+    count = count2 = 0
+
+    for s in solsao:
+        spd = solver.solution_possible(s, end)
+        if not spd["res"]:
+            # print(spd["reason"])  
+            count += 1
+        elif s not in sols:
+            count2 += 1
+            print("s not in sols")
+    print("count", count, count2)
+    count = count2 = 0
+    for s in sols:
+        if s not in solsao:
+            # print(s)
+            count += 1
+            rpos = solver.solution_possible(s, end )
+            if not rpos["res"]:
+                print(rpos["reason"], rpos.get("detail",""))
+                count2 += 1
+            else:
+                sol = s
+                print(s, rpos["res"])
+
+    print("count", count, count2)
+
+
 if __name__ == "__main__":
-    sn = "vip2026"
-    options = {"end": 8, "includenight": True, "verbose": True}
-    lefts, rights, nights, matchboxes, dm, solution = utils.read_data_from_excel(sn)
-    # print(matchboxes.get_perfect_matches(7))
-    psol = Solution(frozenset((Pair('Bennet', 'Francesca'), Pair('Fabian', 'Christin'), Pair('Johannes', 'Marta'), Pair('Cansin', 'Zoe'), Pair('Germain', 'Alexandra'), Pair('Raúl', 'Michelle'), Pair('Johannes', 'Janice'), Pair('Robin', 'Joena'), Pair('Daymian', 'Jenny'), Pair('Brian', 'Julia'), Pair('Laurenz', 'Alexandra'), Pair('Marwin', 'Emma'))))
+    sn = "normalo2026"
+
+    season: Season = get_season(sn)
+    sol: Solution = season.solution  # type: ignore
+    solver: Solver = get_solver(sn)
+    # print(solver.no_match("Cecilia", "Felix", 6))
+    end = 7
+    # sols, times = find_solutions(solver, end)
+    # print(len(sols))
+
     
-    from ayto import Pair
-    season: Season = Season(lefts, rights, nights, matchboxes, solution=solution, ldm=True)
-    solver: Solver = VIP2026Solver(season)
-    print(solver.sm)
-    
-    res = solver.solution_possible(psol, 8)
-    print(res)
-    
+    amounts = []
+    for end in range(2, 10):
+        sols, times = find_solutions(solver, end)
+        # sols = times = []
+        print(len(sols))
+        print(times)
+        print(solver.times)
+        amounts.append(len(sols))
+    print(amounts)
+
+    # comparetoao(sols, 6)
+    exit()
+
+    s = Solution(
+        frozenset(
+            (
+                ("Manuel", "Kathleen"),
+                ("Francesco", "Jules"),
+                ("Alex", "Sarah"),
+                ("Diogo", "Finnja"),
+                ("Salvatore", "Jacky"),
+                ("Francesco", "Vanessa"),
+                ("Tommy", "Jill"),
+                ("Eugen", "Walentina"),
+                ("Danilo", "Melina"),
+                ("Jamy", "Steffi"),
+                ("Josua", "Aurelia"),
+            )
+        )
+    )
+
+    # res = solver.solution_possible(s, end + 1)
+    # print("res", res)
+    # print("no_match", solver.no_match("Francesco", "Vanessa", end))
+    # solspace = SolutionSpace(sols)
+    # probs = solspace.get_pair_probs_dict()
 
     # df = pd.Series(probs).unstack(fill_value=0)
-   
-
-   
+    # print(df)
+    # analyze_solutions(sols)
+    # plot_df(df)

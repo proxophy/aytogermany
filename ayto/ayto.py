@@ -1,23 +1,27 @@
 from collections import Counter
 import itertools
 import functools
+import time
 
 from .models import *
-from .utils import product_without_reps, listeq
 
 
 class Solver:
     season: Season
+    times = [0.0, 0.0, 0.0, 0.0]
 
     def __init__(self, season: Season) -> None:
         self.season: Season = season
+        self.no_match_precomputed = {
+            ((l, r), end): self.no_match(l, r, end)
+            for l in self.season.lefts
+            for r in self.season.rights
+            for end in range(0, 11)
+        }
 
-    def no_match(self, p: Pair, end: int) -> bool:
+    def no_match(self, l: str, r: str, end: int) -> bool:
         """(l,r) are definitely no match"""
-        assert isinstance(p, Pair)
-        assert (
-            p.l in self.season.lefts and p.r in self.season.rights
-        ), f"l: {p.l}, r: {p.r}"
+        assert l in self.season.lefts and r in self.season.rights, f"l: {l}, r: {r}"
         end = max(0, min(end, 10))
 
         mb = self.season.get_matchboxes(end)
@@ -25,19 +29,21 @@ class Solver:
         hpm = [e for pp in kpm for e in pp]
 
         # matchbox result was false
-        if p in mb and not mb[p]:
+        if (l, r) in mb and not mb[(l, r)]:
             return True
 
         # one is part of known perfect match
         # consider multiple seated lefts
         # assumption: if dm is not known and you get double match,
         # you find the double match in the same episode
-        if p not in kpm and (p.l in hpm or p.r in hpm) and p.r != self.season.mm:
+        if (l, r) not in kpm and (l in hpm or r in hpm):
+            #if r != self.season.mm:
             return True
-
+            
         return False
 
     def solution_correct_format(self, sol: Solution) -> bool:
+        # todo: change this to return dict
         assert isinstance(sol, Solution)
 
         if len(sol) > self.season.nummatches:
@@ -61,32 +67,40 @@ class Solver:
 
         return True
 
-    def solution_possible(self, sol: Solution, end: int) -> bool:
+    def solution_possible(self, sol: Solution, end: int) -> dict:
         assert isinstance(sol, Solution)
         if len(sol) > self.season.nummatches:
-            return False
+            return {"res": False, "reason": "too_many_matches"}
         end = max(0, min(end, 10))
+        start = time.time()
 
         if not self.solution_correct_format(sol):
-            return False
+            self.times[0] += time.time() - start
+            return {"res": False, "reason": "sol_wrong_format"}
 
-
+        self.times[0] += time.time() - start
+        start = time.time()
         complete: bool = len(sol) == self.season.nummatches
 
         # no known no matches
-        if any([self.no_match(p, end) for p in sol]):
-            ba: list = [self.no_match(p, end) for p in sol]
+        if any(
+            self.no_match_precomputed[p, end] for p in sol
+        ):  # any([self.no_match(p, end) for p in sol]):
+            ba: list = [self.no_match(*p, end) for p in sol]
             trueindex = ba.index(True)
-            print(f"Solution has known no match: {list(sol)[trueindex]}")
-            return False
+            p = list(sol.pairs)[trueindex]
+            self.times[1] += time.time() - start
+            return {"res": False, "reason": f"known_no_match", "detail": p}
+
+        self.times[1] += time.time() - start
+        start = time.time()
 
         # VIP 23
         # perfect matches of dmtuple must be the same person
         if self.season.dmtuple is not None and end >= self.season.dmtupleknown:
             dml = [l for (l, r) in sol if r in self.season.dmtuple]
             if len(dml) > 1 and dml[0] != dml[1]:
-                # print(f"dmtuple rights do not have same pm {len(sol)} {dml}")
-                return False
+                return {"res": False, "reason": "vip23_dmtuple_not_same_match"}
 
         # check condition for double matches
         pdict = {l: [] for l in self.season.lefts}
@@ -96,16 +110,14 @@ class Solver:
 
         # lefts with multiple matches
         mutiplels = [l for l in self.season.lefts if len(pdict[l]) > 1]
-
         if len(mutiplels) == 2:
             if not self.season.two_dms:
-                # print("Only one double/tripple match")
-                return False
+                return {"res": False, "reason": "two_double_matches"}
             else:
                 # VIP 2025: two double matches
                 multiplers = [e for l in mutiplels for e in pdict[l]]
                 if not self.season.mm in multiplers:
-                    return False
+                    return {"res": False, "reason": "Jimi_not_in_double_match"}
         elif len(mutiplels) == 1:
             mutiplel = mutiplels[0]
             multiplers = pdict[mutiplel]
@@ -115,16 +127,19 @@ class Solver:
                 and len(multiplers) == 2
                 and set(self.season.dmtuple) != set(multiplers)
             ):
-                return False
+                return {"res": False, "reason": "multiplelefts_not_dmtuple"}
             elif (
                 self.season.mm is not None
                 and len(multiplers) == 2
                 and self.season.mm not in pdict[mutiplel]
                 and not self.season.two_dms
             ):
-                return False
+                return {"res": False, "reason": "mm_not_in_double_match"}
         elif len(mutiplels) > 2:
-            return False
+            return {"res": False, "reason": "too_many_double_matches"}
+
+        self.times[2] += time.time() - start
+        start = time.time()
 
         # if Solution has nummatches matches
         if complete:
@@ -133,27 +148,28 @@ class Solver:
             if len(set(g_lefts)) != len(self.season.lefts) or len(set(g_rights)) != len(
                 self.season.rights
             ):
-                return False
-
+                return {
+                    "res": False,
+                    "reason": "not_all_candidates_in_complete_solution",
+                }
         # number of lights with pairs matching lights in nights
         # if we don't have self.nummatches pairs, we allow lesser lights
+
+
         nights = self.season.get_nights(end)
         i = 0
         for night in nights:
             clights = sol.intersectionlength(night.pairs)
-            # print(f"checking night {i} with {lights} lights, Solution has {clights} lights")
-            # print(intersection)
-            # print(len(pairs), pairs)
-            i += 1
+            
             if clights > night.lights:
-                # print(clights, ">", night.lights)
-                return False
+                return {"res": False, "reason": f"too_many_lights_in_night_{i}"}
             elif clights < night.lights:
-                # print(clights, "<", night.lights)
                 if complete:
-                    return False
-
-        return True
+                    return {"res": False, "reason": f"not_enough_lights_in_night_{i}"}
+            i += 1
+        self.times[3] += time.time() - start
+        start = time.time()
+        return {"res": True, "reason": ""}
 
     def merge_solutions_lists(
         self, psl_1: list[Solution], psl_2: list[Solution], end: int = 10
@@ -163,7 +179,7 @@ class Solver:
         """
         m_asm = []
         for g1, g2 in itertools.product(psl_1, psl_2):
-            pred = self.solution_possible(g1.union(g2), end)
+            pred = self.solution_possible(g1.union(g2), end)["res"]
             if pred and g1.union(g2) not in m_asm:
                 m_asm.append(g1.union(g2))
 
@@ -188,6 +204,9 @@ class Solver:
         sitting_nomatches = {}
         # Consider sitting matches as no matches if not in partial sol todo: remove duplicate
         for night in nights:
+            pl = sol.intersectionlength(night.pairs)
+            if pl < night.lights:
+                continue
             for p in set(night.pairs) - set(sol.pairs):
                 sitting_nomatches[p] = True
 
@@ -195,8 +214,8 @@ class Solver:
             l: [
                 r
                 for r in set(self.season.rights) - g_rights
-                if not self.no_match(Pair(l, r), end)
-                and not sitting_nomatches.get(Pair(l, r), False)
+                if not self.no_match(l, r, end)
+                and not sitting_nomatches.get((l, r), False)
                 and r != self.season.mm
             ]
             for l in self.season.lefts
@@ -236,11 +255,10 @@ class Solver:
         solutions = []
         addmatches_dict = {
             r: [
-                Pair(l, r)
+                (l, r)
                 for l in self.season.lefts
                 if not (
-                    self.no_match(Pair(l, r), end)
-                    or sitting_nomatches.get(Pair(l, r), False)
+                    self.no_match(l, r, end) or sitting_nomatches.get((l, r), False)
                 )
             ]
             for r in self.season.rights
@@ -259,7 +277,7 @@ class Solver:
                     continue
 
                 dmleft = [l for (l, r) in tenmatches if r in self.season.dmtuple][0]
-                solutions.append(tenmatches.addpair(Pair(dmleft, mr)))
+                solutions.append(tenmatches.addpair((dmleft, mr)))
 
             # Normalo 2023: dm not known
             elif self.season.mm is None:
@@ -271,20 +289,23 @@ class Solver:
                     solutions += [tenmatches.addpair(ap) for ap in addmatches_dict[mr]]
                 else:
                     dmleft = [l for (l, r) in tenmatches if r == self.season.mm][0]
-                    if Pair(dmleft, mr) not in addmatches_dict[mr]:
+                    if (dmleft, mr) not in addmatches_dict[mr]:
                         continue
-                    solutions.append(tenmatches.addpair(Pair(dmleft, mr)))
+                    solutions.append(tenmatches.addpair((dmleft, mr)))
             assert all(isinstance(x, Solution) for x in solutions)
         return solutions
 
     def generate_complete_solutions(self, sol: Solution, end: int) -> list[Solution]:
         """Generating solutions"""
         assert isinstance(sol, Solution)
-        if len(sol) == self.season.nummatches and self.solution_possible(sol, end):
+        if (
+            len(sol) == self.season.nummatches
+            and self.solution_possible(sol, end)["res"]
+        ):
             return [sol]
 
         def zip_product(clefts, ordering):
-            return frozenset(Pair(*p) for p in zip(clefts, ordering))
+            return frozenset(p for p in zip(clefts, ordering))
 
         _, _, dm_in_psol = self.get_solution_leftrights(sol)
         pos_matches = self.possible_matches_for_solution(sol, end)
@@ -301,14 +322,13 @@ class Solver:
         other_matches_list = list(
             map(lambda p: Solution(zip_product(pos_matches.keys(), p)), products)
         )
-
         if dm_in_psol > 0:
             # Multiple match is already in Solution
             return self.merge_mm_in_solution(sol, other_matches_list, end)
 
         solutions = self.merge_mm_not_in_solution(sol, other_matches_list, end)
 
-        unique_sols = []
+        unique_sols = set()
 
         for sol in solutions:
             assert (
@@ -320,14 +340,9 @@ class Solver:
                 2 not in Counter(rs).values()
             ), f"No double matches for rights possible"
 
-            if sol not in unique_sols:
-                unique_sols.append(sol)
-            assert all(isinstance(x, Pair) for x in sol)
+            unique_sols.add(sol)
 
-        # if len(unique_sols) != len(solutions):
-        #     print("423")
-
-        return unique_sols
+        return list(unique_sols)
 
     def generate_partial_solutions(self, end: int) -> list[Solution]:
 
@@ -337,13 +352,10 @@ class Solver:
         pairs_per_night = []
         for night in nights:
             notcorrect = list(
-                filter(lambda p: self.no_match(p, end) or p in kpm, night.pairs)
+                filter(lambda p: self.no_match(*p, end) or p in kpm, night.pairs)
             )
             defcorrect = list(filter(lambda p: p in kpm, night.pairs))
             remaining = set(night.pairs) - set(defcorrect) - set(notcorrect)
-            assert all(isinstance(x, Pair) for x in kpm), list(kpm) + list(
-                map(type, kpm)
-            )
 
             combs = [
                 Solution(frozenset(comb).union(kpm))
@@ -354,8 +366,6 @@ class Solver:
 
             pairs_per_night.append(combs)
 
-        night1, night2 = pairs_per_night[:2]
-        self.merge_solutions_lists(night1, night2)
 
         merged_solutions: list[Solution] = functools.reduce(
             lambda g1, g2: self.merge_solutions_lists(g1, g2, end),
@@ -363,7 +373,7 @@ class Solver:
         )
 
         merged_solutions: list[Solution] = list(
-            filter(lambda a: self.solution_possible(a, end), merged_solutions)
+            filter(lambda a: self.solution_possible(a, end)["res"], merged_solutions)
         )
 
         return merged_solutions

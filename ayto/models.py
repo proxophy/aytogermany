@@ -3,27 +3,26 @@ from typing import Sequence
 from collections import Counter
 
 
-@dataclass(frozen=True)
-class Pair:
-    l: str
-    r: str
+Pair = tuple[str, str]
+# @dataclass(frozen=True)
+# class Pair:
+#     l: str
+#     r: str
 
-    def __repr__(self) -> str:
-        return f"Pair('{self.l}', '{self.r}')"
+#     def __repr__(self) -> str:
+#         return f"Pair('{self.l}', '{self.r}')"
 
-    def __iter__(self):
-        return iter((self.l, self.r))
+#     def __iter__(self):
+#         return iter((self.l, self.r))
 
-    def tuplerep(self):
-        return (self.l, self.r)
+#     def tuplerep(self):
+#         return (self.l, self.r)
 
 
 @dataclass(frozen=True)
 class Solution:
     pairs: frozenset[Pair] = frozenset()
 
-    # def __init__(self, pairs: set[Pair] = set()):
-    #     self.pairs = frozenset(pairs)
 
     def __repr__(self) -> str:
         return "(" + ", ".join(map(str, self.pairs)) + ")"
@@ -127,6 +126,7 @@ class Matchboxes:
 
 @dataclass(frozen=True)
 class Season:
+    name: str
     lefts: Sequence[str]
     rights: Sequence[str]
     nights: Sequence[Night]
@@ -136,7 +136,7 @@ class Season:
     dmtuple: tuple[str, str] | None = None
     dmtupleknown: int = 7
     two_dms: bool = False
-    ldm: bool = False
+   
 
     def __post_init__(self):
         if not (0 <= len(self.nights) <= 10 and 0 <= len(self.matchboxes)):
@@ -146,7 +146,7 @@ class Season:
 
     @property
     def nummatches(self) -> int:
-        return max(len(self.lefts), len(self.rights)) + (1 if self.ldm else 0)
+        return max(len(self.lefts), len(self.rights)) + (1 if self.name == "vip2026" else 0)
 
     @property
     def numepisodes(self) -> int:
@@ -166,10 +166,10 @@ class Season:
 
 
 if __name__ == "__main__":
-    p1 = Pair("Laurenz", "Joena")
-    p2 = Pair("Raul", "Michelle")
+    p1 = ("Laurenz", "Joena")
+    p2 = ("Raul", "Michelle")
     sol = Solution(frozenset((p1, p2)))
-    myset = {p1, Pair("Raul", "Emma")}
+    myset = {p1, ("Raul", "Emma")}
     myset2 = {p1, p2}
     print(myset | myset2)
     mb = Matchboxes([0, 1], [p1, p2], [True, False])

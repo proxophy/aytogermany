@@ -4,7 +4,10 @@ import time
 from typing import Sequence
 
 from .models import *
-
+from .aytonormalo24 import Normalo2024Solver
+from .aytovip25 import VIP2025Solver
+from .aytovip26 import VIP2026Solver
+from .ayto import Solver
 
 def time_it(inner):
     @functools.wraps(inner)
@@ -26,18 +29,18 @@ def check_nights(nights: list[Night], lefts: list[str], rights: list[str]) -> No
     for night in nights:
         seated_lefts, seated_rights = [], []
 
-        for p in night.pairs:
-            if p.l in lefts and p.r in rights:
+        for l,r in night.pairs:
+            if l in lefts and r in rights:
                 # check that we don't have double seatings
-                if p.l in seated_lefts or p.r in seated_rights:
-                    raise ValueError(f"{p} has already been seated  in night {night}")
-                seated_lefts.append(p.l)
-                seated_rights.append(p.r)
-            elif p.l in rights and p.r in lefts:
-                raise ValueError(f"Pair {p} is in the wrong order in night {night}")
+                if l in seated_lefts or r in seated_rights:
+                    raise ValueError(f"Either {l} or {r} has already been seated  in night {night}")
+                seated_lefts.append(l)
+                seated_rights.append(r)
+            elif l in rights and r in lefts:
+                raise ValueError(f"Pair {(l,r)} is in the wrong order in night {night}")
             else:
                 raise ValueError(
-                    f"{p.l} or {p.r} is neither in the list of women or men"
+                    f"{l} or {r} is neither in the list of women or men"
                 )
         if not 0 <= night.lights <= 10:
             raise ValueError(f"Number of lights not possible in night {night}")
@@ -61,16 +64,16 @@ def validate_season_args(
 
     # matchboxes with results
     pairs = set()
-    for n, p, result in matchboxes:
+    for n, (l,r), result in matchboxes:
 
-        if p in pairs or (p.r, p.l) in pairs:
-            raise AssertionError(f"{p} occurs more than once in matchboxes")
-        if p.l in lefts and p.r in rights:
-            pairs.add(p)
-        elif p.l in rights and p.r in lefts:
-            raise ValueError(f"Pair {p} is in the wrong order in matchboxes")
+        if (l,r) in pairs or (r, l) in pairs:
+            raise AssertionError(f"{(l,r)} occurs more than once in matchboxes")
+        if l in lefts and r in rights:
+            pairs.add((l,r))
+        elif l in rights and r in lefts:
+            raise ValueError(f"Pair {(l,r)} is in the wrong order in matchboxes")
         else:
-            raise ValueError(f"{p.l} or {p.r} is not a valid name")
+            raise ValueError(f"{l} or {r} is not a valid name")
 
     if dm and dm in lefts:
         raise ValueError(f"{dm} is part of lefts (the smaller gender group)")
@@ -81,7 +84,7 @@ def validate_season_args(
 def make_pair_list(lefts: Sequence[str], rights: Sequence[str]) -> tuple[Pair, ...]:
     if len(lefts) != len(rights):
         raise ValueError("Cannot make list of pairs out of lists of different length")
-    return tuple(Pair(l, r) for l, r in zip(lefts, rights))
+    return tuple((l, r) for l, r in zip(lefts, rights))
 
 
 def read_data_from_excel(
@@ -134,7 +137,7 @@ def sols_as_df(sols) -> pd.DataFrame:
     return df
 
 
-def product_without_reps(arr: list[list]) :
+def product_without_reps(arr: list[list]):
     used = set()
     current = []
 
@@ -158,14 +161,58 @@ def product_without_reps(arr: list[list]) :
     yield from rec(0)
 
 
-def listeq(l1, l2):
-    for l in l1:
-        if l not in l2:
-            return False
-    for l in l2:
-        if l not in l1:
-            return False
-    return True
+
+
+def get_season(sn: str) -> Season:
+    lefts, rights, nights, matchboxes, mm, solution = read_data_from_excel(sn)
+    if sn == "normalo2024":
+        season = Season(sn, lefts, rights, nights, matchboxes, solution=solution, mm=mm)
+    elif sn == "vip2023":
+        # return
+        season = Season(
+            sn,
+            lefts,
+            rights,
+            nights,
+            matchboxes,
+            solution=solution,
+            mm=mm,
+            dmtuple=("Peter", "Max"),
+        )
+    elif sn == "vip2025":
+        season = Season(
+            sn,
+            lefts,
+            rights,
+            nights,
+            matchboxes,
+            solution=solution,
+            mm=mm,
+            two_dms=True,
+        )
+    elif sn == "vip2026":
+        season: Season = Season(
+            sn, lefts, rights, nights, matchboxes, solution=solution
+        )
+    else:
+        season: Season = Season(
+            sn, lefts, rights, nights, matchboxes, solution=solution, mm=mm
+        )
+    return season
+
+
+def get_solver(sn:str) -> Solver:
+    season = get_season(sn)
+    if sn == "normalo2024":
+        solver = Normalo2024Solver(season)
+    elif sn == "vip2025":
+        solver = VIP2025Solver(season)
+    elif sn == "vip2026":
+        solver = VIP2026Solver(season)
+    else:
+        solver = Solver(season)
+    return solver
+
 
 
 if __name__ == "__main__":
