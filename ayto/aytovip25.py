@@ -1,31 +1,22 @@
 from .ayto import Solver
 from .models import *
 
-from typing import Optional, Union
 from collections import Counter
 
 
 class VIP2025Solver(Solver):
 
-    def solution_possible(self, sol: Solution, end: int) -> dict:
+    def solution_possible(self, sol: Solution, end: int, includenight: bool) -> dict:
         p_lefts, p_rights = zip(*sol)
         r_counter = Counter(p_lefts)
         # no tripple matches
         if any([v > 2 for v in r_counter.values()]):
             return {"res": False, "reason": f"no_tripple_matches_allowed"}
-        return super().solution_possible(sol, end)
+        return super().solution_possible(sol, end, includenight)
 
-    def get_solution_leftrights(self, sol: Solution):
-        assert isinstance(sol, Solution)
-        if len(sol) > 0:
-            g_lefts, g_rights = zip(*sol)
-            g_lefts, g_rights = list(g_lefts), list(g_rights)
-        else:
-            g_lefts, g_rights = set(), set()
-        return set(g_lefts), set(g_rights), len(g_lefts) - len(set(g_lefts)) == 2
 
     def merge_mm_not_in_solution(
-        self, sol: Solution, other_matches_list: list[Solution], end:int
+        self, sol: Solution, other_matches_list: list[Solution], end:int, includenight
     ):
         solutions = []
         addmatches_dict = {

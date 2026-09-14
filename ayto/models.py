@@ -1,23 +1,8 @@
 from dataclasses import dataclass
 from typing import Sequence
-from collections import Counter
 
 
 Pair = tuple[str, str]
-# @dataclass(frozen=True)
-# class Pair:
-#     l: str
-#     r: str
-
-#     def __repr__(self) -> str:
-#         return f"Pair('{self.l}', '{self.r}')"
-
-#     def __iter__(self):
-#         return iter((self.l, self.r))
-
-#     def tuplerep(self):
-#         return (self.l, self.r)
-
 
 @dataclass(frozen=True)
 class Solution:
@@ -38,17 +23,11 @@ class Solution:
             return self.pairs == other.pairs
         return False
 
-    # def get_candidates(self) -> tuple[tuple[str, ...], tuple[tuple[str, ...]]]:
-    #     ls, rs = zip(*self.pairs)
-    #     return ls, rs
-
-    def intersectionlength(self, other) -> int:
-        if isinstance(other, Solution):
-            return len(set(self.pairs) & set(other.pairs))
-        elif isinstance(other, Sequence):
-            return len(set(self.pairs) & set(other))
-        else:
-            raise NotImplementedError
+    def intersectionlength(self, night: Sequence[Pair]) -> int:
+        if len(night) != 10:
+            raise ValueError("intersectionlength must be called with night as arg")
+        count = sum(1 for p in night if p in self.pairs)
+        return count
 
     def intersection(self, other: "Solution"):
         return Solution(self.pairs & other.pairs)
@@ -62,15 +41,35 @@ class Solution:
     def difference(self, other: "Solution"):
         return set(self.pairs).difference(set(other.pairs))
 
-    def addpair(self, pair: Pair):
+    def addpair(self, pair: Pair) -> "Solution":
         return Solution(self.pairs | {pair})
 
-    def remove(self, pair: Pair):
-        return Solution(self.pairs.difference(pair))
+    def remove(self, pair: Pair) -> "Solution":
+        return Solution(self.pairs.difference([pair]))
 
-    def mm_left(self) -> str:
-        ls, rs = zip(*self.pairs)
-        return [l for (l, v) in Counter(ls).items() if v >= 2][0]
+    def mm_left(self) -> str | None:
+        ls = []
+        for l,_ in self.pairs:
+            if l in ls:
+                return l
+            ls.append(l)
+        return None
+
+    def double_match_for_right(self) -> bool:
+        rs = []
+        for _ , r in self.pairs:
+            if r in rs:
+                return True
+            rs.append(r)
+        return False
+
+    def get_candidates(self):
+        if len(self) > 0:
+            g_lefts, g_rights = zip(*self.pairs)
+            g_lefts, g_rights = list(g_lefts), list(g_rights)
+        else:
+            g_lefts, g_rights = set(), set()
+        return set(g_lefts), set(g_rights), len(g_lefts) - len(set(g_lefts))
 
 
 @dataclass(frozen=True)
@@ -165,12 +164,3 @@ class Season:
         return self.matchboxes.get_perfect_matches(end)
 
 
-if __name__ == "__main__":
-    p1 = ("Laurenz", "Joena")
-    p2 = ("Raul", "Michelle")
-    sol = Solution(frozenset((p1, p2)))
-    myset = {p1, ("Raul", "Emma")}
-    myset2 = {p1, p2}
-    print(myset | myset2)
-    mb = Matchboxes([0, 1], [p1, p2], [True, False])
-    print(sol.mm_left())

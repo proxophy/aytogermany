@@ -12,7 +12,7 @@ class Normalo2024Solver(Solver):
         kpm = self.season.get_pms(end)
         hpm = [e for p in kpm for e in p]
 
-        if (l,r) not in kpm and l in hpm:
+        if (l, r) not in kpm and l in hpm:
             # lefts with multiple matches from matchboxes, appear x times
             # for x perfect matches
             mmls = [p for p in hpm if Counter(hpm)[p] > 1]
@@ -25,7 +25,7 @@ class Normalo2024Solver(Solver):
 
         return nomatch
 
-    def solution_possible(self, sol: Solution, end: int) -> dict:
+    def solution_possible(self, sol: Solution, end: int, includenight: bool) -> dict:
         pdict = {l: [] for l in self.season.lefts}
         sm_in_partialsol = False
         for l, r in sol:
@@ -45,12 +45,12 @@ class Normalo2024Solver(Solver):
                 return {"res": False, "reason": "tripple_match_not_possiblee"}
             elif len(multr) == 3 and self.season.mm not in multr:
                 return {"res": False, "reason": "Mela_not_in_tripple_match"}
-        return super().solution_possible(sol, end)
+        return super().solution_possible(sol, end, includenight)
 
     def possible_matches_for_solution(
-        self, sol: Solution, end: int
+        self, sol: Solution, end: int, includenight: bool
     ) -> dict[str, list[str]]:
-        possible_matches = super().possible_matches_for_solution(sol, end)
+        possible_matches = super().possible_matches_for_solution(sol, end, includenight)
         # Filter out sm
         possible_matches = {
             l: list(filter(lambda r: r != self.season.mm, possible_matches[l]))
@@ -93,15 +93,15 @@ class Normalo2024Solver(Solver):
         return []
 
     def merge_mm_not_in_solution(
-        self, sol: Solution, other_matches_list: list[Solution], end: int
+        self,
+        sol: Solution,
+        other_matches_list: list[Solution],
+        end: int,
+        includenight: bool,
     ):
         solutions = []
         addmatches_dict = {
-            r: [
-                (l, r)
-                for l in self.season.lefts
-                if not self.no_match(l, r, end)
-            ]
+            r: [(l, r) for l in self.season.lefts if not self.no_match(l, r, end)]
             for r in self.season.rights
         }
 

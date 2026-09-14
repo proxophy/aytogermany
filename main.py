@@ -1,24 +1,11 @@
-from ayto import Solver, VIP2026Solver, VIP2025Solver
-from ayto.analysis import SolutionSpace, analyze_solutions
-from ayto.models import Season, Solution, Pair
-from ayto.solver import find_solutions, find_solutions_slow
-from ayto.utils import get_season, get_solver
-import seaborn as sns
-import matplotlib.pyplot as plt
+
 import pandas as pd
+from collections import Counter
 
-
-def plot_df(df):
-    my_cmap = sns.light_palette((0.2, 0.7, 0.2), as_cmap=True)
-    my_cmap.set_under((1, 0.7, 0.7))
-    my_cmap.set_over((0.2, 0.8, 0.2))
-    sns.heatmap(df, vmin=1e-5, vmax=100 - 1e-5, cmap=my_cmap, annot=True, fmt=".0f")
-    plt.tight_layout()
-    plt.show()
-
-
-def index_to_episode(i):
-    return 2 * (i + 1) + 1
+from ayto import Solver
+from ayto.analysis import plot_probs
+from ayto.models import Season, Solution, Pair
+from ayto.utils import get_season, get_solver
 
 
 def appendsol(sn: str, tsol: set[tuple[str, str]]):
@@ -47,74 +34,117 @@ def comparetoao(sols, end):
 
     print("lengths", len(solsao), len(sols))
     count = count2 = 0
+    reasons = []
+    # for s in solsao:
+    #     spd = solver.solution_possible(s, end)
+    #     if not spd["res"]:
+    #         # print(spd["reason"], spd.get("detail", ""))
 
-    for s in solsao:
-        spd = solver.solution_possible(s, end)
-        if not spd["res"]:
-            # print(spd["reason"])  
-            count += 1
-        elif s not in sols:
-            count2 += 1
-            print("s not in sols")
+    #         count += 1
+    #     elif s not in sols:
+    #         count2 += 1
+    #         print("s not in sols")
     print("count", count, count2)
+
     count = count2 = 0
+    nomatchp = []
     for s in sols:
         if s not in solsao:
-            # print(s)
+            print(s)
+            break
             count += 1
-            rpos = solver.solution_possible(s, end )
-            if not rpos["res"]:
-                print(rpos["reason"], rpos.get("detail",""))
-                count2 += 1
-            else:
-                sol = s
-                print(s, rpos["res"])
-
+            # spd = solver.solution_possible(s, end + 1)
+            # if not spd["res"]:
+            #     # print(spd["reason"], spd.get("detail",""))
+            #     nomatchp.append(spd.get("detail", ""))
+            #     reasons.append(spd["reason"])
+            #     count2 += 1
+            #     sol = s
+            # else:
+            #     print(s)
+            # sol = s
+            # print(s, spd["res"])
+    print(Counter(reasons))
     print("count", count, count2)
+    print(Counter(nomatchp))
+
+
+def check_ao_data(s, end):
+    import json
+
+    with open("ayto_data.json", encoding="utf-8") as f:
+        all_data = json.load(f)
+    sn_key = "s4"
+    season_data = all_data[sn_key]
+    weeks = season_data["weeks"]
+    print(season_data)
+    for week in weeks[:end+1]:
+        print("week number", week["number"])
+        for event in week["events"]:
+            if event["type"] == "box":
+                a, b = event["pair"]
+                if event["result"] == "yes" and not (a,b) in s:
+                    return False, event
+                if event["result"] == "no" and (a,b) in s:
+                    return False, event
+            elif event["type"] == "matching_night":
+                lights = sum(1 for a, b in event["pairs"] if (a,b) in s)
+                if lights != event["lights"]:
+                    return False, event
+            else: 
+                print("other event", event)
+    return True, None
 
 
 if __name__ == "__main__":
-    sn = "normalo2026"
+    sn = "normalo2025"
 
     season: Season = get_season(sn)
     sol: Solution = season.solution  # type: ignore
     solver: Solver = get_solver(sn)
     # print(solver.no_match("Cecilia", "Felix", 6))
-    end = 7
-    # sols, times = find_solutions(solver, end)
-    # print(len(sols))
+    end = 2
+    from ayto.utils import time_it
+    sols = solver.solve(end, True)
+    plot_probs(sols)
 
-    
-    amounts = []
-    for end in range(2, 10):
-        sols, times = find_solutions(solver, end)
-        # sols = times = []
-        print(len(sols))
-        print(times)
-        print(solver.times)
-        amounts.append(len(sols))
-    print(amounts)
+    # prinr(probs)
+    # amounts = []
+    # for end in range(1, 10):
+    #     sols = solver.solve(end, True)
+    #     # sols = times = []
+    #     print(len(sols))
+    #     print(times)
+    #     print(solver.times)
+    #     amounts.append(len(sols))
+    # print(amounts)
 
-    # comparetoao(sols, 6)
-    exit()
+    # comparetoao(sols, end)
+    exit() 
 
     s = Solution(
         frozenset(
             (
-                ("Manuel", "Kathleen"),
-                ("Francesco", "Jules"),
-                ("Alex", "Sarah"),
-                ("Diogo", "Finnja"),
-                ("Salvatore", "Jacky"),
-                ("Francesco", "Vanessa"),
-                ("Tommy", "Jill"),
-                ("Eugen", "Walentina"),
-                ("Danilo", "Melina"),
-                ("Jamy", "Steffi"),
-                ("Josua", "Aurelia"),
+                (
+                    ("Henna", "Kenneth"),
+                    ("Juliette", "Barkin"),
+                    ("Juliette", "Burim"),
+                    ("Dorna", "Ken"),
+                    ("Vanessa", "Max"),
+                    ("Valeria", "Joel"),
+                    ("Steffi", "Cris"),
+                    ("Aurelia", "Sasa"),
+                    ("Caro", "Deniz"),
+                    ("Carina", "Pascal"),
+                    ("Larissa", "Marwin"),
+                )
             )
         )
     )
+    print(s)
+    res = check_ao_data(s, end)
+    print(s.mm_left())
+    print(res)
 
     # res = solver.solution_possible(s, end + 1)
     # print("res", res)

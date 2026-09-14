@@ -1,10 +1,10 @@
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 from collections import Counter
 
-from .models import Night, Solution, Pair
-from .solver import find_solutions
+from .models import Solution
 from .ayto import Solver
-from .utils import time_it
 
 
 class SolutionSpace:
@@ -20,7 +20,7 @@ class SolutionSpace:
         self.lefts = list(set(clefts))
         self.rights = list(set(crights))
         self.allpairs = [(l, r) for l in self.lefts for r in self.rights]
-        self.pairs_counter = Counter([p.tuplerep() for s in self.sols for p in s])
+        self.pairs_counter = Counter([p for s in self.sols for p in s])
         for l, r in self.allpairs:
             if (l, r) not in self.pairs_counter:
                 self.pairs_counter[(l, r)] = 0
@@ -54,6 +54,10 @@ class SolutionSpace:
         ]
 
 
+def index_to_episode(i):
+    return 2 * (i + 1) + 1
+
+
 def analyze_solutions(sols: list[Solution]):
     solspace = SolutionSpace(sols)
 
@@ -70,12 +74,9 @@ def analyze_solutions(sols: list[Solution]):
 
 
 def matching_night_probs(solver: Solver, episode: int):
-    options = {"end": episode, "includenight": False, "verbose": False}
-    beforenight = find_solutions(solver, episode)
+    beforenight = solver.solve(episode, False)
     night = solver.season.get_nights(episode)[-1].pairs
     nightpossol = any([set(night).issubset(sol) for sol in beforenight])
-
-    print(f"Pairs of nights are possible solution: {nightpossol}")
 
     poslights = Counter([len(set(night).intersection(sol)) for sol in beforenight])
     return [
@@ -84,12 +85,10 @@ def matching_night_probs(solver: Solver, episode: int):
     ]
 
 
-def sol_probs(sols: list[Solution], sol: Solution, options: dict):
-    # sols = find_solutions(season, options)
+def sol_probs(sols: list[Solution], sol: Solution):
     nightpossol = any([set(sol).issubset(sol) for sol in sols])
 
-    # print(f"Solution possible at this point: {nightpossol}")
-    lights = Counter([len(s.union(sol)) for s in sols])
+    lights = Counter([len(s.intersection(sol)) for s in sols])
     probs = [round(lights.get(i, 0) / len(sols) * 100, 2) for i in range(12 + 1)]
     import statistics
 
@@ -98,3 +97,14 @@ def sol_probs(sols: list[Solution], sol: Solution, options: dict):
         statistics.median(filter(lambda x: x > 0, probs)),
         max(filter(lambda x: x > 0, probs)),
     )
+
+def plot_probs(sols: list[Solution]):
+    solspace = SolutionSpace(sols)
+    probs = solspace.get_pair_probs_dict()
+    df = pd.Series(probs).unstack(fill_value=0)
+    my_cmap = sns.light_palette((0.2, 0.7, 0.2), as_cmap=True)
+    my_cmap.set_under((1, 0.7, 0.7))
+    my_cmap.set_over((0.2, 0.8, 0.2))
+    sns.heatmap(df, vmin=1e-5, vmax=100 - 1e-5, cmap=my_cmap, annot=True, fmt=".0f")
+    plt.tight_layout()
+    plt.show()

@@ -98,9 +98,7 @@ def read_data_from_excel(
         raise ValueError(f"More than one DM in Candidates sheet for {sn}")
     dm: str | None = dmlist[0] if len(dmlist) == 1 else None
     if sn == "normalo2024":
-        print("reading normalo2024")
         dm = dfcand["mm"].dropna().tolist()[0] if "mm" in dfcand.columns else None
-        print("tm", dm)
     dfnights = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Nights", header=0)
     nights: list[Night] = [
         Night(make_pair_list(list(dfnights.columns[:-1]), row[:-1]), int(row[-1]))
@@ -115,7 +113,7 @@ def read_data_from_excel(
     )
 
     validate_season_args(lefts, rights, nights, matchboxes, dm)
-    # todo: type annotate and find out what set is
+    
     try:
         dfsolution = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Solution", header=0)
         solution: Solution = Solution(
@@ -215,23 +213,4 @@ def get_solver(sn:str) -> Solver:
 
 
 
-if __name__ == "__main__":
-    allseasons = [
-        "normalo2020",
-        "normalo2021",
-        "normalo2022",
-        "normalo2023",
-        "normalo2024",
-        "normalo2025",
-        "normalo2026",
-        "vip2021",
-        "vip2022",
-        "vip2023",
-        "vip2024",
-        "vip2025",
-        "vip2026",
-    ]
 
-    res = read_data_from_excel("vip2022")
-    for x in res:
-        print(x)
