@@ -8,7 +8,7 @@ class VIP2026Solver(Solver):
     sm: str = "Laurenz"
 
     def solution_correct_format(self, sol: Solution) -> dict:
-        if len(sol) > self.season.nummatches:
+        if len(sol) > self.season.num_matches:
             return {"res": False, "reason": "too_many_matches"}
 
         ls, rs = zip(*sol)
@@ -55,7 +55,7 @@ class VIP2026Solver(Solver):
         pass
 
         if (
-            len(sol) == self.season.nummatches
+            len(sol) == self.season.num_matches
             and self.solution_possible(sol, end, includenight)["res"]
         ):
             return [sol]
@@ -89,23 +89,16 @@ class VIP2026Solver(Solver):
 
         if mmnum > 0:
             isols = self.merge_mm_in_solution(sol, other_matches_list, end)
-            for sol in isols:
-                assert len(sol) == 11
         else:
             isols = self.merge_mm_not_in_solution(
                 sol, other_matches_list, end, includenight
             )
-            for sol in isols:
-                assert len(sol) == 11
         # add self.sm as double_match
         solutions = [s.addpair((self.sm, r)) for r in smmatches for s in isols]  # type: ignore
-        unique_sols = []
+        unique_sols = set()
 
         for sol in solutions:
-            assert len(sol) == 12
+            unique_sols.add(sol)
 
-            if sol not in unique_sols:
-                unique_sols.append(sol)
-
-        return unique_sols
+        return list(unique_sols)
 

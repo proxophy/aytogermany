@@ -1,4 +1,5 @@
 from collections import Counter
+import functools
 
 from .ayto import Solver
 from .models import *
@@ -6,6 +7,7 @@ from .models import *
 
 class Normalo2024Solver(Solver):
 
+    @functools.cache
     def no_match(self, l: str, r: str, end: int) -> bool:
         nomatch = super().no_match(l, r, end)
 
@@ -107,25 +109,45 @@ class Normalo2024Solver(Solver):
 
         for othermatches in other_matches_list:
             tenmatches = sol.union(othermatches)
-            assert len(tenmatches) == 10
 
-            _, crights = zip(*tenmatches)
+            clefts, crights = zip(*tenmatches)
             missingright = [r for r in self.season.rights if r not in crights][0]
 
             # Normalo 2024
             missingrights = [r for r in self.season.rights if r not in crights]
-            mr1, mr2 = missingrights
-            if self.season.mm in missingrights:
-                # no multiple seatings, Mela not seated
-                for l in self.season.lefts:
-                    addmatches = Solution(frozenset(((l, mr1), (l, mr2))))
+            if len(missingrights) == 2:
+                mr1, mr2 = missingrights
+                if self.season.mm in missingrights:
+                    # no multiple seatings, Mela not seated
+                    for l in self.season.lefts:
+                        addmatches = Solution(frozenset(((l, mr1), (l, mr2))))
+                        if all([not self.no_match(*p, end) for p in addmatches]):
+                            solutions.append(tenmatches.union(addmatches))
+                else:
+                    # no mutiple seatings, Mela seated
+                    dmleft = [l for (l, r) in tenmatches if r == self.season.mm][0]
+                    addmatches = Solution(frozenset(((dmleft, mr1), (dmleft, mr2))))
                     if all([not self.no_match(*p, end) for p in addmatches]):
                         solutions.append(tenmatches.union(addmatches))
-            else:
-                # no mutiple seatings, Mela seated
-                dmleft = [l for (l, r) in tenmatches if r == self.season.mm][0]
-                addmatches = Solution(frozenset(((dmleft, mr1), (dmleft, mr2))))
-                if all([not self.no_match(*p, end) for p in addmatches]):
-                    solutions.append(tenmatches.union(addmatches))
+            elif len(missingrights) == 1:
+                counter = Counter(clefts)
+                if len([l for l in self.season.lefts if counter[l] == 2]) == 0:
+                    print(tenmatches, missingrights, counter)
+                    print(len(tenmatches))
+                    assert False
+                smleft = [l for l in self.season.lefts if counter[l] == 2][0]
+                solutions = []
+                not_sm_in_asm = self.season.mm is not None and self.season.mm not in crights
+                for othermatches in other_matches_list:
+                    elevenmatches = sol.union(othermatches)
+                    _, crights = zip(*elevenmatches)
+                    missingright = [r for r in self.season.rights if r not in crights][0]
+                    # if we still have to add Mela: skip when somebody else is missing
+                    if not_sm_in_asm and missingright != self.season.mm:
+                        continue
+                    elif self.no_match(smleft, missingright, end):
+                        continue
+                    solutions.append(elevenmatches.addpair((smleft, missingright)))
+
 
         return solutions

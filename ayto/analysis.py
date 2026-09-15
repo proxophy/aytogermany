@@ -2,6 +2,8 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 from collections import Counter
+import functools
+import time
 
 from .models import Solution
 from .ayto import Solver
@@ -108,3 +110,14 @@ def plot_probs(sols: list[Solution]):
     sns.heatmap(df, vmin=1e-5, vmax=100 - 1e-5, cmap=my_cmap, annot=True, fmt=".0f")
     plt.tight_layout()
     plt.show()
+
+def time_it(inner):
+    @functools.wraps(inner)
+    def c_inner(*args):
+        start = time.time()
+        res = inner(*args)
+        end = time.time()
+        print(f"=== time needed for {inner.__name__}: {(end-start):0.3f}s ===")
+        return res
+
+    return c_inner

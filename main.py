@@ -97,26 +97,31 @@ def check_ao_data(s, end):
 
 
 if __name__ == "__main__":
-    sn = "normalo2025"
+    sn = "normalo2020"
 
+    import time
     season: Season = get_season(sn)
+    x = hash(season)
+    # print(x)
     sol: Solution = season.solution  # type: ignore
     solver: Solver = get_solver(sn)
     # print(solver.no_match("Cecilia", "Felix", 6))
-    end = 2
-    from ayto.utils import time_it
-    sols = solver.solve(end, True)
-    plot_probs(sols)
+    end = 7
+    start = time.time()
+    solver.solve(end, True)
+    end = time.time()
+    print(end-start)
+    # sols = solver.solve(end, True)
+    # print(len(sols))
+    # plot_probs(sols)
 
     # prinr(probs)
     # amounts = []
-    # for end in range(1, 10):
+    # for end in range(2, 10):
+    #     print(end)
     #     sols = solver.solve(end, True)
-    #     # sols = times = []
-    #     print(len(sols))
-    #     print(times)
-    #     print(solver.times)
     #     amounts.append(len(sols))
+    #     print(len(sols))
     # print(amounts)
 
     # comparetoao(sols, end)

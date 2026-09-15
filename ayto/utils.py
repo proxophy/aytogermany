@@ -1,6 +1,4 @@
 import pandas as pd
-import functools
-import time
 from typing import Sequence
 
 from .models import *
@@ -9,19 +7,10 @@ from .aytovip25 import VIP2025Solver
 from .aytovip26 import VIP2026Solver
 from .ayto import Solver
 
-def time_it(inner):
-    @functools.wraps(inner)
-    def c_inner(*args):
-        start = time.time()
-        res = inner(*args)
-        end = time.time()
-        print(f"=== time needed for {inner.__name__}: {(end-start):0.3f}s ===")
-        return res
-
-    return c_inner
 
 
-def check_nights(nights: list[Night], lefts: list[str], rights: list[str]) -> None:
+
+def check_nights(nights: tuple[Night,...], lefts: tuple[str,...], rights: tuple[str,...]) -> None:
     """Check if nights are fine"""
 
     # make sure all pairs are valid pairs and there are no duplicates
@@ -48,9 +37,9 @@ def check_nights(nights: list[Night], lefts: list[str], rights: list[str]) -> No
 
 
 def validate_season_args(
-    lefts: list[str],
-    rights: list[str],
-    nights: list[Night],
+    lefts: tuple[str,...],
+    rights: tuple[str,...],
+    nights: tuple[Night,...],
     matchboxes: Matchboxes,
     dm: str | None,
 ):
@@ -67,7 +56,7 @@ def validate_season_args(
     for n, (l,r), result in matchboxes:
 
         if (l,r) in pairs or (r, l) in pairs:
-            raise AssertionError(f"{(l,r)} occurs more than once in matchboxes")
+            raise ValueError(f"{(l,r)} occurs more than once in matchboxes")
         if l in lefts and r in rights:
             pairs.add((l,r))
         elif l in rights and r in lefts:
@@ -89,10 +78,10 @@ def make_pair_list(lefts: Sequence[str], rights: Sequence[str]) -> tuple[Pair, .
 
 def read_data_from_excel(
     sn: str,
-) -> tuple[list[str], list[str], list[Night], Matchboxes, str | None, Solution]:
+) -> tuple[tuple[str,...], tuple[str,...], tuple[Night,...], Matchboxes, str | None, Solution]:
     dfcand = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Candidates", header=0)
-    lefts: list[str] = dfcand["left"].dropna().tolist()
-    rights: list[str] = dfcand["right"].dropna().tolist()
+    lefts: tuple[str] = tuple(dfcand["left"].dropna().tolist())
+    rights: tuple[str] = tuple(dfcand["right"].dropna().tolist())
     dmlist = dfcand["mm"].dropna().tolist() if "mm" in dfcand.columns else []
     if len(dmlist) > 1:
         raise ValueError(f"More than one DM in Candidates sheet for {sn}")
@@ -100,16 +89,16 @@ def read_data_from_excel(
     if sn == "normalo2024":
         dm = dfcand["mm"].dropna().tolist()[0] if "mm" in dfcand.columns else None
     dfnights = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Nights", header=0)
-    nights: list[Night] = [
+    nights: tuple[Night, ...] = tuple(
         Night(make_pair_list(list(dfnights.columns[:-1]), row[:-1]), int(row[-1]))
         for row in dfnights.values.tolist()
-    ]
+    )
 
     dfmatchboxes = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Matchboxes", header=0)
     matchboxes: Matchboxes = Matchboxes(
-        dfmatchboxes["episode"].to_list(),
+        tuple(dfmatchboxes["episode"].to_list()),
         make_pair_list(dfmatchboxes["left"].to_list(), dfmatchboxes["right"].to_list()),
-        dfmatchboxes["result"].to_list(),
+        tuple(dfmatchboxes["result"].to_list()),
     )
 
     validate_season_args(lefts, rights, nights, matchboxes, dm)

@@ -18,12 +18,8 @@ class Solution:
     def __iter__(self):
         return iter(self.pairs)
 
-    def __eq__(self, other):
-        if isinstance(other, Solution):
-            return self.pairs == other.pairs
-        return False
 
-    def intersectionlength(self, night: Sequence[Pair]) -> int:
+    def intersection_length(self, night: Sequence[Pair]) -> int:
         if len(night) != 10:
             raise ValueError("intersectionlength must be called with night as arg")
         count = sum(1 for p in night if p in self.pairs)
@@ -85,12 +81,12 @@ class Night:
 # Matchboxes = dict[Pair, bool]
 @dataclass(frozen=True)
 class Matchboxes:
-    episodes: Sequence[int] = ()
-    pairs: Sequence[Pair] = ()
-    results: Sequence[bool] = ()
+    weeks: tuple[int,...] = ()
+    pairs: tuple[Pair,...] = ()
+    results: tuple[bool,...] = ()
 
     def __post_init__(self):
-        if not (len(self.episodes) == len(self.pairs) == len(self.results)):
+        if not (len(self.weeks) == len(self.pairs) == len(self.results)):
             raise ValueError
         pass
 
@@ -101,23 +97,23 @@ class Matchboxes:
         return self.results[idx]
 
     def __iter__(self):
-        return zip(self.episodes, self.pairs, self.results)
+        return zip(self.weeks, self.pairs, self.results)
 
     def __len__(self):
-        return len(self.episodes)
+        return len(self.weeks)
 
     def get_perfect_matches(self, end: int = -1) -> list[Pair]:
         if end == -1:
-            end = max(self.episodes)
+            end = max(self.weeks)
         return [
             self.pairs[i]
             for i in range(len(self.results))
-            if self.results[i] and self.episodes[i] <= end
+            if self.results[i] and self.weeks[i] <= end
         ]
 
-    def get_matchboxes_until_episode(self, end: int):
-        c = sum(1 for e in self.episodes if e <= end)
-        return Matchboxes(self.episodes[:c], self.pairs[:c], self.results[:c])
+    def get_matchboxes_until_week(self, end: int):
+        c = sum(1 for e in self.weeks if e <= end)
+        return Matchboxes(self.weeks[:c], self.pairs[:c], self.results[:c])
 
     def __contains__(self, key: Pair):
         return key in self.pairs
@@ -126,9 +122,9 @@ class Matchboxes:
 @dataclass(frozen=True)
 class Season:
     name: str
-    lefts: Sequence[str]
-    rights: Sequence[str]
-    nights: Sequence[Night]
+    lefts: tuple[str,...]
+    rights: tuple[str,...]
+    nights: tuple[Night,...]
     matchboxes: Matchboxes
     solution: Solution | None = None
     mm: str | None = None
@@ -144,12 +140,16 @@ class Season:
             )
 
     @property
-    def nummatches(self) -> int:
+    def num_matches(self) -> int:
         return max(len(self.lefts), len(self.rights)) + (1 if self.name == "vip2026" else 0)
 
     @property
-    def numepisodes(self) -> int:
+    def num_weeks(self) -> int:
         return len(self.nights)
+
+    @property
+    def mm_known_after_week(self) -> int:
+        return 5 if self.name == "normalo2026" else 0
 
     def get_nights(self, end: int = 10) -> Sequence[Night]:
         end = max(0, min(end, 10))
@@ -157,7 +157,7 @@ class Season:
 
     def get_matchboxes(self, end: int = 10) -> Matchboxes:
         end = max(0, min(end, 10))
-        return self.matchboxes.get_matchboxes_until_episode(end)
+        return self.matchboxes.get_matchboxes_until_week(end)
 
     def get_pms(self, end: int = 10) -> list[Pair]:
         end = max(0, min(end, 10))
