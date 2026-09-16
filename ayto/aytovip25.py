@@ -70,7 +70,7 @@ class VIP2025Solver(Solver):
                         l for (l, r) in tenplusmatches if r == self.season.mm
                     ][0]
                     # print(jimipartner)
-                    if  (jimipartner, r1) in addmatches_dict[r1]:
+                    if (jimipartner, r1) in addmatches_dict[r1]:
                         solutions += [
                             tenplusmatches.union(
                                 Solution(frozenset({(jimipartner, r1), ap}))

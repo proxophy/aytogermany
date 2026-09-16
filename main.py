@@ -42,6 +42,7 @@ def comparetoao(sols, end):
         elif s not in sols:
             count2 += 1
             print(s)
+            # break
             
     print(
         f"solution in solsao not possible: {count}; solutions in solsao not in sols {count2}"
@@ -55,7 +56,7 @@ def comparetoao(sols, end):
         if s not in solsao:
             spd = solver.solution_possible(s, end, False)
             count += 1
-            print(s)
+            # print(s)
             if not spd["res"]:
                 reasons.append(spd["reason"])
                 count2 += 1
@@ -104,7 +105,7 @@ def check_solution_possible(sols, solver: Solver, end):
         p = solver.solution_possible(s, end, True)
         if not p["res"]:
             reasons.append(p["reason"])
-            print(s, p["reason"])
+            # print(s, p["reason"])
     return Counter(reasons)
 
 
@@ -118,7 +119,7 @@ def findpsol(sol, solver: Solver, end):
 
 
 if __name__ == "__main__":
-    sn = "vip2025"
+    sn = "vip2026"
 
     import time
 
@@ -126,38 +127,40 @@ if __name__ == "__main__":
     sol: Solution = season.solution  # type: ignore
     solver: Solver = get_solver(sn)
     s = time.time()
-    end = 3
-    sols = solver.solve(end, True)
+    end = 1
+    # sols = solver.solve(end, True)
     e = time.time()
     print(e - s)
-    print(len(sols))
+    # print(len(sols))
+    # print(Counter(solver.reasons))
 
     # for l in season.lefts:
     #     print(l, solver.no_match(l,"Jimi",end))
     # comparetoao(sols, end)
-    print(iterate_through(solver))
+    print(iterate_through(solver, 2))
 
-    exit()
+    
 
     # print(check_solution_possible(sols, solver, end))
+    exit()
     sol = Solution(
         frozenset(
-           (('Viki', 'Oliver'), ('Sandra', 'Lennert'), ('Viki', 'Rob'), ('Hati', 'Jimi'), ('Antonia', 'Nico'), ('Beverly', 'Kevin'), ('Nelly', 'Calvin O.'), ('Henna', 'Jonny'), ('Ariel', 'Leandro'), ('Elli', 'Xander'), ('Joanna', 'Calvin S.'), ('Hati', 'Sidar'))
+          (('Paddy', 'Julia'), ('Ryan', 'Sina'), ('Gerrit', 'Edda'), ('Sidar', 'Afra'), ('Kevin', 'Lina'), ('Sidar', 'Mela'), ('Wilson', 'Shelly'), ('Paulo', 'Lisa-Marie'), ('Sidar', 'Jana'), ('Eti', 'Maja'), ('Martin', 'Pia'), ('Sandro', 'Tais'))
         )
     )
-    psol = Solution(
-        frozenset(
-            (
-                ("Henna", "Leandro"),
-                ("Hati", "Jimi"),
-                ("Elli", "Xander"),
-                ("Ariel", "Nico"),
-                ("Sandra", "Lennert"),
-                ("Viki", "Kevin"),
-                ("Joanna", "Sidar"),
-            )
-        )
-    )
+    # psol = Solution(
+    #     frozenset(
+    #         (
+    #             ("Henna", "Leandro"),
+    #             ("Hati", "Jimi"),
+    #             ("Elli", "Xander"),
+    #             ("Ariel", "Nico"),
+    #             ("Sandra", "Lennert"),
+    #             ("Viki", "Kevin"),
+    #             ("Joanna", "Sidar"),
+    #         )
+    #     )
+    # )
     pairs = set()
     for night in season.get_nights(end):
         isect = sol.pairs & set(night.pairs)
@@ -166,12 +169,13 @@ if __name__ == "__main__":
     psol = Solution(frozenset(pairs))
     print("subst", psol.issubset(sol))
     diff = sol.difference(psol)
-    print(diff)
+    print(psol, len(psol))
     print("in generated psol", psol in solver.generate_partial_solutions(end, True))
+    print("psol possible", solver.solution_possible(psol, end, True))
     # psol = findpsol(sol, solver, end)
     # print(psol)
-    sols = solver.generate_complete_solutions(psol, end, True)
-    print("sol in sols", sol in sols)
+    # sols = solver.generate_complete_solutions(psol, end, True)
+    # print("sol in sols", sol in sols)
     # print(psol.dict_rep())
     # print(sol.dict_rep())
     # comparetoao(sols, end)

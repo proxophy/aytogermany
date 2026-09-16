@@ -161,6 +161,10 @@ class Season:
     def mm_known_after_week(self) -> int:
         return 5 if self.name == "normalo2026" else 0
 
+    @property
+    def max_multiple_match_size(self) -> int:
+        return 3 if self.name == "normalo2024" else 2
+
     def get_nights(self, end: int = 10) -> Sequence[Night]:
         end = max(0, min(end, 10))
         return self.nights[: (end + 1)]

@@ -16,6 +16,7 @@ class Solver:
             for r in self.season.rights
             for end in range(0, 11)
         }
+        self.reasons = []
 
     @functools.cache 
     def no_match(self, l: str, r: str, end: int) -> bool:
@@ -84,12 +85,14 @@ class Solver:
             return {"res": False, "reason": f"known_no_match", "detail": p}
 
 
+        complete: bool = len(sol) == self.season.num_matches
         # check conditions for double matches
+        # if complete:
         double_match_logic = self.check_double_match_logic(sol, end)
         if not double_match_logic["res"]:
             return double_match_logic
 
-        complete: bool = len(sol) == self.season.num_matches
+       
         # if Solution has nummatches matches
         if complete:
             # we must have 10 seated lefts and nummatches rights
@@ -118,6 +121,8 @@ class Solver:
                     return {"res": False, "reason": f"not_enough_lights_in_night_{i}"}
             i += 1
         return {"res": True, "reason": ""}
+
+
 
     def check_double_match_logic(self, sol: Solution, end:int) -> dict:
         if self.season.dmtuple is not None and end >= self.season.dmtupleknown:
@@ -150,11 +155,11 @@ class Solver:
             elif (
                 mm is not None
                 and end >= self.season.mm_known_after_week
-                and len(multiplers) == 2
+                and len(multiplers) == self.season.max_multiple_match_size
                 and mm not in pdict[mutiplel]
                 and not self.season.two_dms
             ):
-                return {"res": False, "reason": "mm_not_in_double_match"}
+                return {"res": False, "reason": "mm_not_in_double_match", "detail":(mutiplel,multiplers)}
         elif len(mutiplels) > 2:
             return {"res": False, "reason": "too_many_double_matches"}
         return {"res":True, "reason": ""}
@@ -172,6 +177,8 @@ class Solver:
             pred = self.solution_possible(g3, end, includenight)
             if pred["res"]:
                 m_asm.add(g3)
+            else:
+                self.reasons.append(pred["reason"])
 
         return list(m_asm)
 
