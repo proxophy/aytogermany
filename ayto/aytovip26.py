@@ -65,8 +65,7 @@ class VIP2026Solver(Solver):
 
         glefts, _, mmnum = sol.get_candidates()
         pos_matches = self.possible_matches_for_solution(sol, end, includenight)
-        pos_matches.pop(self.sm)  # type: ignore
-        smr = None
+        pos_matches.pop(self.sm, None)  # type: ignore
         if self.sm in glefts:
             # remove pair with self.sm if necessary
             smmatches = [r for l, r in sol if l == self.sm][0]

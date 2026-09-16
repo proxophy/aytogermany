@@ -10,7 +10,7 @@ class Solution:
 
 
     def __repr__(self) -> str:
-        return "(" + ", ".join(map(str, self.pairs)) + ")"
+        return "(" + ", ".join(map(str, self.pairs)) + ")" # type: ignore
 
     def __len__(self) -> int:
         return len(self.pairs)
@@ -66,6 +66,16 @@ class Solution:
         else:
             g_lefts, g_rights = set(), set()
         return set(g_lefts), set(g_rights), len(g_lefts) - len(set(g_lefts))
+
+    def dict_rep(self) -> dict[str, list[str]]:
+        d = {}
+        for l, r in self.pairs:
+            if l in d:
+                d[l].append(r)
+            else:
+                d[l] = [r]
+        return d
+
 
 
 @dataclass(frozen=True)

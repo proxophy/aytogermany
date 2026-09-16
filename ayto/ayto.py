@@ -210,7 +210,7 @@ class Solver:
     ) -> list[Solution]:
         _, _, mm_num = sol.get_candidates()
         if mm_num == 0:
-            raise ValueError("merge_mm_in_Solution shouldn't be called if muliple match(es) are not in Solution")
+            raise ValueError("merge_mm_in_solution shouldn't be called if muliple match(es) are not in Solution")
         
         sols = [sol.union(othermatches) for othermatches in other_matches_list]
         return sols
@@ -297,6 +297,8 @@ class Solver:
 
         _, _, mm_num = sol.get_candidates()
         pos_matches = self.possible_matches_for_solution(sol, end, includenight)
+        # for p in pos_matches:
+        #     print(p, pos_matches[p])
 
         products = [
             list(ps)
@@ -370,11 +372,11 @@ class Solver:
         return merged_solutions
 
     def solve(self, end: int, includenight: bool)-> list[Solution]:
-        merged_partialsols = self.generate_partial_solutions(end, includenight)
+        partial_solutions = self.generate_partial_solutions(end, includenight)
         
         solutions_unfiltered: list[Solution] = []
     
-        for g in merged_partialsols:
+        for g in partial_solutions:
             sols_g = self.generate_complete_solutions(g, end, includenight)
             solutions_unfiltered.extend(sols_g)
 

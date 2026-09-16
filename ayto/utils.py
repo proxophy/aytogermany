@@ -88,11 +88,20 @@ def read_data_from_excel(
     dm: str | None = dmlist[0] if len(dmlist) == 1 else None
     if sn == "normalo2024":
         dm = dfcand["mm"].dropna().tolist()[0] if "mm" in dfcand.columns else None
+
     dfnights = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Nights", header=0)
-    nights: tuple[Night, ...] = tuple(
-        Night(make_pair_list(list(dfnights.columns[:-1]), row[:-1]), int(row[-1]))
-        for row in dfnights.values.tolist()
-    )
+    if sn != "vip2026":
+        nights: tuple[Night, ...] = tuple(
+            Night(make_pair_list(list(dfnights.columns[:-1]), row[:-1]), int(row[-1]))
+            for row in dfnights.values.tolist()
+        )
+    else:
+        pairspnight = [make_pair_list(list(dfnights.columns[:-1]), row[:-1])  for row in dfnights.values.tolist()]
+        pairspnight = [tuple(filter(lambda x: isinstance(x[1], str), pairs)) for pairs in pairspnight]
+        nights: tuple[Night, ...] = tuple(
+                Night(pairspnight[i], int(dfnights["lights"][i]))
+                for i in range(dfnights.shape[0])
+            )
 
     dfmatchboxes = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Matchboxes", header=0)
     matchboxes: Matchboxes = Matchboxes(
