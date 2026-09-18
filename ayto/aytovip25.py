@@ -1,6 +1,7 @@
-from .ayto import Solver
+from .ayto import Solver, mm_left, dict_rep, get_candidates
 from .models import *
 
+import time
 from collections import Counter
 
 
@@ -21,98 +22,98 @@ class VIP2025Solver(Solver):
         end: int,
         includenight: bool,
     ):
-        solutions = []
-        sitting_nomatches: dict[Pair, bool] = {}
-        # Consider sitting matches as no matches if not in Solution and we have the right
-        # amount of lights
+        s = time.time()
+        sitting_nomatches: set[Pair] = set()
         nights = self.season.get_nights(end)
         if not includenight:
             nights = nights[:-1]
         for night in nights:
-            pl = sol.intersection_length(night.pairs)
+            pl = len(sol & night.pairs)
             if pl > night.lights:
                 return []
             elif pl < night.lights:
                 continue
-            for p in set(night.pairs) - set(sol.pairs):
-                sitting_nomatches[p] = True
-        addmatches_dict = {
+            for p in night.pairs - sol:
+                sitting_nomatches.add(p)
+
+        addable_lefts = {
             r: [
-                (l, r)
+                l
                 for l in self.season.lefts
-                if not (
-                    self.no_match(l, r, end) or sitting_nomatches.get((l, r), False)
-                )
+                if not (self.no_match(l, r, end) or (l, r) in sitting_nomatches)
             ]
             for r in self.season.rights
         }
-        # print("merge_mm_not_in_solution")
+        e = time.time()
+        self.times["before_loop"] += e - s
+
+        solutions: list[Solution] = []
         for othermatches in other_matches_list:
+            s = time.time()
             tenplusmatches = sol.union(othermatches)
+            base = tenplusmatches
             _, crights = zip(*tenplusmatches)
             missingrights = [r for r in self.season.rights if r not in crights]
-            # print(missingrights)
+            e = time.time()
+            self.times["before_if"] += e - s
+
             if len(missingrights) == 2:
+                s = time.time()
                 # add two matches
                 r1, r2 = missingrights
                 if r1 == self.season.mm or r2 == self.season.mm:
-                    for l1, _ in addmatches_dict[r1]:
-                        for l2, _ in addmatches_dict[r2]:
+                    for l1 in addable_lefts[r1]:
+                        for l2 in addable_lefts[r2]:
                             if l1 == l2:
                                 continue
-                            solutions.append(
-                                tenplusmatches.union(
-                                    Solution(frozenset({(l1, r1), (l2, r2)}))
-                                )
-                            )
+
+                            x = base | {(l1, r1), (l2, r2)}
+                            solutions.append(x)
                 else:
                     jimipartner = [
                         l for (l, r) in tenplusmatches if r == self.season.mm
                     ][0]
                     # print(jimipartner)
-                    if (jimipartner, r1) in addmatches_dict[r1]:
+                    if jimipartner in addable_lefts[r1]:
                         solutions += [
-                            tenplusmatches.union(
-                                Solution(frozenset({(jimipartner, r1), ap}))
-                            )
-                            for ap in addmatches_dict[r2]
-                            if ap[0] != jimipartner
+                            base | {(jimipartner, r1), (l2, r2)}
+                            for l2 in addable_lefts[r2]
+                            if l2 != jimipartner
                         ]
-                    if (jimipartner, r2) in addmatches_dict[r2]:
+                    if jimipartner in addable_lefts[r2]:
                         solutions += [
-                            tenplusmatches.union(
-                                Solution(frozenset({(jimipartner, r2), ap}))
-                            )
-                            for ap in addmatches_dict[r1]
-                            if ap[0] != jimipartner
+                            base | {(jimipartner, r2), (l1, r1)}
+                            for l1 in addable_lefts[r1]
+                            if l1 != jimipartner
                         ]
-            else:
+                e = time.time()
+                self.times["mr2"] += e - s
+            elif len(missingrights) == 1:
+                s = time.time()
                 missing_right = missingrights[0]
-                mm_left = tenplusmatches.mm_left()
+                mml = mm_left(tenplusmatches)
                 if missing_right == self.season.mm:
                     solutions += [
-                        tenplusmatches.addpair(ap)
-                        for ap in addmatches_dict[missing_right]
-                        if ap[0] != mm_left
+                        base | {(l, missing_right)}
+                        for l in addable_lefts[missing_right]
+                        if l != mml
                     ]
                 else:
                     jimipartner = [
                         l for (l, r) in tenplusmatches if r == self.season.mm
                     ][0]
-                    d = tenplusmatches.dict_rep()
+                    d = dict_rep(tenplusmatches)
                     # dont add to Jimi if he's already part of double match
                     if len(d[jimipartner]) == 2:
                         solutions += [
-                            tenplusmatches.addpair(ap)
-                            for ap in addmatches_dict[missing_right]
-                            if ap[0] != jimipartner
+                            base | {(l, missing_right)}
+                            for l in addable_lefts[missing_right]
+                            if l != jimipartner
                         ]
                     else:
-                        if (jimipartner, missing_right) not in addmatches_dict[
-                            missing_right
-                        ]:
+                        if jimipartner not in addable_lefts[missing_right]:
                             continue
-                        solutions.append(
-                            tenplusmatches.addpair((jimipartner, missing_right))
-                        )
+                        solutions.append(base | {(jimipartner, missing_right)})
+                e = time.time()
+                self.times["mr1"] += e - s
         return solutions

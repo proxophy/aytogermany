@@ -5,6 +5,7 @@ from ayto import Solver
 from ayto.analysis import plot_probs, analyze_solutions
 from ayto.models import Season, Solution, Pair
 from ayto.utils import get_season, get_solver
+from ayto.aytovip25 import VIP2025Solver
 
 
 def appendsol(sn: str, tsol: set[tuple[str, str]]):
@@ -18,7 +19,7 @@ def appendsol(sn: str, tsol: set[tuple[str, str]]):
         dfsol.to_excel(writer, sheet_name="Solution", index=False)
 
 
-def comparetoao(sols, end):
+def comparetoao(solver, sols, end):
     with open("aodata.txt", "r") as f:
         lines = map(eval, f.readlines())
 
@@ -27,7 +28,7 @@ def comparetoao(sols, end):
         for l, rs in ld.items():
             for r in rs:
                 pairs.add((l, r))
-        return Solution(frozenset(pairs))
+        return Solution(set(pairs))
 
     solsao = list(map(parse_sol, lines))
 
@@ -41,9 +42,9 @@ def comparetoao(sols, end):
             reasons.append(spd["reason"])
         elif s not in sols:
             count2 += 1
-            print(s)
+            # print(s)
             # break
-            
+
     print(
         f"solution in solsao not possible: {count}; solutions in solsao not in sols {count2}"
     )
@@ -105,7 +106,7 @@ def check_solution_possible(sols, solver: Solver, end):
         p = solver.solution_possible(s, end, True)
         if not p["res"]:
             reasons.append(p["reason"])
-            # print(s, p["reason"])
+            print(s, p["reason"], p.get("detail", ""))
     return Counter(reasons)
 
 
@@ -119,63 +120,65 @@ def findpsol(sol, solver: Solver, end):
 
 
 if __name__ == "__main__":
-    sn = "vip2026"
+    sn = "vip2025"
 
     import time
 
     season: Season = get_season(sn)
     sol: Solution = season.solution  # type: ignore
-    solver: Solver = get_solver(sn)
+    solver: Solver = get_solver(sn)  # type: ignore
     s = time.time()
-    end = 1
-    # sols = solver.solve(end, True)
+    end = 3
+    sols = solver.solve(end, True)
     e = time.time()
     print(e - s)
-    # print(len(sols))
-    # print(Counter(solver.reasons))
+    print(solver.times)
 
-    # for l in season.lefts:
-    #     print(l, solver.no_match(l,"Jimi",end))
-    # comparetoao(sols, end)
-    print(iterate_through(solver, 2))
 
-    
-
-    # print(check_solution_possible(sols, solver, end))
+    # comparetoao(solver, sols, end)
     exit()
-    sol = Solution(
-        frozenset(
-          (('Paddy', 'Julia'), ('Ryan', 'Sina'), ('Gerrit', 'Edda'), ('Sidar', 'Afra'), ('Kevin', 'Lina'), ('Sidar', 'Mela'), ('Wilson', 'Shelly'), ('Paulo', 'Lisa-Marie'), ('Sidar', 'Jana'), ('Eti', 'Maja'), ('Martin', 'Pia'), ('Sandro', 'Tais'))
+
+    pos_matches = {
+            "A": ["1", "2"],
+            "B": ["2", "3", "4"],
+            "C": ["3", "4"],
+        }
+    
+    lefts = ["A", "B", "C"]
+    rights = ["1", "2", "3", "4"]
+    from ayto.ayto import compute_matches
+
+    psol = Solution(
+        set(
+            (('Nelly', 'Calvin O.'), ('Beverly', 'Nico'), ('Viki', 'Kevin'), ('Joanna', 'Rob'), ('Elli', 'Xander'), ('Henna', 'Oliver'), ('Hati', 'Sidar'), ('Sandra', 'Lennert'))
         )
     )
-    # psol = Solution(
-    #     frozenset(
-    #         (
-    #             ("Henna", "Leandro"),
-    #             ("Hati", "Jimi"),
-    #             ("Elli", "Xander"),
-    #             ("Ariel", "Nico"),
-    #             ("Sandra", "Lennert"),
-    #             ("Viki", "Kevin"),
-    #             ("Joanna", "Sidar"),
-    #         )
-    #     )
-    # )
-    pairs = set()
-    for night in season.get_nights(end):
-        isect = sol.pairs & set(night.pairs)
-        pairs.update(isect)
-        pass
-    psol = Solution(frozenset(pairs))
-    print("subst", psol.issubset(sol))
-    diff = sol.difference(psol)
-    print(psol, len(psol))
-    print("in generated psol", psol in solver.generate_partial_solutions(end, True))
-    print("psol possible", solver.solution_possible(psol, end, True))
-    # psol = findpsol(sol, solver, end)
-    # print(psol)
-    # sols = solver.generate_complete_solutions(psol, end, True)
-    # print("sol in sols", sol in sols)
-    # print(psol.dict_rep())
+
+    print(sol.difference(psol))
     # print(sol.dict_rep())
-    # comparetoao(sols, end)
+    print(psol.issubset(sol))
+    
+
+    # sols = compute_matches(pos_matches, lefts, rights, None)
+    # print(len(sols), sols)
+
+    # psols = solver.generate_partial_solutions(end, True)
+    # print(len(psols))
+    # for p in psols:
+    #     if (p.issubset(sol)):
+    #         print(p)
+    # for psol in psols:
+    sols = solver.generate_complete_solutions(psol, end, True)
+    print("sol in sols", sol in sols)
+    
+    # sols2 = solver.generate_complete_solutions2(psol, end, True)
+    # print(len(sols), len(sols2))
+    # if len(sols) != len(sols2):
+    #     print(f"len(sols) != len(sols2) {len(sols)} {len(sols2)}")
+    # for s in sols:
+    #     if s not in sols2:
+    #         print("not the same", s)
+
+    exit()
+
+    

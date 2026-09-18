@@ -1,4 +1,4 @@
-from .ayto import Solver
+from .ayto import Solver, get_candidates
 from .models import *
 
 import itertools
@@ -22,7 +22,7 @@ class VIP2026Solver(Solver):
             return {
                 "res": False,
                 "reason": "wrongly_written_names_in_rights",
-                "detail": [c for c in ls if c not in self.season.rights],
+                "detail": [c for c in rs if c not in self.season.rights],
             }
 
         return {"res": True, "reason": ""}
@@ -52,7 +52,9 @@ class VIP2026Solver(Solver):
     def generate_complete_solutions(
         self, sol: Solution, end: int, includenight: bool
     ) -> list[Solution]:
-        pass
+        if not self.solution_possible(sol, end, includenight)["res"]:
+            return []
+
 
         if (
             len(sol) == self.season.num_matches
@@ -60,16 +62,18 @@ class VIP2026Solver(Solver):
         ):
             return [sol]
 
-        def zip_product(clefts, ordering):
-            return frozenset(p for p in zip(clefts, ordering))
+        def zip_product(clefts, ordering) -> Solution:
+            return Solution(p for p in zip(clefts, ordering))
 
-        glefts, _, mmnum = sol.get_candidates()
+        glefts, _, mmnum = get_candidates(sol)
         pos_matches = self.possible_matches_for_solution(sol, end, includenight)
         pos_matches.pop(self.sm, None)  # type: ignore
         if self.sm in glefts:
             # remove pair with self.sm if necessary
-            smmatches = [r for l, r in sol if l == self.sm][0]
-            sol = sol.remove((self.sm, smmatches[0]))  # type: ignore
+            smmatches = [r for l, r in sol if l == self.sm]
+            # print(smmatches)
+            # isol = set(sol)
+            sol = sol.difference({(self.sm, smmatches[0])})
         else:
             smmatches = [
                 r
@@ -83,7 +87,7 @@ class VIP2026Solver(Solver):
             if len(set(ps)) == len(ps)
         ]
         other_matches_list = list(
-            map(lambda p: Solution(zip_product(pos_matches.keys(), p)), products)
+            map(lambda p: zip_product(pos_matches.keys(), p), products)
         )
 
         if mmnum > 0:
@@ -93,11 +97,15 @@ class VIP2026Solver(Solver):
                 sol, other_matches_list, end, includenight
             )
         # add self.sm as double_match
-        solutions = [s.addpair((self.sm, r)) for r in smmatches for s in isols]  # type: ignore
+        solutions = [
+            s | {(self.sm, r)}
+            for r in smmatches
+            for s in isols
+            if self.solution_possible(s | {(self.sm, r)}, end, includenight)["res"]
+        ] # todo: fix problem with too many mathes in night
         unique_sols = set()
 
         for sol in solutions:
             unique_sols.add(sol)
 
         return list(unique_sols)
-

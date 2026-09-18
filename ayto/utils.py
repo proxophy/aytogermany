@@ -8,9 +8,9 @@ from .aytovip26 import VIP2026Solver
 from .ayto import Solver
 
 
-
-
-def check_nights(nights: tuple[Night,...], lefts: tuple[str,...], rights: tuple[str,...]) -> None:
+def check_nights(
+    nights: tuple[Night, ...], lefts: tuple[str, ...], rights: tuple[str, ...]
+) -> None:
     """Check if nights are fine"""
 
     # make sure all pairs are valid pairs and there are no duplicates
@@ -18,28 +18,28 @@ def check_nights(nights: tuple[Night,...], lefts: tuple[str,...], rights: tuple[
     for night in nights:
         seated_lefts, seated_rights = [], []
 
-        for l,r in night.pairs:
+        for l, r in night.pairs:
             if l in lefts and r in rights:
                 # check that we don't have double seatings
                 if l in seated_lefts or r in seated_rights:
-                    raise ValueError(f"Either {l} or {r} has already been seated  in night {night}")
+                    raise ValueError(
+                        f"Either {l} or {r} has already been seated  in night {night}"
+                    )
                 seated_lefts.append(l)
                 seated_rights.append(r)
             elif l in rights and r in lefts:
                 raise ValueError(f"Pair {(l,r)} is in the wrong order in night {night}")
             else:
-                raise ValueError(
-                    f"{l} or {r} is neither in the list of women or men"
-                )
+                raise ValueError(f"{l} or {r} is neither in the list of women or men")
         if not 0 <= night.lights <= 10:
             raise ValueError(f"Number of lights not possible in night {night}")
         ni += 1
 
 
 def validate_season_args(
-    lefts: tuple[str,...],
-    rights: tuple[str,...],
-    nights: tuple[Night,...],
+    lefts: tuple[str, ...],
+    rights: tuple[str, ...],
+    nights: tuple[Night, ...],
     matchboxes: Matchboxes,
     dm: str | None,
 ):
@@ -53,12 +53,12 @@ def validate_season_args(
 
     # matchboxes with results
     pairs = set()
-    for n, (l,r), result in matchboxes:
+    for n, (l, r), result in matchboxes:
 
-        if (l,r) in pairs or (r, l) in pairs:
+        if (l, r) in pairs or (r, l) in pairs:
             raise ValueError(f"{(l,r)} occurs more than once in matchboxes")
         if l in lefts and r in rights:
-            pairs.add((l,r))
+            pairs.add((l, r))
         elif l in rights and r in lefts:
             raise ValueError(f"Pair {(l,r)} is in the wrong order in matchboxes")
         else:
@@ -78,7 +78,14 @@ def make_pair_list(lefts: Sequence[str], rights: Sequence[str]) -> tuple[Pair, .
 
 def read_data_from_excel(
     sn: str,
-) -> tuple[tuple[str,...], tuple[str,...], tuple[Night,...], Matchboxes, str | None, Solution]:
+) -> tuple[
+    tuple[str, ...],
+    tuple[str, ...],
+    tuple[Night, ...],
+    Matchboxes,
+    str | None,
+    Solution,
+]:
     dfcand = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Candidates", header=0)
     lefts: tuple[str] = tuple(dfcand["left"].dropna().tolist())
     rights: tuple[str] = tuple(dfcand["right"].dropna().tolist())
@@ -92,16 +99,24 @@ def read_data_from_excel(
     dfnights = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Nights", header=0)
     if sn != "vip2026":
         nights: tuple[Night, ...] = tuple(
-            Night(make_pair_list(list(dfnights.columns[:-1]), row[:-1]), int(row[-1]))
+            Night(
+                set(make_pair_list(list(dfnights.columns[:-1]), row[:-1])), int(row[-1])
+            )
             for row in dfnights.values.tolist()
         )
     else:
-        pairspnight = [make_pair_list(list(dfnights.columns[:-1]), row[:-1])  for row in dfnights.values.tolist()]
-        pairspnight = [tuple(filter(lambda x: isinstance(x[1], str), pairs)) for pairs in pairspnight]
+        pairspnight = [
+            make_pair_list(list(dfnights.columns[:-1]), row[:-1])
+            for row in dfnights.values.tolist()
+        ]
+        pairspnight = [
+            tuple(filter(lambda x: isinstance(x[1], str), pairs))
+            for pairs in pairspnight
+        ]
         nights: tuple[Night, ...] = tuple(
-                Night(pairspnight[i], int(dfnights["lights"][i]))
-                for i in range(dfnights.shape[0])
-            )
+            Night(set(pairspnight[i]), int(dfnights["lights"][i]))
+            for i in range(dfnights.shape[0])
+        )
 
     dfmatchboxes = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Matchboxes", header=0)
     matchboxes: Matchboxes = Matchboxes(
@@ -111,16 +126,13 @@ def read_data_from_excel(
     )
 
     validate_season_args(lefts, rights, nights, matchboxes, dm)
-    
+
     try:
         dfsolution = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Solution", header=0)
         solution: Solution = Solution(
-            frozenset(
-                make_pair_list(
-                    dfsolution["left"].to_list(), dfsolution["right"].to_list()
-                )
-            )
+            make_pair_list(dfsolution["left"].to_list(), dfsolution["right"].to_list())
         )
+
     except:
         solution: Solution = Solution()
 
@@ -155,8 +167,6 @@ def product_without_reps(arr: list[list]):
             used.remove(x)
 
     yield from rec(0)
-
-
 
 
 def get_season(sn: str) -> Season:
@@ -197,7 +207,7 @@ def get_season(sn: str) -> Season:
     return season
 
 
-def get_solver(sn:str) -> Solver:
+def get_solver(sn: str) -> Solver:
     season = get_season(sn)
     if sn == "normalo2024":
         solver = Normalo2024Solver(season)
@@ -208,7 +218,3 @@ def get_solver(sn:str) -> Solver:
     else:
         solver = Solver(season)
     return solver
-
-
-
-

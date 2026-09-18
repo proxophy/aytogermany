@@ -50,7 +50,7 @@ class SolutionSpace:
         return [l for l in self.lefts if self.pairs_counter[(l, r)] == 0]
 
     def get_mm_probs(self):
-        mm = [s.mm_left() for s in self.sols]
+        mm = [next(s.mm_lefts()) for s in self.sols]
         return [
             (l, round(v / len(self.sols) * 100, 1)) for (l, v) in Counter(mm).items()
         ]
@@ -77,6 +77,7 @@ def analyze_solutions(sols: list[Solution]):
 
 def matching_night_probs(solver: Solver, episode: int):
     beforenight = solver.solve(episode, False)
+    print(len(beforenight))
     night = solver.season.get_nights(episode)[-1].pairs
     nightpossol = any([set(night).issubset(sol) for sol in beforenight])
 

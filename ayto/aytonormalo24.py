@@ -44,7 +44,10 @@ class Normalo2024Solver(Solver):
             multr = pdict[multl]
             # sm has to be one of multiple matches
             if sm_in_partialsol and (multl, self.season.mm) not in sol:  # type: ignore
-                return {"res": False, "reason": "multiple_match_not_possible_without_Mela"}
+                return {
+                    "res": False,
+                    "reason": "multiple_match_not_possible_without_Mela",
+                }
             elif len(multr) == 3 and self.season.mm not in multr:
                 return {"res": False, "reason": "Mela_not_in_tripple_match"}
         return super().solution_possible(sol, end, includenight)
@@ -89,7 +92,7 @@ class Normalo2024Solver(Solver):
                     continue
                 elif self.no_match(smleft, missingright, end):
                     continue
-                solutions.append(elevenmatches.addpair((smleft, missingright)))
+                solutions.append(elevenmatches | {(smleft, missingright)})
 
             return solutions
         return []
@@ -102,27 +105,25 @@ class Normalo2024Solver(Solver):
         includenight: bool,
     ):
         solutions = []
-        sitting_nomatches: dict[Pair, bool] = {}
+        sitting_nomatches: set[Pair] = set()
         # Consider sitting matches as no matches if not in Solution and we have the right
         # amount of lights
         nights = self.season.get_nights(end)
         if not includenight:
             nights = nights[:-1]
         for night in nights:
-            pl = sol.intersection_length(night.pairs)
+            pl: int = len(sol & night.pairs)
             if pl > night.lights:
                 return []
             elif pl < night.lights:
                 continue
-            for p in set(night.pairs) - set(sol.pairs):
-                sitting_nomatches[p] = True
+            for p in night.pairs - sol:
+                sitting_nomatches.add(p)
         addmatches_dict = {
             r: [
                 (l, r)
                 for l in self.season.lefts
-                if not (
-                    self.no_match(l, r, end) or sitting_nomatches.get((l, r), False)
-                )
+                if not (self.no_match(l, r, end) or (l, r) in sitting_nomatches)
             ]
             for r in self.season.rights
         }
@@ -139,15 +140,19 @@ class Normalo2024Solver(Solver):
                 if self.season.mm in missingrights:
                     # no multiple seatings, Mela not seated
                     for l in self.season.lefts:
-                        if  (l, mr1) in addmatches_dict[mr1] and (l, mr2) in addmatches_dict[mr2]:
-                            addmatches = Solution(frozenset(((l, mr1), (l, mr2))))
-                            solutions.append(tenmatches.union(addmatches))
+                        if (l, mr1) in addmatches_dict[mr1] and (
+                            l,
+                            mr2,
+                        ) in addmatches_dict[mr2]:
+                            solutions.append(tenmatches | {(l, mr1), (l, mr2)})
                 else:
                     # no mutiple seatings, Mela seated
                     dmleft = [l for (l, r) in tenmatches if r == self.season.mm][0]
-                    if (dmleft, mr1) in addmatches_dict[mr1] and (dmleft, mr2) in addmatches_dict[mr2]:
-                        addmatches = Solution(frozenset(((dmleft, mr1), (dmleft, mr2))))
-                        solutions.append(tenmatches.union(addmatches))
+                    if (dmleft, mr1) in addmatches_dict[mr1] and (
+                        dmleft,
+                        mr2,
+                    ) in addmatches_dict[mr2]:
+                        solutions.append(tenmatches | {(dmleft, mr1), (dmleft, mr2)})
             elif len(missingrights) == 1:
                 counter = Counter(clefts)
                 smleft = [l for l in self.season.lefts if counter[l] == 2][0]
@@ -166,6 +171,6 @@ class Normalo2024Solver(Solver):
                         continue
                     elif self.no_match(smleft, missingright, end):
                         continue
-                    solutions.append(elevenmatches.addpair((smleft, missingright)))
+                    solutions.append(elevenmatches | {(smleft, missingright)})
 
         return solutions
