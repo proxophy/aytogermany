@@ -1,0 +1,8084 @@
+{
+  "s1": {
+    "schema_version": 2,
+    "initial_active": "all",
+    "groups": {
+      "a": [
+        "Aline",
+        "Ivana",
+        "Katharina",
+        "Laura",
+        "Luisa",
+        "Madeleine",
+        "Melissa",
+        "Michelle",
+        "Nadine",
+        "Sabrina"
+      ],
+      "b": [
+        "Aleks",
+        "Axel",
+        "Dominic",
+        "Edin",
+        "Elisha",
+        "Ferhat",
+        "Juliano",
+        "Kevin",
+        "Laurin",
+        "Mo",
+        "René"
+      ]
+    },
+    "matrix": {
+      "rows": "a",
+      "bits": "b"
+    },
+    "initial_match_model": {
+      "multi_matches": [
+        {
+          "group": "bits",
+          "size": 2,
+          "known_members": [
+            "Edin"
+          ]
+        }
+      ]
+    },
+    "style": {
+      "background": "insta_styles/image_backgrounds/ayto_s1.png",
+      "face_layer": "insta_styles/image_face_layers/ayto_s1.png"
+    },
+    "weeks": [
+      {
+        "number": 1,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Ivana",
+              "Mo"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 1,
+            "pairs": [
+              [
+                "Aline",
+                "Kevin"
+              ],
+              [
+                "Ivana",
+                "Juliano"
+              ],
+              [
+                "Katharina",
+                "René"
+              ],
+              [
+                "Laura",
+                "Ferhat"
+              ],
+              [
+                "Luisa",
+                "Axel"
+              ],
+              [
+                "Madeleine",
+                "Laurin"
+              ],
+              [
+                "Melissa",
+                "Dominic"
+              ],
+              [
+                "Michelle",
+                "Mo"
+              ],
+              [
+                "Nadine",
+                "Elisha"
+              ],
+              [
+                "Sabrina",
+                "Aleks"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Melissa",
+              "Dominic"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Aline",
+                "Ferhat"
+              ],
+              [
+                "Ivana",
+                "Elisha"
+              ],
+              [
+                "Katharina",
+                "Kevin"
+              ],
+              [
+                "Laura",
+                "Juliano"
+              ],
+              [
+                "Luisa",
+                "René"
+              ],
+              [
+                "Madeleine",
+                "Axel"
+              ],
+              [
+                "Melissa",
+                "Laurin"
+              ],
+              [
+                "Michelle",
+                "Mo"
+              ],
+              [
+                "Nadine",
+                "Aleks"
+              ],
+              [
+                "Sabrina",
+                "Dominic"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Aline",
+              "Mo"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Aline",
+                "Mo"
+              ],
+              [
+                "Ivana",
+                "Elisha"
+              ],
+              [
+                "Katharina",
+                "Kevin"
+              ],
+              [
+                "Laura",
+                "Juliano"
+              ],
+              [
+                "Luisa",
+                "René"
+              ],
+              [
+                "Madeleine",
+                "Axel"
+              ],
+              [
+                "Melissa",
+                "Laurin"
+              ],
+              [
+                "Michelle",
+                "Ferhat"
+              ],
+              [
+                "Nadine",
+                "Aleks"
+              ],
+              [
+                "Sabrina",
+                "Dominic"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 4,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Melissa",
+              "Laurin"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Aline",
+                "Mo"
+              ],
+              [
+                "Ivana",
+                "Axel"
+              ],
+              [
+                "Katharina",
+                "Juliano"
+              ],
+              [
+                "Laura",
+                "Kevin"
+              ],
+              [
+                "Luisa",
+                "René"
+              ],
+              [
+                "Madeleine",
+                "Ferhat"
+              ],
+              [
+                "Melissa",
+                "Laurin"
+              ],
+              [
+                "Michelle",
+                "Elisha"
+              ],
+              [
+                "Nadine",
+                "Dominic"
+              ],
+              [
+                "Sabrina",
+                "Aleks"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 5,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Ivana",
+              "Elisha"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 5,
+            "pairs": [
+              [
+                "Aline",
+                "Mo"
+              ],
+              [
+                "Ivana",
+                "Dominic"
+              ],
+              [
+                "Katharina",
+                "Kevin"
+              ],
+              [
+                "Laura",
+                "Juliano"
+              ],
+              [
+                "Luisa",
+                "Ferhat"
+              ],
+              [
+                "Madeleine",
+                "Aleks"
+              ],
+              [
+                "Melissa",
+                "Laurin"
+              ],
+              [
+                "Michelle",
+                "Axel"
+              ],
+              [
+                "Nadine",
+                "René"
+              ],
+              [
+                "Sabrina",
+                "Elisha"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 6,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Michelle",
+              "René"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 5,
+            "pairs": [
+              [
+                "Aline",
+                "Mo"
+              ],
+              [
+                "Ivana",
+                "Juliano"
+              ],
+              [
+                "Katharina",
+                "Kevin"
+              ],
+              [
+                "Laura",
+                "Edin"
+              ],
+              [
+                "Luisa",
+                "Axel"
+              ],
+              [
+                "Madeleine",
+                "Aleks"
+              ],
+              [
+                "Melissa",
+                "Laurin"
+              ],
+              [
+                "Michelle",
+                "René"
+              ],
+              [
+                "Nadine",
+                "Elisha"
+              ],
+              [
+                "Sabrina",
+                "Dominic"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 7,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Ivana",
+              "Edin"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 5,
+            "pairs": [
+              [
+                "Aline",
+                "Mo"
+              ],
+              [
+                "Ivana",
+                "Kevin"
+              ],
+              [
+                "Katharina",
+                "Elisha"
+              ],
+              [
+                "Laura",
+                "Juliano"
+              ],
+              [
+                "Luisa",
+                "Axel"
+              ],
+              [
+                "Madeleine",
+                "Aleks"
+              ],
+              [
+                "Melissa",
+                "Laurin"
+              ],
+              [
+                "Michelle",
+                "René"
+              ],
+              [
+                "Nadine",
+                "Ferhat"
+              ],
+              [
+                "Sabrina",
+                "Dominic"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 8,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Sabrina",
+              "Axel"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 6,
+            "pairs": [
+              [
+                "Aline",
+                "Mo"
+              ],
+              [
+                "Ivana",
+                "Kevin"
+              ],
+              [
+                "Katharina",
+                "Aleks"
+              ],
+              [
+                "Laura",
+                "Juliano"
+              ],
+              [
+                "Luisa",
+                "Axel"
+              ],
+              [
+                "Madeleine",
+                "Edin"
+              ],
+              [
+                "Melissa",
+                "Laurin"
+              ],
+              [
+                "Michelle",
+                "René"
+              ],
+              [
+                "Nadine",
+                "Ferhat"
+              ],
+              [
+                "Sabrina",
+                "Dominic"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 9,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Luisa",
+              "Ferhat"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 7,
+            "pairs": [
+              [
+                "Aline",
+                "Mo"
+              ],
+              [
+                "Ivana",
+                "Dominic"
+              ],
+              [
+                "Katharina",
+                "Aleks"
+              ],
+              [
+                "Laura",
+                "Juliano"
+              ],
+              [
+                "Luisa",
+                "Axel"
+              ],
+              [
+                "Madeleine",
+                "Kevin"
+              ],
+              [
+                "Melissa",
+                "Laurin"
+              ],
+              [
+                "Michelle",
+                "René"
+              ],
+              [
+                "Nadine",
+                "Ferhat"
+              ],
+              [
+                "Sabrina",
+                "Elisha"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 10,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Katharina",
+              "Kevin"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 10,
+            "pairs": [
+              [
+                "Aline",
+                "Mo"
+              ],
+              [
+                "Ivana",
+                "Dominic"
+              ],
+              [
+                "Katharina",
+                "Kevin"
+              ],
+              [
+                "Laura",
+                "Aleks"
+              ],
+              [
+                "Luisa",
+                "Axel"
+              ],
+              [
+                "Madeleine",
+                "Juliano"
+              ],
+              [
+                "Melissa",
+                "Laurin"
+              ],
+              [
+                "Michelle",
+                "René"
+              ],
+              [
+                "Nadine",
+                "Ferhat"
+              ],
+              [
+                "Sabrina",
+                "Elisha"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "target_lights": 10,
+    "status": "completed",
+    "outcome": "won",
+    "competitive_end_week": 10
+  },
+  "s1vip": {
+    "schema_version": 2,
+    "initial_active": "all",
+    "groups": {
+      "a": [
+        "Alex",
+        "Danilo",
+        "Diogo",
+        "Eugen",
+        "Francesco",
+        "Jamy",
+        "Josua",
+        "Manuel",
+        "Salvatore",
+        "Tommy"
+      ],
+      "b": [
+        "Aurelia",
+        "Finnja",
+        "Jacky",
+        "Jill",
+        "Jules",
+        "Kathleen",
+        "Melina",
+        "Sarah",
+        "Steffi",
+        "Vanessa",
+        "Walentina"
+      ]
+    },
+    "matrix": {
+      "rows": "a",
+      "bits": "b"
+    },
+    "initial_match_model": {
+      "multi_matches": [
+        {
+          "group": "bits",
+          "size": 2,
+          "known_members": [
+            "Vanessa"
+          ]
+        }
+      ]
+    },
+    "style": {
+      "background": "insta_styles/image_backgrounds/ayto_s1vip.png",
+      "face_layer": "insta_styles/image_face_layers/ayto_s1vip.png"
+    },
+    "weeks": [
+      {
+        "number": 1,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Danilo",
+              "Finnja"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Alex",
+                "Jules"
+              ],
+              [
+                "Danilo",
+                "Steffi"
+              ],
+              [
+                "Diogo",
+                "Aurelia"
+              ],
+              [
+                "Eugen",
+                "Walentina"
+              ],
+              [
+                "Francesco",
+                "Finnja"
+              ],
+              [
+                "Jamy",
+                "Jill"
+              ],
+              [
+                "Josua",
+                "Sarah"
+              ],
+              [
+                "Manuel",
+                "Kathleen"
+              ],
+              [
+                "Salvatore",
+                "Jacky"
+              ],
+              [
+                "Tommy",
+                "Melina"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Francesco",
+              "Jules"
+            ],
+            "result": "yes"
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Tommy",
+              "Walentina"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Alex",
+                "Finnja"
+              ],
+              [
+                "Danilo",
+                "Sarah"
+              ],
+              [
+                "Diogo",
+                "Aurelia"
+              ],
+              [
+                "Eugen",
+                "Steffi"
+              ],
+              [
+                "Francesco",
+                "Jules"
+              ],
+              [
+                "Jamy",
+                "Jill"
+              ],
+              [
+                "Josua",
+                "Walentina"
+              ],
+              [
+                "Manuel",
+                "Kathleen"
+              ],
+              [
+                "Salvatore",
+                "Jacky"
+              ],
+              [
+                "Tommy",
+                "Melina"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 4,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Diogo",
+              "Aurelia"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Alex",
+                "Steffi"
+              ],
+              [
+                "Danilo",
+                "Melina"
+              ],
+              [
+                "Diogo",
+                "Aurelia"
+              ],
+              [
+                "Eugen",
+                "Finnja"
+              ],
+              [
+                "Francesco",
+                "Jules"
+              ],
+              [
+                "Jamy",
+                "Vanessa"
+              ],
+              [
+                "Josua",
+                "Sarah"
+              ],
+              [
+                "Manuel",
+                "Kathleen"
+              ],
+              [
+                "Salvatore",
+                "Walentina"
+              ],
+              [
+                "Tommy",
+                "Jill"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 5,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Tommy",
+              "Melina"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Alex",
+                "Sarah"
+              ],
+              [
+                "Danilo",
+                "Aurelia"
+              ],
+              [
+                "Diogo",
+                "Vanessa"
+              ],
+              [
+                "Eugen",
+                "Finnja"
+              ],
+              [
+                "Francesco",
+                "Jules"
+              ],
+              [
+                "Jamy",
+                "Steffi"
+              ],
+              [
+                "Josua",
+                "Walentina"
+              ],
+              [
+                "Manuel",
+                "Jill"
+              ],
+              [
+                "Salvatore",
+                "Kathleen"
+              ],
+              [
+                "Tommy",
+                "Melina"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 6,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Salvatore",
+              "Finnja"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Alex",
+                "Steffi"
+              ],
+              [
+                "Danilo",
+                "Jill"
+              ],
+              [
+                "Diogo",
+                "Aurelia"
+              ],
+              [
+                "Eugen",
+                "Finnja"
+              ],
+              [
+                "Francesco",
+                "Jules"
+              ],
+              [
+                "Jamy",
+                "Sarah"
+              ],
+              [
+                "Josua",
+                "Walentina"
+              ],
+              [
+                "Manuel",
+                "Kathleen"
+              ],
+              [
+                "Salvatore",
+                "Jacky"
+              ],
+              [
+                "Tommy",
+                "Melina"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 7,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Eugen",
+              "Finnja"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Alex",
+                "Jacky"
+              ],
+              [
+                "Danilo",
+                "Aurelia"
+              ],
+              [
+                "Diogo",
+                "Vanessa"
+              ],
+              [
+                "Eugen",
+                "Jill"
+              ],
+              [
+                "Francesco",
+                "Jules"
+              ],
+              [
+                "Jamy",
+                "Finnja"
+              ],
+              [
+                "Josua",
+                "Sarah"
+              ],
+              [
+                "Manuel",
+                "Kathleen"
+              ],
+              [
+                "Salvatore",
+                "Walentina"
+              ],
+              [
+                "Tommy",
+                "Melina"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 8,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Eugen",
+              "Steffi"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 1,
+            "pairs": [
+              [
+                "Alex",
+                "Melina"
+              ],
+              [
+                "Danilo",
+                "Aurelia"
+              ],
+              [
+                "Diogo",
+                "Vanessa"
+              ],
+              [
+                "Eugen",
+                "Jacky"
+              ],
+              [
+                "Francesco",
+                "Jules"
+              ],
+              [
+                "Jamy",
+                "Sarah"
+              ],
+              [
+                "Josua",
+                "Walentina"
+              ],
+              [
+                "Manuel",
+                "Finnja"
+              ],
+              [
+                "Salvatore",
+                "Jill"
+              ],
+              [
+                "Tommy",
+                "Steffi"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 9,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Josua",
+              "Sarah"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Alex",
+                "Sarah"
+              ],
+              [
+                "Danilo",
+                "Jill"
+              ],
+              [
+                "Diogo",
+                "Aurelia"
+              ],
+              [
+                "Eugen",
+                "Melina"
+              ],
+              [
+                "Francesco",
+                "Jules"
+              ],
+              [
+                "Jamy",
+                "Steffi"
+              ],
+              [
+                "Josua",
+                "Vanessa"
+              ],
+              [
+                "Manuel",
+                "Kathleen"
+              ],
+              [
+                "Salvatore",
+                "Walentina"
+              ],
+              [
+                "Tommy",
+                "Finnja"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 10,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Josua",
+              "Aurelia"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 7,
+            "pairs": [
+              [
+                "Alex",
+                "Vanessa"
+              ],
+              [
+                "Danilo",
+                "Sarah"
+              ],
+              [
+                "Diogo",
+                "Jill"
+              ],
+              [
+                "Eugen",
+                "Walentina"
+              ],
+              [
+                "Francesco",
+                "Jules"
+              ],
+              [
+                "Jamy",
+                "Steffi"
+              ],
+              [
+                "Josua",
+                "Aurelia"
+              ],
+              [
+                "Manuel",
+                "Kathleen"
+              ],
+              [
+                "Salvatore",
+                "Jacky"
+              ],
+              [
+                "Tommy",
+                "Finnja"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "target_lights": 10,
+    "status": "completed",
+    "outcome": "lost",
+    "competitive_end_week": 10
+  },
+  "s2": {
+    "schema_version": 2,
+    "initial_active": "all",
+    "groups": {
+      "a": [
+        "Aaron",
+        "Dario",
+        "Dominik",
+        "Germain",
+        "Marc",
+        "Marcel",
+        "Marko",
+        "Marvin",
+        "Maximilian",
+        "Sascha"
+      ],
+      "b": [
+        "Christin",
+        "Jill",
+        "Kathleen",
+        "Laura",
+        "Leonie",
+        "Melissa",
+        "Mirjam",
+        "Sabrina",
+        "Vanessa E.",
+        "Vanessa M.",
+        "Victoria"
+      ]
+    },
+    "matrix": {
+      "rows": "a",
+      "bits": "b"
+    },
+    "initial_match_model": {
+      "multi_matches": [
+        {
+          "group": "bits",
+          "size": 2,
+          "known_members": [
+            "Vanessa M."
+          ]
+        }
+      ]
+    },
+    "style": {
+      "background": "insta_styles/image_backgrounds/ayto_s2.png",
+      "face_layer": "insta_styles/image_face_layers/ayto_s2.png"
+    },
+    "weeks": [
+      {
+        "number": 1,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Maximilian",
+              "Sabrina"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Aaron",
+                "Kathleen"
+              ],
+              [
+                "Dario",
+                "Victoria"
+              ],
+              [
+                "Dominik",
+                "Melissa"
+              ],
+              [
+                "Germain",
+                "Leonie"
+              ],
+              [
+                "Marc",
+                "Mirjam"
+              ],
+              [
+                "Marcel",
+                "Laura"
+              ],
+              [
+                "Marko",
+                "Sabrina"
+              ],
+              [
+                "Marvin",
+                "Jill"
+              ],
+              [
+                "Maximilian",
+                "Christin"
+              ],
+              [
+                "Sascha",
+                "Vanessa E."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Germain",
+              "Victoria"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Aaron",
+                "Kathleen"
+              ],
+              [
+                "Dario",
+                "Laura"
+              ],
+              [
+                "Dominik",
+                "Melissa"
+              ],
+              [
+                "Germain",
+                "Victoria"
+              ],
+              [
+                "Marc",
+                "Mirjam"
+              ],
+              [
+                "Marcel",
+                "Leonie"
+              ],
+              [
+                "Marko",
+                "Sabrina"
+              ],
+              [
+                "Marvin",
+                "Vanessa E."
+              ],
+              [
+                "Maximilian",
+                "Christin"
+              ],
+              [
+                "Sascha",
+                "Jill"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Aaron",
+              "Kathleen"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Aaron",
+                "Melissa"
+              ],
+              [
+                "Dario",
+                "Victoria"
+              ],
+              [
+                "Dominik",
+                "Vanessa E."
+              ],
+              [
+                "Germain",
+                "Christin"
+              ],
+              [
+                "Marc",
+                "Leonie"
+              ],
+              [
+                "Marcel",
+                "Laura"
+              ],
+              [
+                "Marko",
+                "Mirjam"
+              ],
+              [
+                "Marvin",
+                "Kathleen"
+              ],
+              [
+                "Maximilian",
+                "Jill"
+              ],
+              [
+                "Sascha",
+                "Sabrina"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 4,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Marcel",
+              "Laura"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Aaron",
+                "Melissa"
+              ],
+              [
+                "Dario",
+                "Kathleen"
+              ],
+              [
+                "Dominik",
+                "Laura"
+              ],
+              [
+                "Germain",
+                "Victoria"
+              ],
+              [
+                "Marc",
+                "Mirjam"
+              ],
+              [
+                "Marcel",
+                "Leonie"
+              ],
+              [
+                "Marko",
+                "Sabrina"
+              ],
+              [
+                "Marvin",
+                "Christin"
+              ],
+              [
+                "Maximilian",
+                "Jill"
+              ],
+              [
+                "Sascha",
+                "Vanessa E."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 5,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Marcel",
+              "Leonie"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Aaron",
+                "Mirjam"
+              ],
+              [
+                "Dario",
+                "Victoria"
+              ],
+              [
+                "Dominik",
+                "Vanessa E."
+              ],
+              [
+                "Germain",
+                "Christin"
+              ],
+              [
+                "Marc",
+                "Melissa"
+              ],
+              [
+                "Marcel",
+                "Leonie"
+              ],
+              [
+                "Marko",
+                "Vanessa M."
+              ],
+              [
+                "Marvin",
+                "Kathleen"
+              ],
+              [
+                "Maximilian",
+                "Laura"
+              ],
+              [
+                "Sascha",
+                "Jill"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 6,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Marc",
+              "Mirjam"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Aaron",
+                "Melissa"
+              ],
+              [
+                "Dario",
+                "Vanessa M."
+              ],
+              [
+                "Dominik",
+                "Vanessa E."
+              ],
+              [
+                "Germain",
+                "Victoria"
+              ],
+              [
+                "Marc",
+                "Mirjam"
+              ],
+              [
+                "Marcel",
+                "Leonie"
+              ],
+              [
+                "Marko",
+                "Sabrina"
+              ],
+              [
+                "Marvin",
+                "Laura"
+              ],
+              [
+                "Maximilian",
+                "Christin"
+              ],
+              [
+                "Sascha",
+                "Jill"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 7,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Dario",
+              "Laura"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Aaron",
+                "Melissa"
+              ],
+              [
+                "Dario",
+                "Sabrina"
+              ],
+              [
+                "Dominik",
+                "Laura"
+              ],
+              [
+                "Germain",
+                "Vanessa M."
+              ],
+              [
+                "Marc",
+                "Mirjam"
+              ],
+              [
+                "Marcel",
+                "Leonie"
+              ],
+              [
+                "Marko",
+                "Victoria"
+              ],
+              [
+                "Marvin",
+                "Kathleen"
+              ],
+              [
+                "Maximilian",
+                "Christin"
+              ],
+              [
+                "Sascha",
+                "Jill"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 8,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Marko",
+              "Sabrina"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 1,
+            "pairs": [
+              [
+                "Aaron",
+                "Vanessa E."
+              ],
+              [
+                "Dario",
+                "Victoria"
+              ],
+              [
+                "Dominik",
+                "Melissa"
+              ],
+              [
+                "Germain",
+                "Jill"
+              ],
+              [
+                "Marc",
+                "Vanessa M."
+              ],
+              [
+                "Marcel",
+                "Leonie"
+              ],
+              [
+                "Marko",
+                "Laura"
+              ],
+              [
+                "Marvin",
+                "Kathleen"
+              ],
+              [
+                "Maximilian",
+                "Mirjam"
+              ],
+              [
+                "Sascha",
+                "Sabrina"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 9,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Aaron",
+              "Melissa"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Aaron",
+                "Melissa"
+              ],
+              [
+                "Dario",
+                "Kathleen"
+              ],
+              [
+                "Dominik",
+                "Sabrina"
+              ],
+              [
+                "Germain",
+                "Laura"
+              ],
+              [
+                "Marc",
+                "Mirjam"
+              ],
+              [
+                "Marcel",
+                "Leonie"
+              ],
+              [
+                "Marko",
+                "Victoria"
+              ],
+              [
+                "Marvin",
+                "Vanessa E."
+              ],
+              [
+                "Maximilian",
+                "Christin"
+              ],
+              [
+                "Sascha",
+                "Jill"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 10,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Marc",
+              "Mirjam"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 10,
+            "pairs": [
+              [
+                "Aaron",
+                "Melissa"
+              ],
+              [
+                "Dario",
+                "Sabrina"
+              ],
+              [
+                "Dominik",
+                "Vanessa E."
+              ],
+              [
+                "Germain",
+                "Christin"
+              ],
+              [
+                "Marc",
+                "Mirjam"
+              ],
+              [
+                "Marcel",
+                "Leonie"
+              ],
+              [
+                "Marko",
+                "Kathleen"
+              ],
+              [
+                "Marvin",
+                "Jill"
+              ],
+              [
+                "Maximilian",
+                "Victoria"
+              ],
+              [
+                "Sascha",
+                "Laura"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "target_lights": 10,
+    "status": "completed",
+    "outcome": "won",
+    "competitive_end_week": 10
+  },
+  "s2vip": {
+    "schema_version": 2,
+    "initial_active": "all",
+    "groups": {
+      "a": [
+        "Anna",
+        "Cecilia",
+        "Celina",
+        "Franzi",
+        "Gina",
+        "Isabelle",
+        "Karina",
+        "Luisa",
+        "Ricarda",
+        "Zoe"
+      ],
+      "b": [
+        "Amadu",
+        "Calvin",
+        "Fabio",
+        "Felix",
+        "Luca",
+        "Lukas",
+        "Martin",
+        "Maurice",
+        "Max",
+        "Micha",
+        "Pharrell"
+      ]
+    },
+    "matrix": {
+      "rows": "a",
+      "bits": "b"
+    },
+    "initial_match_model": {
+      "multi_matches": [
+        {
+          "group": "bits",
+          "size": 2,
+          "known_members": [
+            "Felix"
+          ]
+        }
+      ]
+    },
+    "style": {
+      "background": "insta_styles/image_backgrounds/ayto_s2vip.png",
+      "face_layer": "insta_styles/image_face_layers/ayto_s2vip.png"
+    },
+    "weeks": [
+      {
+        "number": 1,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Zoe",
+              "Martin"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Anna",
+                "Micha"
+              ],
+              [
+                "Cecilia",
+                "Amadu"
+              ],
+              [
+                "Celina",
+                "Martin"
+              ],
+              [
+                "Franzi",
+                "Max"
+              ],
+              [
+                "Gina",
+                "Calvin"
+              ],
+              [
+                "Isabelle",
+                "Lukas"
+              ],
+              [
+                "Karina",
+                "Pharrell"
+              ],
+              [
+                "Luisa",
+                "Fabio"
+              ],
+              [
+                "Ricarda",
+                "Maurice"
+              ],
+              [
+                "Zoe",
+                "Luca"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Karina",
+              "Pharrell"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Anna",
+                "Micha"
+              ],
+              [
+                "Cecilia",
+                "Pharrell"
+              ],
+              [
+                "Celina",
+                "Max"
+              ],
+              [
+                "Franzi",
+                "Luca"
+              ],
+              [
+                "Gina",
+                "Amadu"
+              ],
+              [
+                "Isabelle",
+                "Martin"
+              ],
+              [
+                "Karina",
+                "Fabio"
+              ],
+              [
+                "Luisa",
+                "Calvin"
+              ],
+              [
+                "Ricarda",
+                "Maurice"
+              ],
+              [
+                "Zoe",
+                "Lukas"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Celina",
+              "Lukas"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Anna",
+                "Martin"
+              ],
+              [
+                "Cecilia",
+                "Amadu"
+              ],
+              [
+                "Celina",
+                "Fabio"
+              ],
+              [
+                "Franzi",
+                "Lukas"
+              ],
+              [
+                "Gina",
+                "Micha"
+              ],
+              [
+                "Isabelle",
+                "Luca"
+              ],
+              [
+                "Karina",
+                "Calvin"
+              ],
+              [
+                "Luisa",
+                "Pharrell"
+              ],
+              [
+                "Ricarda",
+                "Maurice"
+              ],
+              [
+                "Zoe",
+                "Max"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 4,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Isabelle",
+              "Amadu"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "box",
+            "pair": [
+              "Luisa",
+              "Lukas"
+            ],
+            "result": "yes"
+          }
+        ]
+      },
+      {
+        "number": 5,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Ricarda",
+              "Felix"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Anna",
+                "Pharrell"
+              ],
+              [
+                "Cecilia",
+                "Amadu"
+              ],
+              [
+                "Celina",
+                "Fabio"
+              ],
+              [
+                "Franzi",
+                "Micha"
+              ],
+              [
+                "Gina",
+                "Felix"
+              ],
+              [
+                "Isabelle",
+                "Maurice"
+              ],
+              [
+                "Karina",
+                "Martin"
+              ],
+              [
+                "Luisa",
+                "Lukas"
+              ],
+              [
+                "Ricarda",
+                "Max"
+              ],
+              [
+                "Zoe",
+                "Luca"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 6,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Isabelle",
+              "Pharrell"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Anna",
+                "Micha"
+              ],
+              [
+                "Cecilia",
+                "Maurice"
+              ],
+              [
+                "Celina",
+                "Fabio"
+              ],
+              [
+                "Franzi",
+                "Max"
+              ],
+              [
+                "Gina",
+                "Felix"
+              ],
+              [
+                "Isabelle",
+                "Martin"
+              ],
+              [
+                "Karina",
+                "Calvin"
+              ],
+              [
+                "Luisa",
+                "Lukas"
+              ],
+              [
+                "Ricarda",
+                "Pharrell"
+              ],
+              [
+                "Zoe",
+                "Luca"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 7,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Cecilia",
+              "Amadu"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Anna",
+                "Micha"
+              ],
+              [
+                "Cecilia",
+                "Amadu"
+              ],
+              [
+                "Celina",
+                "Fabio"
+              ],
+              [
+                "Franzi",
+                "Max"
+              ],
+              [
+                "Gina",
+                "Felix"
+              ],
+              [
+                "Isabelle",
+                "Martin"
+              ],
+              [
+                "Karina",
+                "Calvin"
+              ],
+              [
+                "Luisa",
+                "Lukas"
+              ],
+              [
+                "Ricarda",
+                "Pharrell"
+              ],
+              [
+                "Zoe",
+                "Luca"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 8,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Anna",
+              "Micha"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 5,
+            "pairs": [
+              [
+                "Anna",
+                "Micha"
+              ],
+              [
+                "Cecilia",
+                "Amadu"
+              ],
+              [
+                "Celina",
+                "Luca"
+              ],
+              [
+                "Franzi",
+                "Calvin"
+              ],
+              [
+                "Gina",
+                "Fabio"
+              ],
+              [
+                "Isabelle",
+                "Felix"
+              ],
+              [
+                "Karina",
+                "Martin"
+              ],
+              [
+                "Luisa",
+                "Lukas"
+              ],
+              [
+                "Ricarda",
+                "Pharrell"
+              ],
+              [
+                "Zoe",
+                "Maurice"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 9,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Ricarda",
+              "Pharrell"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 7,
+            "pairs": [
+              [
+                "Anna",
+                "Micha"
+              ],
+              [
+                "Cecilia",
+                "Amadu"
+              ],
+              [
+                "Celina",
+                "Fabio"
+              ],
+              [
+                "Franzi",
+                "Max"
+              ],
+              [
+                "Gina",
+                "Calvin"
+              ],
+              [
+                "Isabelle",
+                "Felix"
+              ],
+              [
+                "Karina",
+                "Martin"
+              ],
+              [
+                "Luisa",
+                "Lukas"
+              ],
+              [
+                "Ricarda",
+                "Maurice"
+              ],
+              [
+                "Zoe",
+                "Pharrell"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 10,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Franzi",
+              "Max"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 10,
+            "pairs": [
+              [
+                "Anna",
+                "Micha"
+              ],
+              [
+                "Cecilia",
+                "Amadu"
+              ],
+              [
+                "Celina",
+                "Fabio"
+              ],
+              [
+                "Franzi",
+                "Calvin"
+              ],
+              [
+                "Gina",
+                "Martin"
+              ],
+              [
+                "Isabelle",
+                "Felix"
+              ],
+              [
+                "Karina",
+                "Luca"
+              ],
+              [
+                "Luisa",
+                "Lukas"
+              ],
+              [
+                "Ricarda",
+                "Maurice"
+              ],
+              [
+                "Zoe",
+                "Pharrell"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "target_lights": 10,
+    "status": "completed",
+    "outcome": "won",
+    "competitive_end_week": 10
+  },
+  "s3": {
+    "schema_version": 2,
+    "initial_active": "all",
+    "groups": {
+      "a": [
+        "Andre",
+        "Antonino",
+        "Dustin",
+        "Jordi",
+        "Leon",
+        "Marius",
+        "Max",
+        "Mike",
+        "Tim",
+        "William"
+      ],
+      "b": [
+        "Dana",
+        "Estelle",
+        "Isabelle",
+        "Jessica",
+        "Joelina",
+        "Kerstin",
+        "Marie",
+        "Monami",
+        "Raphaela",
+        "Zaira",
+        "Desirée"
+      ]
+    },
+    "matrix": {
+      "rows": "a",
+      "bits": "b"
+    },
+    "initial_match_model": {
+      "multi_matches": [
+        {
+          "group": "bits",
+          "size": 2,
+          "known_members": [
+            "Desirée"
+          ]
+        }
+      ]
+    },
+    "style": {
+      "background": "insta_styles/image_backgrounds/ayto_s3.png",
+      "face_layer": "insta_styles/image_face_layers/ayto_s3.png"
+    },
+    "weeks": [
+      {
+        "number": 1,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Mike",
+              "Jessica"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Andre",
+                "Raphaela"
+              ],
+              [
+                "Antonino",
+                "Monami"
+              ],
+              [
+                "Dustin",
+                "Zaira"
+              ],
+              [
+                "Jordi",
+                "Estelle"
+              ],
+              [
+                "Leon",
+                "Jessica"
+              ],
+              [
+                "Marius",
+                "Isabelle"
+              ],
+              [
+                "Max",
+                "Kerstin"
+              ],
+              [
+                "Mike",
+                "Joelina"
+              ],
+              [
+                "Tim",
+                "Marie"
+              ],
+              [
+                "William",
+                "Dana"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Leon",
+              "Monami"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Andre",
+                "Dana"
+              ],
+              [
+                "Antonino",
+                "Monami"
+              ],
+              [
+                "Dustin",
+                "Isabelle"
+              ],
+              [
+                "Jordi",
+                "Zaira"
+              ],
+              [
+                "Leon",
+                "Estelle"
+              ],
+              [
+                "Marius",
+                "Marie"
+              ],
+              [
+                "Max",
+                "Kerstin"
+              ],
+              [
+                "Mike",
+                "Joelina"
+              ],
+              [
+                "Tim",
+                "Jessica"
+              ],
+              [
+                "William",
+                "Raphaela"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Andre",
+              "Raphaela"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Andre",
+                "Raphaela"
+              ],
+              [
+                "Antonino",
+                "Kerstin"
+              ],
+              [
+                "Dustin",
+                "Zaira"
+              ],
+              [
+                "Jordi",
+                "Jessica"
+              ],
+              [
+                "Leon",
+                "Estelle"
+              ],
+              [
+                "Marius",
+                "Isabelle"
+              ],
+              [
+                "Max",
+                "Monami"
+              ],
+              [
+                "Mike",
+                "Joelina"
+              ],
+              [
+                "Tim",
+                "Marie"
+              ],
+              [
+                "William",
+                "Dana"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 4,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "William",
+              "Dana"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Andre",
+                "Isabelle"
+              ],
+              [
+                "Antonino",
+                "Monami"
+              ],
+              [
+                "Dustin",
+                "Zaira"
+              ],
+              [
+                "Jordi",
+                "Raphaela"
+              ],
+              [
+                "Leon",
+                "Estelle"
+              ],
+              [
+                "Marius",
+                "Jessica"
+              ],
+              [
+                "Max",
+                "Marie"
+              ],
+              [
+                "Mike",
+                "Joelina"
+              ],
+              [
+                "Tim",
+                "Kerstin"
+              ],
+              [
+                "William",
+                "Dana"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 5,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Antonino",
+              "Monami"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Andre",
+                "Joelina"
+              ],
+              [
+                "Antonino",
+                "Kerstin"
+              ],
+              [
+                "Dustin",
+                "Isabelle"
+              ],
+              [
+                "Jordi",
+                "Zaira"
+              ],
+              [
+                "Leon",
+                "Jessica"
+              ],
+              [
+                "Marius",
+                "Raphaela"
+              ],
+              [
+                "Max",
+                "Monami"
+              ],
+              [
+                "Mike",
+                "Estelle"
+              ],
+              [
+                "Tim",
+                "Desirée"
+              ],
+              [
+                "William",
+                "Dana"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 6,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Max",
+              "Jessica"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Andre",
+                "Marie"
+              ],
+              [
+                "Antonino",
+                "Dana"
+              ],
+              [
+                "Dustin",
+                "Isabelle"
+              ],
+              [
+                "Jordi",
+                "Desirée"
+              ],
+              [
+                "Leon",
+                "Jessica"
+              ],
+              [
+                "Marius",
+                "Zaira"
+              ],
+              [
+                "Max",
+                "Kerstin"
+              ],
+              [
+                "Mike",
+                "Estelle"
+              ],
+              [
+                "Tim",
+                "Joelina"
+              ],
+              [
+                "William",
+                "Raphaela"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 7,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Marius",
+              "Zaira"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 6,
+            "pairs": [
+              [
+                "Andre",
+                "Desirée"
+              ],
+              [
+                "Antonino",
+                "Dana"
+              ],
+              [
+                "Dustin",
+                "Isabelle"
+              ],
+              [
+                "Jordi",
+                "Monami"
+              ],
+              [
+                "Leon",
+                "Jessica"
+              ],
+              [
+                "Marius",
+                "Zaira"
+              ],
+              [
+                "Max",
+                "Marie"
+              ],
+              [
+                "Mike",
+                "Joelina"
+              ],
+              [
+                "Tim",
+                "Kerstin"
+              ],
+              [
+                "William",
+                "Raphaela"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 8,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Jordi",
+              "Raphaela"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Andre",
+                "Marie"
+              ],
+              [
+                "Antonino",
+                "Dana"
+              ],
+              [
+                "Dustin",
+                "Isabelle"
+              ],
+              [
+                "Jordi",
+                "Monami"
+              ],
+              [
+                "Leon",
+                "Jessica"
+              ],
+              [
+                "Marius",
+                "Zaira"
+              ],
+              [
+                "Max",
+                "Kerstin"
+              ],
+              [
+                "Mike",
+                "Estelle"
+              ],
+              [
+                "Tim",
+                "Joelina"
+              ],
+              [
+                "William",
+                "Raphaela"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 9,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Max",
+              "Kerstin"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Andre",
+                "Desirée"
+              ],
+              [
+                "Antonino",
+                "Isabelle"
+              ],
+              [
+                "Dustin",
+                "Dana"
+              ],
+              [
+                "Jordi",
+                "Monami"
+              ],
+              [
+                "Leon",
+                "Jessica"
+              ],
+              [
+                "Marius",
+                "Zaira"
+              ],
+              [
+                "Max",
+                "Raphaela"
+              ],
+              [
+                "Mike",
+                "Estelle"
+              ],
+              [
+                "Tim",
+                "Joelina"
+              ],
+              [
+                "William",
+                "Marie"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 10,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Dustin",
+              "Isabelle"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 10,
+            "pairs": [
+              [
+                "Andre",
+                "Isabelle"
+              ],
+              [
+                "Antonino",
+                "Dana"
+              ],
+              [
+                "Dustin",
+                "Marie"
+              ],
+              [
+                "Jordi",
+                "Estelle"
+              ],
+              [
+                "Leon",
+                "Jessica"
+              ],
+              [
+                "Marius",
+                "Zaira"
+              ],
+              [
+                "Max",
+                "Monami"
+              ],
+              [
+                "Mike",
+                "Joelina"
+              ],
+              [
+                "Tim",
+                "Kerstin"
+              ],
+              [
+                "William",
+                "Raphaela"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "target_lights": 10,
+    "status": "completed",
+    "outcome": "won",
+    "competitive_end_week": 10
+  },
+  "s3vip": {
+    "schema_version": 2,
+    "initial_active": "all",
+    "groups": {
+      "a": [
+        "Alicia",
+        "Shakira",
+        "Darya",
+        "Jenny",
+        "Kim",
+        "Marie",
+        "Paulina",
+        "Sabrina",
+        "Sandra",
+        "Steffi"
+      ],
+      "b": [
+        "Danilo",
+        "Elia",
+        "Emanuell",
+        "Fabio",
+        "Teezy",
+        "Marvin",
+        "Max",
+        "Mike",
+        "Paco",
+        "Peter",
+        "Steffen"
+      ]
+    },
+    "matrix": {
+      "rows": "a",
+      "bits": "b"
+    },
+    "initial_match_model": {
+      "multi_matches": [
+        {
+          "group": "bits",
+          "size": 2,
+          "known_members": [
+            "Max"
+          ]
+        }
+      ]
+    },
+    "style": {
+      "background": "insta_styles/image_backgrounds/ayto_s3vip.png",
+      "face_layer": "insta_styles/image_face_layers/ayto_s3vip.png"
+    },
+    "weeks": [
+      {
+        "number": 1,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Jenny",
+              "Danilo"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Alicia",
+                "Peter"
+              ],
+              [
+                "Shakira",
+                "Marvin"
+              ],
+              [
+                "Darya",
+                "Danilo"
+              ],
+              [
+                "Jenny",
+                "Elia"
+              ],
+              [
+                "Kim",
+                "Mike"
+              ],
+              [
+                "Marie",
+                "Fabio"
+              ],
+              [
+                "Paulina",
+                "Steffen"
+              ],
+              [
+                "Sabrina",
+                "Emanuell"
+              ],
+              [
+                "Sandra",
+                "Paco"
+              ],
+              [
+                "Steffi",
+                "Teezy"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Jenny",
+              "Elia"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Alicia",
+                "Steffen"
+              ],
+              [
+                "Shakira",
+                "Peter"
+              ],
+              [
+                "Darya",
+                "Emanuell"
+              ],
+              [
+                "Jenny",
+                "Marvin"
+              ],
+              [
+                "Kim",
+                "Paco"
+              ],
+              [
+                "Marie",
+                "Fabio"
+              ],
+              [
+                "Paulina",
+                "Danilo"
+              ],
+              [
+                "Sabrina",
+                "Mike"
+              ],
+              [
+                "Sandra",
+                "Elia"
+              ],
+              [
+                "Steffi",
+                "Teezy"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Darya",
+              "Elia"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Alicia",
+                "Steffen"
+              ],
+              [
+                "Shakira",
+                "Fabio"
+              ],
+              [
+                "Darya",
+                "Danilo"
+              ],
+              [
+                "Jenny",
+                "Emanuell"
+              ],
+              [
+                "Kim",
+                "Teezy"
+              ],
+              [
+                "Marie",
+                "Elia"
+              ],
+              [
+                "Paulina",
+                "Mike"
+              ],
+              [
+                "Sabrina",
+                "Peter"
+              ],
+              [
+                "Sandra",
+                "Paco"
+              ],
+              [
+                "Steffi",
+                "Marvin"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 4,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Kim",
+              "Mike"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Alicia",
+                "Teezy"
+              ],
+              [
+                "Shakira",
+                "Fabio"
+              ],
+              [
+                "Darya",
+                "Danilo"
+              ],
+              [
+                "Jenny",
+                "Marvin"
+              ],
+              [
+                "Kim",
+                "Peter"
+              ],
+              [
+                "Marie",
+                "Elia"
+              ],
+              [
+                "Paulina",
+                "Max"
+              ],
+              [
+                "Sabrina",
+                "Paco"
+              ],
+              [
+                "Sandra",
+                "Steffen"
+              ],
+              [
+                "Steffi",
+                "Emanuell"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 5,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Darya",
+              "Danilo"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Alicia",
+                "Steffen"
+              ],
+              [
+                "Shakira",
+                "Paco"
+              ],
+              [
+                "Darya",
+                "Danilo"
+              ],
+              [
+                "Jenny",
+                "Marvin"
+              ],
+              [
+                "Kim",
+                "Teezy"
+              ],
+              [
+                "Marie",
+                "Fabio"
+              ],
+              [
+                "Paulina",
+                "Mike"
+              ],
+              [
+                "Sabrina",
+                "Emanuell"
+              ],
+              [
+                "Sandra",
+                "Max"
+              ],
+              [
+                "Steffi",
+                "Elia"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 6,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Alicia",
+              "Teezy"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Alicia",
+                "Paco"
+              ],
+              [
+                "Shakira",
+                "Fabio"
+              ],
+              [
+                "Darya",
+                "Danilo"
+              ],
+              [
+                "Jenny",
+                "Marvin"
+              ],
+              [
+                "Kim",
+                "Teezy"
+              ],
+              [
+                "Marie",
+                "Elia"
+              ],
+              [
+                "Paulina",
+                "Mike"
+              ],
+              [
+                "Sabrina",
+                "Peter"
+              ],
+              [
+                "Sandra",
+                "Steffen"
+              ],
+              [
+                "Steffi",
+                "Emanuell"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 7,
+        "events": [
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Alicia",
+                "Fabio"
+              ],
+              [
+                "Shakira",
+                "Max"
+              ],
+              [
+                "Darya",
+                "Danilo"
+              ],
+              [
+                "Jenny",
+                "Paco"
+              ],
+              [
+                "Kim",
+                "Teezy"
+              ],
+              [
+                "Marie",
+                "Steffen"
+              ],
+              [
+                "Paulina",
+                "Marvin"
+              ],
+              [
+                "Sabrina",
+                "Emanuell"
+              ],
+              [
+                "Sandra",
+                "Mike"
+              ],
+              [
+                "Steffi",
+                "Elia"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 8,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Sabrina",
+              "Max"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 1,
+            "pairs": [
+              [
+                "Alicia",
+                "Paco"
+              ],
+              [
+                "Shakira",
+                "Steffen"
+              ],
+              [
+                "Darya",
+                "Danilo"
+              ],
+              [
+                "Jenny",
+                "Marvin"
+              ],
+              [
+                "Kim",
+                "Max"
+              ],
+              [
+                "Marie",
+                "Elia"
+              ],
+              [
+                "Paulina",
+                "Teezy"
+              ],
+              [
+                "Sabrina",
+                "Emanuell"
+              ],
+              [
+                "Sandra",
+                "Fabio"
+              ],
+              [
+                "Steffi",
+                "Mike"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 9,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Steffi",
+              "Emanuell"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 6,
+            "pairs": [
+              [
+                "Alicia",
+                "Steffen"
+              ],
+              [
+                "Shakira",
+                "Marvin"
+              ],
+              [
+                "Darya",
+                "Danilo"
+              ],
+              [
+                "Jenny",
+                "Max"
+              ],
+              [
+                "Kim",
+                "Teezy"
+              ],
+              [
+                "Marie",
+                "Fabio"
+              ],
+              [
+                "Paulina",
+                "Paco"
+              ],
+              [
+                "Sabrina",
+                "Mike"
+              ],
+              [
+                "Sandra",
+                "Elia"
+              ],
+              [
+                "Steffi",
+                "Emanuell"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 10,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Alicia",
+              "Elia"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 10,
+            "pairs": [
+              [
+                "Alicia",
+                "Elia"
+              ],
+              [
+                "Shakira",
+                "Marvin"
+              ],
+              [
+                "Darya",
+                "Danilo"
+              ],
+              [
+                "Jenny",
+                "Paco"
+              ],
+              [
+                "Kim",
+                "Teezy"
+              ],
+              [
+                "Marie",
+                "Fabio"
+              ],
+              [
+                "Paulina",
+                "Max"
+              ],
+              [
+                "Sabrina",
+                "Mike"
+              ],
+              [
+                "Sandra",
+                "Steffen"
+              ],
+              [
+                "Steffi",
+                "Emanuell"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "target_lights": 10,
+    "status": "completed",
+    "outcome": "won",
+    "competitive_end_week": 10
+  },
+  "s4": {
+    "schema_version": 2,
+    "initial_active": "all",
+    "groups": {
+      "a": [
+        "Vanessa",
+        "Carina",
+        "Henna",
+        "Juliette",
+        "Larissa",
+        "Aurelia",
+        "Valeria",
+        "Dorna",
+        "Steffi",
+        "Caro"
+      ],
+      "b": [
+        "Sasa",
+        "Deniz",
+        "Marwin",
+        "Kenneth",
+        "Barkin",
+        "Pascal",
+        "Burim",
+        "Joel",
+        "Cris",
+        "Max",
+        "Ken"
+      ]
+    },
+    "matrix": {
+      "rows": "a",
+      "bits": "b"
+    },
+    "initial_match_model": {
+      "multi_matches": [
+        {
+          "group": "bits",
+          "size": 2,
+          "known_members": []
+        }
+      ]
+    },
+    "style": {
+      "background": "insta_styles/image_backgrounds/ayto_s4.png",
+      "face_layer": "insta_styles/image_face_layers/ayto_s4.png"
+    },
+    "weeks": [
+      {
+        "number": 1,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Valeria",
+              "Marwin"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "box",
+            "pair": [
+              "Dorna",
+              "Kenneth"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Vanessa",
+                "Sasa"
+              ],
+              [
+                "Carina",
+                "Ken"
+              ],
+              [
+                "Henna",
+                "Kenneth"
+              ],
+              [
+                "Juliette",
+                "Burim"
+              ],
+              [
+                "Larissa",
+                "Joel"
+              ],
+              [
+                "Aurelia",
+                "Deniz"
+              ],
+              [
+                "Valeria",
+                "Max"
+              ],
+              [
+                "Dorna",
+                "Marwin"
+              ],
+              [
+                "Steffi",
+                "Cris"
+              ],
+              [
+                "Caro",
+                "Barkin"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Carina",
+              "Burim"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Vanessa",
+                "Sasa"
+              ],
+              [
+                "Carina",
+                "Ken"
+              ],
+              [
+                "Henna",
+                "Kenneth"
+              ],
+              [
+                "Juliette",
+                "Barkin"
+              ],
+              [
+                "Larissa",
+                "Joel"
+              ],
+              [
+                "Aurelia",
+                "Burim"
+              ],
+              [
+                "Valeria",
+                "Pascal"
+              ],
+              [
+                "Dorna",
+                "Marwin"
+              ],
+              [
+                "Steffi",
+                "Cris"
+              ],
+              [
+                "Caro",
+                "Max"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Steffi",
+              "Cris"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Vanessa",
+                "Marwin"
+              ],
+              [
+                "Carina",
+                "Sasa"
+              ],
+              [
+                "Henna",
+                "Ken"
+              ],
+              [
+                "Juliette",
+                "Barkin"
+              ],
+              [
+                "Larissa",
+                "Joel"
+              ],
+              [
+                "Aurelia",
+                "Kenneth"
+              ],
+              [
+                "Valeria",
+                "Max"
+              ],
+              [
+                "Dorna",
+                "Deniz"
+              ],
+              [
+                "Steffi",
+                "Cris"
+              ],
+              [
+                "Caro",
+                "Pascal"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 4,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Valeria",
+              "Max"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Vanessa",
+                "Sasa"
+              ],
+              [
+                "Carina",
+                "Pascal"
+              ],
+              [
+                "Henna",
+                "Ken"
+              ],
+              [
+                "Juliette",
+                "Kenneth"
+              ],
+              [
+                "Larissa",
+                "Deniz"
+              ],
+              [
+                "Aurelia",
+                "Marwin"
+              ],
+              [
+                "Valeria",
+                "Joel"
+              ],
+              [
+                "Dorna",
+                "Burim"
+              ],
+              [
+                "Steffi",
+                "Cris"
+              ],
+              [
+                "Caro",
+                "Max"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 5,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Caro",
+              "Ken"
+            ],
+            "result": "yes",
+            "revealed_group": {
+              "partner": "Caro",
+              "members": [
+                "Ken",
+                "Max"
+              ],
+              "complete": true
+            }
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Vanessa",
+                "Sasa"
+              ],
+              [
+                "Carina",
+                "Pascal"
+              ],
+              [
+                "Henna",
+                "Kenneth"
+              ],
+              [
+                "Juliette",
+                "Barkin"
+              ],
+              [
+                "Larissa",
+                "Deniz"
+              ],
+              [
+                "Aurelia",
+                "Marwin"
+              ],
+              [
+                "Valeria",
+                "Joel"
+              ],
+              [
+                "Dorna",
+                "Burim"
+              ],
+              [
+                "Steffi",
+                "Cris"
+              ],
+              [
+                "Caro",
+                "Ken"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 6,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Dorna",
+              "Burim"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Vanessa",
+                "Joel"
+              ],
+              [
+                "Carina",
+                "Sasa"
+              ],
+              [
+                "Henna",
+                "Kenneth"
+              ],
+              [
+                "Juliette",
+                "Barkin"
+              ],
+              [
+                "Larissa",
+                "Marwin"
+              ],
+              [
+                "Aurelia",
+                "Burim"
+              ],
+              [
+                "Valeria",
+                "Pascal"
+              ],
+              [
+                "Dorna",
+                "Deniz"
+              ],
+              [
+                "Steffi",
+                "Cris"
+              ],
+              [
+                "Caro",
+                "Ken"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 7,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Juliette",
+              "Joel"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Vanessa",
+                "Deniz"
+              ],
+              [
+                "Carina",
+                "Marwin"
+              ],
+              [
+                "Henna",
+                "Burim"
+              ],
+              [
+                "Juliette",
+                "Kenneth"
+              ],
+              [
+                "Larissa",
+                "Sasa"
+              ],
+              [
+                "Aurelia",
+                "Joel"
+              ],
+              [
+                "Valeria",
+                "Pascal"
+              ],
+              [
+                "Dorna",
+                "Barkin"
+              ],
+              [
+                "Steffi",
+                "Cris"
+              ],
+              [
+                "Caro",
+                "Ken"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 8,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Dorna",
+              "Marwin"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Vanessa",
+                "Sasa"
+              ],
+              [
+                "Carina",
+                "Kenneth"
+              ],
+              [
+                "Henna",
+                "Deniz"
+              ],
+              [
+                "Juliette",
+                "Barkin"
+              ],
+              [
+                "Larissa",
+                "Pascal"
+              ],
+              [
+                "Aurelia",
+                "Marwin"
+              ],
+              [
+                "Valeria",
+                "Burim"
+              ],
+              [
+                "Dorna",
+                "Joel"
+              ],
+              [
+                "Steffi",
+                "Cris"
+              ],
+              [
+                "Caro",
+                "Ken"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 9,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Carina",
+              "Pascal"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 10,
+            "pairs": [
+              [
+                "Vanessa",
+                "Marwin"
+              ],
+              [
+                "Carina",
+                "Deniz"
+              ],
+              [
+                "Henna",
+                "Kenneth"
+              ],
+              [
+                "Juliette",
+                "Burim"
+              ],
+              [
+                "Larissa",
+                "Barkin"
+              ],
+              [
+                "Aurelia",
+                "Pascal"
+              ],
+              [
+                "Valeria",
+                "Joel"
+              ],
+              [
+                "Dorna",
+                "Sasa"
+              ],
+              [
+                "Steffi",
+                "Cris"
+              ],
+              [
+                "Caro",
+                "Ken"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "target_lights": 10,
+    "status": "completed",
+    "outcome": "won",
+    "competitive_end_week": 9
+  },
+  "s4vip": {
+    "schema_version": 2,
+    "initial_active": "all",
+    "groups": {
+      "a": [
+        "Alex",
+        "Antonino",
+        "Chris",
+        "Kaan",
+        "Lars",
+        "Lukas",
+        "Marc-Robin",
+        "Nikola",
+        "Ozan",
+        "Tim"
+      ],
+      "b": [
+        "Anastasia",
+        "Asena",
+        "Dana",
+        "Emmy",
+        "Gabriela",
+        "Jennifer",
+        "LauraL",
+        "LauraM",
+        "Linda",
+        "Nadja",
+        "Tara"
+      ]
+    },
+    "matrix": {
+      "rows": "a",
+      "bits": "b"
+    },
+    "initial_match_model": {
+      "multi_matches": [
+        {
+          "group": "bits",
+          "size": 2,
+          "known_members": [
+            "Dana"
+          ]
+        }
+      ]
+    },
+    "style": {
+      "background": "insta_styles/image_backgrounds/ayto_s4vip.png",
+      "face_layer": "insta_styles/image_face_layers/ayto_s4vip.png"
+    },
+    "weeks": [
+      {
+        "number": 1,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Marc-Robin",
+              "LauraL"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Alex",
+                "LauraL"
+              ],
+              [
+                "Antonino",
+                "LauraM"
+              ],
+              [
+                "Chris",
+                "Emmy"
+              ],
+              [
+                "Kaan",
+                "Asena"
+              ],
+              [
+                "Lars",
+                "Nadja"
+              ],
+              [
+                "Lukas",
+                "Jennifer"
+              ],
+              [
+                "Marc-Robin",
+                "Anastasia"
+              ],
+              [
+                "Nikola",
+                "Tara"
+              ],
+              [
+                "Ozan",
+                "Gabriela"
+              ],
+              [
+                "Tim",
+                "Linda"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Chris",
+              "Emmy"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Alex",
+                "Jennifer"
+              ],
+              [
+                "Antonino",
+                "Dana"
+              ],
+              [
+                "Chris",
+                "Emmy"
+              ],
+              [
+                "Kaan",
+                "Nadja"
+              ],
+              [
+                "Lars",
+                "Anastasia"
+              ],
+              [
+                "Lukas",
+                "LauraM"
+              ],
+              [
+                "Marc-Robin",
+                "Asena"
+              ],
+              [
+                "Nikola",
+                "Tara"
+              ],
+              [
+                "Ozan",
+                "LauraL"
+              ],
+              [
+                "Tim",
+                "Linda"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Alex",
+              "Anastasia"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Alex",
+                "Anastasia"
+              ],
+              [
+                "Antonino",
+                "Nadja"
+              ],
+              [
+                "Chris",
+                "Emmy"
+              ],
+              [
+                "Kaan",
+                "Jennifer"
+              ],
+              [
+                "Lars",
+                "Gabriela"
+              ],
+              [
+                "Lukas",
+                "Linda"
+              ],
+              [
+                "Marc-Robin",
+                "Asena"
+              ],
+              [
+                "Nikola",
+                "LauraL"
+              ],
+              [
+                "Ozan",
+                "LauraM"
+              ],
+              [
+                "Tim",
+                "Dana"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 4,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Marc-Robin",
+              "Asena"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 1,
+            "pairs": [
+              [
+                "Alex",
+                "Jennifer"
+              ],
+              [
+                "Antonino",
+                "Nadja"
+              ],
+              [
+                "Chris",
+                "Emmy"
+              ],
+              [
+                "Kaan",
+                "Asena"
+              ],
+              [
+                "Lars",
+                "Tara"
+              ],
+              [
+                "Lukas",
+                "Gabriela"
+              ],
+              [
+                "Marc-Robin",
+                "Linda"
+              ],
+              [
+                "Nikola",
+                "Anastasia"
+              ],
+              [
+                "Ozan",
+                "LauraM"
+              ],
+              [
+                "Tim",
+                "LauraL"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 5,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Nikola",
+              "LauraM"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "matching_night",
+            "lights": 5,
+            "pairs": [
+              [
+                "Alex",
+                "Gabriela"
+              ],
+              [
+                "Antonino",
+                "Asena"
+              ],
+              [
+                "Chris",
+                "Emmy"
+              ],
+              [
+                "Kaan",
+                "Tara"
+              ],
+              [
+                "Lars",
+                "Nadja"
+              ],
+              [
+                "Lukas",
+                "Jennifer"
+              ],
+              [
+                "Marc-Robin",
+                "Anastasia"
+              ],
+              [
+                "Nikola",
+                "LauraL"
+              ],
+              [
+                "Ozan",
+                "Dana"
+              ],
+              [
+                "Tim",
+                "Linda"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 6,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Ozan",
+              "Anastasia"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 6,
+            "pairs": [
+              [
+                "Alex",
+                "Gabriela"
+              ],
+              [
+                "Antonino",
+                "Asena"
+              ],
+              [
+                "Chris",
+                "Emmy"
+              ],
+              [
+                "Kaan",
+                "Tara"
+              ],
+              [
+                "Lars",
+                "Dana"
+              ],
+              [
+                "Lukas",
+                "Jennifer"
+              ],
+              [
+                "Marc-Robin",
+                "LauraM"
+              ],
+              [
+                "Nikola",
+                "Nadja"
+              ],
+              [
+                "Ozan",
+                "Anastasia"
+              ],
+              [
+                "Tim",
+                "Linda"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 7,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Lukas",
+              "Jennifer"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 6,
+            "pairs": [
+              [
+                "Alex",
+                "Gabriela"
+              ],
+              [
+                "Antonino",
+                "Asena"
+              ],
+              [
+                "Chris",
+                "Emmy"
+              ],
+              [
+                "Kaan",
+                "Tara"
+              ],
+              [
+                "Lars",
+                "LauraL"
+              ],
+              [
+                "Lukas",
+                "Dana"
+              ],
+              [
+                "Marc-Robin",
+                "LauraM"
+              ],
+              [
+                "Nikola",
+                "Nadja"
+              ],
+              [
+                "Ozan",
+                "Anastasia"
+              ],
+              [
+                "Tim",
+                "Linda"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 8,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Tim",
+              "Linda"
+            ],
+            "result": "yes",
+            "revealed_group": {
+              "partner": "Tim",
+              "members": [
+                "Linda",
+                "Dana"
+              ],
+              "complete": true
+            }
+          },
+          {
+            "type": "matching_night",
+            "lights": 7,
+            "pairs": [
+              [
+                "Alex",
+                "Gabriela"
+              ],
+              [
+                "Antonino",
+                "Asena"
+              ],
+              [
+                "Chris",
+                "Emmy"
+              ],
+              [
+                "Kaan",
+                "Jennifer"
+              ],
+              [
+                "Lars",
+                "LauraL"
+              ],
+              [
+                "Lukas",
+                "Tara"
+              ],
+              [
+                "Marc-Robin",
+                "LauraM"
+              ],
+              [
+                "Nikola",
+                "Nadja"
+              ],
+              [
+                "Ozan",
+                "Anastasia"
+              ],
+              [
+                "Tim",
+                "Linda"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 9,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Lars",
+              "LauraL"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 10,
+            "pairs": [
+              [
+                "Alex",
+                "Gabriela"
+              ],
+              [
+                "Antonino",
+                "Asena"
+              ],
+              [
+                "Chris",
+                "Emmy"
+              ],
+              [
+                "Kaan",
+                "Nadja"
+              ],
+              [
+                "Lars",
+                "Jennifer"
+              ],
+              [
+                "Lukas",
+                "Tara"
+              ],
+              [
+                "Marc-Robin",
+                "LauraM"
+              ],
+              [
+                "Nikola",
+                "LauraL"
+              ],
+              [
+                "Ozan",
+                "Anastasia"
+              ],
+              [
+                "Tim",
+                "Linda"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "target_lights": 10,
+    "status": "completed",
+    "outcome": "won",
+    "competitive_end_week": 9
+  },
+  "s5": {
+    "schema_version": 2,
+    "initial_active": "all",
+    "groups": {
+      "a": [
+        "Eti",
+        "Gerrit",
+        "Kevin",
+        "Martin",
+        "Paddy",
+        "Paul",
+        "Ryan",
+        "Sandro",
+        "Sidar",
+        "Wilson"
+      ],
+      "b": [
+        "Afra",
+        "Edda",
+        "Jana",
+        "Julia",
+        "Lina",
+        "Lisa-Marie",
+        "Maja",
+        "Melanie",
+        "Pia",
+        "Shelly",
+        "Sina",
+        "Tais"
+      ]
+    },
+    "matrix": {
+      "rows": "a",
+      "bits": "b"
+    },
+    "initial_match_model": {
+      "multi_matches": [
+        {
+          "group": "bits",
+          "size": 3,
+          "known_members": [
+            "Melanie"
+          ]
+        }
+      ]
+    },
+    "style": {
+      "background": "insta_styles/image_backgrounds/ayto_s5.png",
+      "face_layer": "insta_styles/image_face_layers/ayto_s5.png"
+    },
+    "weeks": [
+      {
+        "number": 1,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Paul",
+              "Jana"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Eti",
+                "Lisa-Marie"
+              ],
+              [
+                "Gerrit",
+                "Pia"
+              ],
+              [
+                "Kevin",
+                "Sina"
+              ],
+              [
+                "Martin",
+                "Julia"
+              ],
+              [
+                "Paddy",
+                "Maja"
+              ],
+              [
+                "Paul",
+                "Tais"
+              ],
+              [
+                "Ryan",
+                "Lina"
+              ],
+              [
+                "Sandro",
+                "Edda"
+              ],
+              [
+                "Sidar",
+                "Jana"
+              ],
+              [
+                "Wilson",
+                "Shelly"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Ryan",
+              "Lina"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Eti",
+                "Afra"
+              ],
+              [
+                "Gerrit",
+                "Tais"
+              ],
+              [
+                "Kevin",
+                "Sina"
+              ],
+              [
+                "Martin",
+                "Lina"
+              ],
+              [
+                "Paddy",
+                "Shelly"
+              ],
+              [
+                "Paul",
+                "Lisa-Marie"
+              ],
+              [
+                "Ryan",
+                "Pia"
+              ],
+              [
+                "Sandro",
+                "Edda"
+              ],
+              [
+                "Sidar",
+                "Jana"
+              ],
+              [
+                "Wilson",
+                "Maja"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Kevin",
+              "Maja"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "box",
+            "pair": [
+              "Eti",
+              "Melanie"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Eti",
+                "Maja"
+              ],
+              [
+                "Gerrit",
+                "Tais"
+              ],
+              [
+                "Kevin",
+                "Melanie"
+              ],
+              [
+                "Martin",
+                "Lisa-Marie"
+              ],
+              [
+                "Paddy",
+                "Julia"
+              ],
+              [
+                "Paul",
+                "Edda"
+              ],
+              [
+                "Ryan",
+                "Jana"
+              ],
+              [
+                "Sandro",
+                "Sina"
+              ],
+              [
+                "Sidar",
+                "Afra"
+              ],
+              [
+                "Wilson",
+                "Shelly"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 4,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Wilson",
+              "Shelly"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Eti",
+                "Afra"
+              ],
+              [
+                "Gerrit",
+                "Tais"
+              ],
+              [
+                "Kevin",
+                "Sina"
+              ],
+              [
+                "Martin",
+                "Julia"
+              ],
+              [
+                "Paddy",
+                "Lina"
+              ],
+              [
+                "Paul",
+                "Lisa-Marie"
+              ],
+              [
+                "Ryan",
+                "Edda"
+              ],
+              [
+                "Sandro",
+                "Pia"
+              ],
+              [
+                "Sidar",
+                "Jana"
+              ],
+              [
+                "Wilson",
+                "Shelly"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 5,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Gerrit",
+              "Tais"
+            ],
+            "result": "yes",
+            "revealed_group": {
+              "partner": "Gerrit",
+              "members": [
+                "Tais",
+                "Pia",
+                "Melanie"
+              ],
+              "complete": true
+            }
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Eti",
+                "Maja"
+              ],
+              [
+                "Gerrit",
+                "Tais"
+              ],
+              [
+                "Kevin",
+                "Julia"
+              ],
+              [
+                "Martin",
+                "Lisa-Marie"
+              ],
+              [
+                "Paddy",
+                "Lina"
+              ],
+              [
+                "Paul",
+                "Edda"
+              ],
+              [
+                "Ryan",
+                "Jana"
+              ],
+              [
+                "Sandro",
+                "Sina"
+              ],
+              [
+                "Sidar",
+                "Afra"
+              ],
+              [
+                "Wilson",
+                "Shelly"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 6,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Sandro",
+              "Sina"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 5,
+            "pairs": [
+              [
+                "Eti",
+                "Maja"
+              ],
+              [
+                "Gerrit",
+                "Tais"
+              ],
+              [
+                "Kevin",
+                "Lina"
+              ],
+              [
+                "Martin",
+                "Lisa-Marie"
+              ],
+              [
+                "Paddy",
+                "Edda"
+              ],
+              [
+                "Paul",
+                "Sina"
+              ],
+              [
+                "Ryan",
+                "Jana"
+              ],
+              [
+                "Sandro",
+                "Afra"
+              ],
+              [
+                "Sidar",
+                "Julia"
+              ],
+              [
+                "Wilson",
+                "Shelly"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 7,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Paul",
+              "Julia"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 5,
+            "pairs": [
+              [
+                "Eti",
+                "Maja"
+              ],
+              [
+                "Gerrit",
+                "Tais"
+              ],
+              [
+                "Kevin",
+                "Lina"
+              ],
+              [
+                "Martin",
+                "Afra"
+              ],
+              [
+                "Paddy",
+                "Jana"
+              ],
+              [
+                "Paul",
+                "Sina"
+              ],
+              [
+                "Ryan",
+                "Edda"
+              ],
+              [
+                "Sandro",
+                "Julia"
+              ],
+              [
+                "Sidar",
+                "Lisa-Marie"
+              ],
+              [
+                "Wilson",
+                "Shelly"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 8,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Eti",
+              "Maja"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Eti",
+                "Afra"
+              ],
+              [
+                "Gerrit",
+                "Tais"
+              ],
+              [
+                "Kevin",
+                "Lina"
+              ],
+              [
+                "Martin",
+                "Lisa-Marie"
+              ],
+              [
+                "Paddy",
+                "Jana"
+              ],
+              [
+                "Paul",
+                "Sina"
+              ],
+              [
+                "Ryan",
+                "Edda"
+              ],
+              [
+                "Sandro",
+                "Julia"
+              ],
+              [
+                "Sidar",
+                "Maja"
+              ],
+              [
+                "Wilson",
+                "Shelly"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 9,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Sandro",
+              "Afra"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 6,
+            "pairs": [
+              [
+                "Eti",
+                "Maja"
+              ],
+              [
+                "Gerrit",
+                "Tais"
+              ],
+              [
+                "Kevin",
+                "Lina"
+              ],
+              [
+                "Martin",
+                "Lisa-Marie"
+              ],
+              [
+                "Paddy",
+                "Sina"
+              ],
+              [
+                "Paul",
+                "Edda"
+              ],
+              [
+                "Ryan",
+                "Jana"
+              ],
+              [
+                "Sandro",
+                "Julia"
+              ],
+              [
+                "Sidar",
+                "Afra"
+              ],
+              [
+                "Wilson",
+                "Shelly"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 10,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Kevin",
+              "Lina"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 7,
+            "pairs": [
+              [
+                "Eti",
+                "Maja"
+              ],
+              [
+                "Gerrit",
+                "Tais"
+              ],
+              [
+                "Kevin",
+                "Lina"
+              ],
+              [
+                "Martin",
+                "Afra"
+              ],
+              [
+                "Paddy",
+                "Edda"
+              ],
+              [
+                "Paul",
+                "Lisa-Marie"
+              ],
+              [
+                "Ryan",
+                "Jana"
+              ],
+              [
+                "Sandro",
+                "Julia"
+              ],
+              [
+                "Sidar",
+                "Sina"
+              ],
+              [
+                "Wilson",
+                "Shelly"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "target_lights": 10,
+    "status": "completed",
+    "outcome": "lost",
+    "competitive_end_week": 10
+  },
+  "s5vip": {
+    "schema_version": 2,
+    "initial_active": "all",
+    "groups": {
+      "a": [
+        "Antonia",
+        "Ariel",
+        "Beverly",
+        "Elli",
+        "Hati",
+        "Henna",
+        "Joanna",
+        "Nelly",
+        "Sandra",
+        "Viki"
+      ],
+      "b": [
+        "Calvin S.",
+        "Calvin O.",
+        "Jonny",
+        "Kevin",
+        "Leandro",
+        "Lennert",
+        "Nico",
+        "Oliver",
+        "Rob",
+        "Sidar",
+        "Xander"
+      ]
+    },
+    "matrix": {
+      "rows": "a",
+      "bits": "b"
+    },
+    "initial_match_model": {
+      "multi_matches": [
+        {
+          "group": "bits",
+          "size": 2,
+          "known_members": []
+        }
+      ]
+    },
+    "style": {
+      "background": "insta_styles/image_backgrounds/ayto_s5vip.png",
+      "face_layer": "insta_styles/image_face_layers/ayto_s5vip.png"
+    },
+    "weeks": [
+      {
+        "number": 1,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Sandra",
+              "Kevin"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Antonia",
+                "Lennert"
+              ],
+              [
+                "Ariel",
+                "Nico"
+              ],
+              [
+                "Beverly",
+                "Calvin S."
+              ],
+              [
+                "Elli",
+                "Xander"
+              ],
+              [
+                "Hati",
+                "Calvin O."
+              ],
+              [
+                "Henna",
+                "Jonny"
+              ],
+              [
+                "Joanna",
+                "Rob"
+              ],
+              [
+                "Nelly",
+                "Sidar"
+              ],
+              [
+                "Sandra",
+                "Kevin"
+              ],
+              [
+                "Viki",
+                "Leandro"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Elli",
+              "Xander"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Antonia",
+                "Jonny"
+              ],
+              [
+                "Ariel",
+                "Nico"
+              ],
+              [
+                "Beverly",
+                "Sidar"
+              ],
+              [
+                "Elli",
+                "Xander"
+              ],
+              [
+                "Hati",
+                "Calvin O."
+              ],
+              [
+                "Henna",
+                "Oliver"
+              ],
+              [
+                "Joanna",
+                "Calvin S."
+              ],
+              [
+                "Nelly",
+                "Rob"
+              ],
+              [
+                "Sandra",
+                "Kevin"
+              ],
+              [
+                "Viki",
+                "Leandro"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Nelly",
+              "Calvin S."
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Antonia",
+                "Oliver"
+              ],
+              [
+                "Ariel",
+                "Calvin O."
+              ],
+              [
+                "Beverly",
+                "Nico"
+              ],
+              [
+                "Elli",
+                "Xander"
+              ],
+              [
+                "Hati",
+                "Rob"
+              ],
+              [
+                "Henna",
+                "Leandro"
+              ],
+              [
+                "Joanna",
+                "Calvin S."
+              ],
+              [
+                "Nelly",
+                "Lennert"
+              ],
+              [
+                "Sandra",
+                "Kevin"
+              ],
+              [
+                "Viki",
+                "Jonny"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 4,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Beverly",
+              "Jonny"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Antonia",
+                "Oliver"
+              ],
+              [
+                "Ariel",
+                "Nico"
+              ],
+              [
+                "Beverly",
+                "Sidar"
+              ],
+              [
+                "Elli",
+                "Xander"
+              ],
+              [
+                "Hati",
+                "Rob"
+              ],
+              [
+                "Henna",
+                "Lennert"
+              ],
+              [
+                "Joanna",
+                "Calvin S."
+              ],
+              [
+                "Nelly",
+                "Calvin O."
+              ],
+              [
+                "Sandra",
+                "Leandro"
+              ],
+              [
+                "Viki",
+                "Kevin"
+              ]
+            ]
+          },
+          {
+            "type": "box",
+            "pair": [
+              "Sandra",
+              "Leandro"
+            ],
+            "result": "no"
+          }
+        ]
+      },
+      {
+        "number": 5,
+        "events": [
+          {
+            "type": "cast_change",
+            "title": "Nachkommer Jimi",
+            "add": [
+              {
+                "group": "b",
+                "person": "Jimi"
+              }
+            ],
+            "face_layer": "insta_styles/image_face_layers/ayto_s5vip_1.png",
+          "match_update": {
+            "mode": "extend",
+            "new_multi_match": {
+                "group": "bits",
+                "size": 2,
+                "known_members": [
+                  "Jimi"
+                ]
+              }
+            }
+          },
+          {
+            "type": "box",
+            "pair": [
+              "Nelly",
+              "Jimi"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Antonia",
+                "Oliver"
+              ],
+              [
+                "Ariel",
+                "Nico"
+              ],
+              [
+                "Beverly",
+                "Sidar"
+              ],
+              [
+                "Elli",
+                "Xander"
+              ],
+              [
+                "Hati",
+                "Rob"
+              ],
+              [
+                "Henna",
+                "Jimi"
+              ],
+              [
+                "Joanna",
+                "Calvin S."
+              ],
+              [
+                "Nelly",
+                "Calvin O."
+              ],
+              [
+                "Sandra",
+                "Lennert"
+              ],
+              [
+                "Viki",
+                "Kevin"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 6,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Sandra",
+              "Lennert"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Antonia",
+                "Calvin S."
+              ],
+              [
+                "Ariel",
+                "Kevin"
+              ],
+              [
+                "Beverly",
+                "Leandro"
+              ],
+              [
+                "Elli",
+                "Xander"
+              ],
+              [
+                "Hati",
+                "Jimi"
+              ],
+              [
+                "Henna",
+                "Oliver"
+              ],
+              [
+                "Joanna",
+                "Sidar"
+              ],
+              [
+                "Nelly",
+                "Calvin O."
+              ],
+              [
+                "Sandra",
+                "Lennert"
+              ],
+              [
+                "Viki",
+                "Jonny"
+              ]
+            ]
+          },
+          {
+            "type": "box",
+            "pair": [
+              "Antonia",
+              "Oliver"
+            ],
+            "result": "no"
+          }
+        ]
+      },
+      {
+        "number": 7,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Hati",
+              "Jimi"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 5,
+            "pairs": [
+              [
+                "Antonia",
+                "Calvin S."
+              ],
+              [
+                "Ariel",
+                "Leandro"
+              ],
+              [
+                "Beverly",
+                "Nico"
+              ],
+              [
+                "Elli",
+                "Xander"
+              ],
+              [
+                "Hati",
+                "Jonny"
+              ],
+              [
+                "Henna",
+                "Oliver"
+              ],
+              [
+                "Joanna",
+                "Sidar"
+              ],
+              [
+                "Nelly",
+                "Rob"
+              ],
+              [
+                "Sandra",
+                "Lennert"
+              ],
+              [
+                "Viki",
+                "Kevin"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 8,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Henna",
+              "Sidar"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Antonia",
+                "Calvin S."
+              ],
+              [
+                "Ariel",
+                "Kevin"
+              ],
+              [
+                "Beverly",
+                "Nico"
+              ],
+              [
+                "Elli",
+                "Xander"
+              ],
+              [
+                "Hati",
+                "Jonny"
+              ],
+              [
+                "Henna",
+                "Oliver"
+              ],
+              [
+                "Joanna",
+                "Calvin O."
+              ],
+              [
+                "Nelly",
+                "Rob"
+              ],
+              [
+                "Sandra",
+                "Lennert"
+              ],
+              [
+                "Viki",
+                "Leandro"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 9,
+        "events": [
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Antonia",
+                "Jonny"
+              ],
+              [
+                "Ariel",
+                "Leandro"
+              ],
+              [
+                "Beverly",
+                "Sidar"
+              ],
+              [
+                "Elli",
+                "Xander"
+              ],
+              [
+                "Hati",
+                "Kevin"
+              ],
+              [
+                "Henna",
+                "Oliver"
+              ],
+              [
+                "Joanna",
+                "Calvin S."
+              ],
+              [
+                "Nelly",
+                "Calvin O."
+              ],
+              [
+                "Sandra",
+                "Lennert"
+              ],
+              [
+                "Viki",
+                "Rob"
+              ]
+            ]
+          },
+          {
+            "type": "box",
+            "pair": [
+              "Nelly",
+              "Calvin O."
+            ],
+            "result": "yes"
+          }
+        ]
+      },
+      {
+        "number": 10,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Joanna",
+              "Calvin S."
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 7,
+            "pairs": [
+              [
+                "Antonia",
+                "Calvin S."
+              ],
+              [
+                "Ariel",
+                "Oliver"
+              ],
+              [
+                "Beverly",
+                "Nico"
+              ],
+              [
+                "Elli",
+                "Xander"
+              ],
+              [
+                "Hati",
+                "Sidar"
+              ],
+              [
+                "Henna",
+                "Leandro"
+              ],
+              [
+                "Joanna",
+                "Rob"
+              ],
+              [
+                "Nelly",
+                "Calvin O."
+              ],
+              [
+                "Sandra",
+                "Lennert"
+              ],
+              [
+                "Viki",
+                "Kevin"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 11,
+        "events": [
+          {
+            "type": "solution",
+            "pairs": [
+              [
+                "Antonia",
+                "Leandro"
+              ],
+              [
+                "Ariel",
+                "Calvin S."
+              ],
+              [
+                "Beverly",
+                "Nico"
+              ],
+              [
+                "Beverly",
+                "Jimi"
+              ],
+              [
+                "Elli",
+                "Xander"
+              ],
+              [
+                "Hati",
+                "Sidar"
+              ],
+              [
+                "Henna",
+                "Oliver"
+              ],
+              [
+                "Joanna",
+                "Jonny"
+              ],
+              [
+                "Joanna",
+                "Rob"
+              ],
+              [
+                "Nelly",
+                "Calvin O."
+              ],
+              [
+                "Sandra",
+                "Lennert"
+              ],
+              [
+                "Viki",
+                "Kevin"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "target_lights": 10,
+    "status": "completed",
+    "outcome": "lost",
+    "competitive_end_week": 10
+  },
+  "s6": {
+    "schema_version": 2,
+    "initial_active": "all",
+    "groups": {
+      "a": [
+        "Danish",
+        "Dino",
+        "Dion",
+        "Enes",
+        "Josh",
+        "Joshua",
+        "Kaan",
+        "Levin",
+        "Sinan",
+        "Tano"
+      ],
+      "b": [
+        "Anna",
+        "Camelia",
+        "Chiara",
+        "Deisy",
+        "Ina",
+        "Joanna",
+        "Nadja",
+        "Nasti",
+        "Selina",
+        "Sophia",
+        "Tori"
+      ]
+    },
+    "matrix": {
+      "rows": "a",
+      "bits": "b"
+    },
+    "initial_match_model": {
+      "multi_matches": [
+        {
+          "group": "bits",
+          "size": 2,
+          "known_members": []
+        }
+      ]
+    },
+    "style": {
+      "background": "insta_styles/image_backgrounds/ayto_s6.png",
+      "face_layer": "insta_styles/image_face_layers/ayto_s6.png"
+    },
+    "weeks": [
+      {
+        "number": 1,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Josh",
+              "Anna"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Danish",
+                "Sophia"
+              ],
+              [
+                "Dino",
+                "Deisy"
+              ],
+              [
+                "Dion",
+                "Tori"
+              ],
+              [
+                "Enes",
+                "Anna"
+              ],
+              [
+                "Josh",
+                "Nadja"
+              ],
+              [
+                "Joshua",
+                "Selina"
+              ],
+              [
+                "Kaan",
+                "Joanna"
+              ],
+              [
+                "Levin",
+                "Camelia"
+              ],
+              [
+                "Sinan",
+                "Ina"
+              ],
+              [
+                "Tano",
+                "Chiara"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Levin",
+              "Camelia"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Danish",
+                "Camelia"
+              ],
+              [
+                "Dino",
+                "Deisy"
+              ],
+              [
+                "Dion",
+                "Selina"
+              ],
+              [
+                "Enes",
+                "Nasti"
+              ],
+              [
+                "Josh",
+                "Nadja"
+              ],
+              [
+                "Joshua",
+                "Joanna"
+              ],
+              [
+                "Kaan",
+                "Anna"
+              ],
+              [
+                "Levin",
+                "Chiara"
+              ],
+              [
+                "Sinan",
+                "Ina"
+              ],
+              [
+                "Tano",
+                "Tori"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Sinan",
+              "Ina"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Danish",
+                "Sophia"
+              ],
+              [
+                "Dino",
+                "Deisy"
+              ],
+              [
+                "Dion",
+                "Chiara"
+              ],
+              [
+                "Enes",
+                "Selina"
+              ],
+              [
+                "Josh",
+                "Nadja"
+              ],
+              [
+                "Joshua",
+                "Joanna"
+              ],
+              [
+                "Kaan",
+                "Anna"
+              ],
+              [
+                "Levin",
+                "Camelia"
+              ],
+              [
+                "Sinan",
+                "Nasti"
+              ],
+              [
+                "Tano",
+                "Tori"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 4,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Danish",
+              "Nadja"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Danish",
+                "Nadja"
+              ],
+              [
+                "Dino",
+                "Deisy"
+              ],
+              [
+                "Dion",
+                "Nasti"
+              ],
+              [
+                "Enes",
+                "Selina"
+              ],
+              [
+                "Josh",
+                "Ina"
+              ],
+              [
+                "Joshua",
+                "Joanna"
+              ],
+              [
+                "Kaan",
+                "Anna"
+              ],
+              [
+                "Levin",
+                "Camelia"
+              ],
+              [
+                "Sinan",
+                "Sophia"
+              ],
+              [
+                "Tano",
+                "Tori"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 5,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Dino",
+              "Deisy"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Danish",
+                "Nadja"
+              ],
+              [
+                "Dino",
+                "Deisy"
+              ],
+              [
+                "Dion",
+                "Chiara"
+              ],
+              [
+                "Enes",
+                "Selina"
+              ],
+              [
+                "Josh",
+                "Ina"
+              ],
+              [
+                "Joshua",
+                "Joanna"
+              ],
+              [
+                "Kaan",
+                "Sophia"
+              ],
+              [
+                "Levin",
+                "Camelia"
+              ],
+              [
+                "Sinan",
+                "Nasti"
+              ],
+              [
+                "Tano",
+                "Tori"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 6,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Tano",
+              "Tori"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "matching_night",
+            "lights": 5,
+            "pairs": [
+              [
+                "Danish",
+                "Nadja"
+              ],
+              [
+                "Dino",
+                "Deisy"
+              ],
+              [
+                "Dion",
+                "Anna"
+              ],
+              [
+                "Enes",
+                "Selina"
+              ],
+              [
+                "Josh",
+                "Nasti"
+              ],
+              [
+                "Joshua",
+                "Ina"
+              ],
+              [
+                "Kaan",
+                "Sophia"
+              ],
+              [
+                "Levin",
+                "Chiara"
+              ],
+              [
+                "Sinan",
+                "Camelia"
+              ],
+              [
+                "Tano",
+                "Tori"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 7,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Kaan",
+              "Sophia"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 6,
+            "pairs": [
+              [
+                "Danish",
+                "Nadja"
+              ],
+              [
+                "Dino",
+                "Deisy"
+              ],
+              [
+                "Dion",
+                "Tori"
+              ],
+              [
+                "Enes",
+                "Sophia"
+              ],
+              [
+                "Josh",
+                "Camelia"
+              ],
+              [
+                "Joshua",
+                "Joanna"
+              ],
+              [
+                "Kaan",
+                "Selina"
+              ],
+              [
+                "Levin",
+                "Chiara"
+              ],
+              [
+                "Sinan",
+                "Nasti"
+              ],
+              [
+                "Tano",
+                "Anna"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 8,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Joshua",
+              "Joanna"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 5,
+            "pairs": [
+              [
+                "Danish",
+                "Nadja"
+              ],
+              [
+                "Dino",
+                "Deisy"
+              ],
+              [
+                "Dion",
+                "Chiara"
+              ],
+              [
+                "Enes",
+                "Sophia"
+              ],
+              [
+                "Josh",
+                "Camelia"
+              ],
+              [
+                "Joshua",
+                "Anna"
+              ],
+              [
+                "Kaan",
+                "Selina"
+              ],
+              [
+                "Levin",
+                "Ina"
+              ],
+              [
+                "Sinan",
+                "Nasti"
+              ],
+              [
+                "Tano",
+                "Joanna"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 9,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Sinan",
+              "Nasti"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 7,
+            "pairs": [
+              [
+                "Danish",
+                "Nadja"
+              ],
+              [
+                "Dino",
+                "Deisy"
+              ],
+              [
+                "Dion",
+                "Sophia"
+              ],
+              [
+                "Enes",
+                "Ina"
+              ],
+              [
+                "Josh",
+                "Camelia"
+              ],
+              [
+                "Joshua",
+                "Tori"
+              ],
+              [
+                "Kaan",
+                "Anna"
+              ],
+              [
+                "Levin",
+                "Chiara"
+              ],
+              [
+                "Sinan",
+                "Nasti"
+              ],
+              [
+                "Tano",
+                "Joanna"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 10,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Josh",
+              "Camelia"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 10,
+            "pairs": [
+              [
+                "Danish",
+                "Nadja"
+              ],
+              [
+                "Dino",
+                "Deisy"
+              ],
+              [
+                "Dion",
+                "Tori"
+              ],
+              [
+                "Enes",
+                "Selina"
+              ],
+              [
+                "Josh",
+                "Camelia"
+              ],
+              [
+                "Joshua",
+                "Ina"
+              ],
+              [
+                "Kaan",
+                "Anna"
+              ],
+              [
+                "Levin",
+                "Chiara"
+              ],
+              [
+                "Sinan",
+                "Nasti"
+              ],
+              [
+                "Tano",
+                "Joanna"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "target_lights": 10,
+    "status": "completed",
+    "outcome": "won",
+    "competitive_end_week": 10
+  },
+  "s7": {
+    "schema_version": 2,
+    "initial_active": "all",
+    "groups": {
+      "a": [
+        "Chris",
+        "Ema",
+        "Evi",
+        "Jeronymo",
+        "Jerry",
+        "Julian M.",
+        "Julian S.",
+        "Luke",
+        "Meji",
+        "Noel"
+      ],
+      "b": [
+        "Adrianna",
+        "Alicia",
+        "Aurora",
+        "Elena",
+        "Ella",
+        "Laura",
+        "Linda",
+        "Marla",
+        "Michelle",
+        "Tiziana",
+        "Tonia"
+      ]
+    },
+    "matrix": {
+      "rows": "a",
+      "bits": "b"
+    },
+    "initial_match_model": {
+      "multi_matches": [
+        {
+          "group": "bits",
+          "size": 2,
+          "known_members": []
+        }
+      ]
+    },
+    "style": {
+      "background": "insta_styles/image_backgrounds/ayto_s7.png",
+      "face_layer": "insta_styles/image_face_layers/ayto_s7.png"
+    },
+    "weeks": [
+      {
+        "number": 1,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Evi",
+              "Tiziana"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Chris",
+                "Linda"
+              ],
+              [
+                "Ema",
+                "Michelle"
+              ],
+              [
+                "Evi",
+                "Laura"
+              ],
+              [
+                "Jeronymo",
+                "Tiziana"
+              ],
+              [
+                "Jerry",
+                "Elena"
+              ],
+              [
+                "Julian M.",
+                "Adrianna"
+              ],
+              [
+                "Julian S.",
+                "Aurora"
+              ],
+              [
+                "Luke",
+                "Marla"
+              ],
+              [
+                "Meji",
+                "Ella"
+              ],
+              [
+                "Noel",
+                "Tonia"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Evi",
+              "Laura"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Chris",
+                "Tonia"
+              ],
+              [
+                "Ema",
+                "Ella"
+              ],
+              [
+                "Evi",
+                "Laura"
+              ],
+              [
+                "Jeronymo",
+                "Tiziana"
+              ],
+              [
+                "Jerry",
+                "Michelle"
+              ],
+              [
+                "Julian M.",
+                "Alicia"
+              ],
+              [
+                "Julian S.",
+                "Adrianna"
+              ],
+              [
+                "Luke",
+                "Marla"
+              ],
+              [
+                "Meji",
+                "Elena"
+              ],
+              [
+                "Noel",
+                "Linda"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Julian S.",
+              "Linda"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 2,
+            "pairs": [
+              [
+                "Chris",
+                "Linda"
+              ],
+              [
+                "Ema",
+                "Michelle"
+              ],
+              [
+                "Evi",
+                "Laura"
+              ],
+              [
+                "Jeronymo",
+                "Tiziana"
+              ],
+              [
+                "Jerry",
+                "Aurora"
+              ],
+              [
+                "Julian M.",
+                "Adrianna"
+              ],
+              [
+                "Julian S.",
+                "Alicia"
+              ],
+              [
+                "Luke",
+                "Marla"
+              ],
+              [
+                "Meji",
+                "Elena"
+              ],
+              [
+                "Noel",
+                "Tonia"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 4,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Julian M.",
+              "Marla"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "result": "sold",
+            "title": "Matching Night verkauft",
+            "pairs": [
+              [
+                "Julian M.",
+                "Marla"
+              ],
+              [
+                "Chris",
+                "Aurora"
+              ],
+              [
+                "Luke",
+                "Tonia"
+              ],
+              [
+                "Meji",
+                "Laura"
+              ],
+              [
+                "Jerry",
+                "Elena"
+              ],
+              [
+                "Evi",
+                "Ella"
+              ],
+              [
+                "Julian S.",
+                "Alicia"
+              ],
+              [
+                "Ema",
+                "Michelle"
+              ],
+              [
+                "Jeronymo",
+                "Linda"
+              ],
+              [
+                "Noel",
+                "Adrianna"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 5,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Chris",
+              "Aurora"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 5,
+            "pairs": [
+              [
+                "Chris",
+                "Linda"
+              ],
+              [
+                "Ema",
+                "Michelle"
+              ],
+              [
+                "Evi",
+                "Aurora"
+              ],
+              [
+                "Jeronymo",
+                "Tiziana"
+              ],
+              [
+                "Jerry",
+                "Elena"
+              ],
+              [
+                "Julian M.",
+                "Marla"
+              ],
+              [
+                "Julian S.",
+                "Adrianna"
+              ],
+              [
+                "Luke",
+                "Laura"
+              ],
+              [
+                "Meji",
+                "Ella"
+              ],
+              [
+                "Noel",
+                "Tonia"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 6,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Jerry",
+              "Elena"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "cast_change",
+            "title": "Ciao Alicia",
+            "remove": [
+              "Alicia"
+            ],
+            "multi_match_members": [
+              "Alicia"
+            ]
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Chris",
+                "Ella"
+              ],
+              [
+                "Ema",
+                "Michelle"
+              ],
+              [
+                "Evi",
+                "Linda"
+              ],
+              [
+                "Jeronymo",
+                "Laura"
+              ],
+              [
+                "Jerry",
+                "Elena"
+              ],
+              [
+                "Julian M.",
+                "Marla"
+              ],
+              [
+                "Julian S.",
+                "Tiziana"
+              ],
+              [
+                "Luke",
+                "Adrianna"
+              ],
+              [
+                "Meji",
+                "Aurora"
+              ],
+              [
+                "Noel",
+                "Tonia"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 7,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Noel",
+              "Tonia"
+            ],
+            "result": "yes",
+            "complete_pair": false
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Chris",
+                "Linda"
+              ],
+              [
+                "Ema",
+                "Michelle"
+              ],
+              [
+                "Evi",
+                "Aurora"
+              ],
+              [
+                "Jeronymo",
+                "Tiziana"
+              ],
+              [
+                "Jerry",
+                "Laura"
+              ],
+              [
+                "Julian M.",
+                "Marla"
+              ],
+              [
+                "Julian S.",
+                "Adrianna"
+              ],
+              [
+                "Luke",
+                "Elena"
+              ],
+              [
+                "Meji",
+                "Ella"
+              ],
+              [
+                "Noel",
+                "Tonia"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 8,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Ema",
+              "Michelle"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 5,
+            "pairs": [
+              [
+                "Chris",
+                "Linda"
+              ],
+              [
+                "Ema",
+                "Aurora"
+              ],
+              [
+                "Evi",
+                "Michelle"
+              ],
+              [
+                "Jeronymo",
+                "Tiziana"
+              ],
+              [
+                "Jerry",
+                "Elena"
+              ],
+              [
+                "Julian M.",
+                "Marla"
+              ],
+              [
+                "Julian S.",
+                "Adrianna"
+              ],
+              [
+                "Luke",
+                "Laura"
+              ],
+              [
+                "Meji",
+                "Ella"
+              ],
+              [
+                "Noel",
+                "Tonia"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 9,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Meji",
+              "Ella"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Chris",
+                "Tiziana"
+              ],
+              [
+                "Ema",
+                "Linda"
+              ],
+              [
+                "Evi",
+                "Aurora"
+              ],
+              [
+                "Jeronymo",
+                "Michelle"
+              ],
+              [
+                "Jerry",
+                "Elena"
+              ],
+              [
+                "Julian M.",
+                "Marla"
+              ],
+              [
+                "Julian S.",
+                "Laura"
+              ],
+              [
+                "Luke",
+                "Adrianna"
+              ],
+              [
+                "Meji",
+                "Ella"
+              ],
+              [
+                "Noel",
+                "Tonia"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 10,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Jeronymo",
+              "Tiziana"
+            ],
+            "result": "yes",
+            "complete_pair": false
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "pairs": [
+              [
+                "Julian M.",
+                "Marla"
+              ],
+              [
+                "Noel",
+                "Tonia"
+              ],
+              [
+                "Jeronymo",
+                "Tiziana"
+              ],
+              [
+                "Evi",
+                "Adrianna"
+              ],
+              [
+                "Luke",
+                "Linda"
+              ],
+              [
+                "Jerry",
+                "Aurora"
+              ],
+              [
+                "Julian S.",
+                "Michelle"
+              ],
+              [
+                "Chris",
+                "Laura"
+              ],
+              [
+                "Meji",
+                "Ella"
+              ],
+              [
+                "Ema",
+                "Elena"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 11,
+        "events": [
+          {
+            "type": "solution",
+            "title": "Auflösung / Reunion",
+            "pairs": [
+              [
+                "Julian M.",
+                "Marla"
+              ],
+              [
+                "Jeronymo",
+                "Tiziana"
+              ],
+              [
+                "Luke",
+                "Linda"
+              ],
+              [
+                "Noel",
+                "Alicia"
+              ],
+              [
+                "Noel",
+                "Tonia"
+              ],
+              [
+                "Evi",
+                "Ella"
+              ],
+              [
+                "Julian S.",
+                "Adrianna"
+              ],
+              [
+                "Chris",
+                "Michelle"
+              ],
+              [
+                "Ema",
+                "Laura"
+              ],
+              [
+                "Jerry",
+                "Elena"
+              ],
+              [
+                "Meji",
+                "Aurora"
+              ]
+            ]
+          }
+        ]
+      }
+    ],
+    "target_lights": 10,
+    "status": "completed",
+    "outcome": "lost",
+    "competitive_end_week": 10
+  },
+  "s6vip": {
+    "schema_version": 2,
+    "initial_active": "all",
+    "groups": {
+      "a": [
+        "Bennett",
+        "Brian",
+        "Cansin",
+        "Daymian",
+        "Fabi",
+        "Germain",
+        "Johannes",
+        "Marwin",
+        "Raul",
+        "Robin"
+      ],
+      "b": [
+        "Alexandra",
+        "Christin",
+        "Emma",
+        "Francesca",
+        "Janice",
+        "Jenny",
+        "Julia",
+        "Marta",
+        "Michelle",
+        "Zoe"
+      ]
+    },
+    "matrix": {
+      "rows": "a",
+      "bits": "b"
+    },
+    "initial_match_model": {
+      "multi_matches": []
+    },
+    "style": {
+      "background": "insta_styles/image_backgrounds/ayto_s6vip.png",
+      "face_layer": "insta_styles/image_face_layers/ayto_s6vip_initial.png"
+    },
+    "weeks": [
+      {
+        "number": 1,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Marwin",
+              "Christin"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "box",
+            "pair": [
+              "Robin",
+              "Marta"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "cast_change",
+            "title": "Nachkommerin Joena",
+            "add": [
+              {
+                "group": "b",
+                "person": "Joena"
+              }
+            ],
+            "face_layer": "insta_styles/image_face_layers/ayto_s6vip.png",
+            "match_update": {
+              "mode": "rebuild",
+              "multi_matches": [
+                {
+                  "group": "bits",
+                  "size": 2,
+                  "known_members": []
+                }
+              ]
+            }
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Bennett",
+                "Francesca"
+              ],
+              [
+                "Brian",
+                "Christin"
+              ],
+              [
+                "Cansin",
+                "Zoe"
+              ],
+              [
+                "Daymian",
+                "Julia"
+              ],
+              [
+                "Fabi",
+                "Janice"
+              ],
+              [
+                "Germain",
+                "Emma"
+              ],
+              [
+                "Johannes",
+                "Marta"
+              ],
+              [
+                "Marwin",
+                "Michelle"
+              ],
+              [
+                "Raul",
+                "Alexandra"
+              ],
+              [
+                "Robin",
+                "Jenny"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 2,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Daymian",
+              "Julia"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Bennett",
+                "Joena"
+              ],
+              [
+                "Brian",
+                "Alexandra"
+              ],
+              [
+                "Cansin",
+                "Zoe"
+              ],
+              [
+                "Daymian",
+                "Jenny"
+              ],
+              [
+                "Fabi",
+                "Julia"
+              ],
+              [
+                "Germain",
+                "Emma"
+              ],
+              [
+                "Johannes",
+                "Janice"
+              ],
+              [
+                "Marwin",
+                "Michelle"
+              ],
+              [
+                "Raul",
+                "Marta"
+              ],
+              [
+                "Robin",
+                "Christin"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 3,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Johannes",
+              "Marta"
+            ],
+            "result": "yes",
+            "revealed_group": {
+              "partner": "Johannes",
+              "members": [
+                "Marta",
+                "Janice"
+              ],
+              "complete": true
+            }
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "pairs": [
+              [
+                "Bennett",
+                "Julia"
+              ],
+              [
+                "Brian",
+                "Francesca"
+              ],
+              [
+                "Cansin",
+                "Jenny"
+              ],
+              [
+                "Daymian",
+                "Zoe"
+              ],
+              [
+                "Fabi",
+                "Emma"
+              ],
+              [
+                "Germain",
+                "Alexandra"
+              ],
+              [
+                "Johannes",
+                "Marta"
+              ],
+              [
+                "Marwin",
+                "Joena"
+              ],
+              [
+                "Raul",
+                "Michelle"
+              ],
+              [
+                "Robin",
+                "Christin"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 4,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Bennett",
+              "Julia"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 4,
+            "automatic_lights": 1,
+            "pairs": [
+              [
+                "Fabi",
+                "Zoe"
+              ],
+              [
+                "Cansin",
+                "Julia"
+              ],
+              [
+                "Bennett",
+                "Christin"
+              ],
+              [
+                "Raul",
+                "Francesca"
+              ],
+              [
+                "Robin",
+                "Joena"
+              ],
+              [
+                "Daymian",
+                "Jenny"
+              ],
+              [
+                "Marwin",
+                "Emma"
+              ],
+              [
+                "Germain",
+                "Michelle"
+              ],
+              [
+                "Brian",
+                "Alexandra"
+              ]
+            ]
+          },
+          {
+            "type": "cast_change",
+            "title": "Nachkommer Laurenz",
+            "add": [
+              {
+                "group": "a",
+                "person": "Laurenz"
+              }
+            ],
+            "remove": [
+              "Johannes",
+              "Marta",
+              "Janice"
+            ],
+            "face_layer": "insta_styles/image_face_layers/ayto_s6vip_laurenz.png",
+            "match_update": {
+              "mode": "extend",
+              "new_multi_match": {
+                "group": "rows",
+                "size": 2,
+                "known_members": [
+                  "Laurenz"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "target_lights": 10,
+    "status": "ongoing",
+    "outcome": null,
+    "competitive_end_week": null
+  }
+}

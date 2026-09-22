@@ -106,7 +106,7 @@ def check_solution_possible(sols, solver: Solver, end):
         p = solver.solution_possible(s, end, True)
         if not p["res"]:
             reasons.append(p["reason"])
-            print(s, p["reason"], p.get("detail", ""))
+            # print(s, p["reason"], p.get("detail", ""))
     return Counter(reasons)
 
 
@@ -122,20 +122,25 @@ def findpsol(sol, solver: Solver, end):
 if __name__ == "__main__":
     sn = "vip2025"
 
-    import time
+    tm = frozenset((str(i), str(i+100)) for i in range(10))
+    tm_t = tuple(tm)
+
+    import cProfile
+    profiler = cProfile.Profile()
+    profiler.enable()
 
     season: Season = get_season(sn)
     sol: Solution = season.solution  # type: ignore
     solver: Solver = get_solver(sn)  # type: ignore
-    s = time.time()
-    end = 3
-    sols = solver.solve(end, True)
-    e = time.time()
-    print(e - s)
-    print(solver.times)
-
-
-    # comparetoao(solver, sols, end)
+    end = 0
+    sols = solver.solve(end, True, validate=False)
+    profiler.disable()
+    
+    print(len(sols))
+    import pstats
+    p = pstats.Stats(profiler)
+    p.sort_stats('cumulative').print_stats(10)
+    # print(check_solution_possible(sols, solver, end))
     exit()
 
     pos_matches = {
@@ -153,6 +158,7 @@ if __name__ == "__main__":
             (('Nelly', 'Calvin O.'), ('Beverly', 'Nico'), ('Viki', 'Kevin'), ('Joanna', 'Rob'), ('Elli', 'Xander'), ('Henna', 'Oliver'), ('Hati', 'Sidar'), ('Sandra', 'Lennert'))
         )
     )
+
 
     print(sol.difference(psol))
     # print(sol.dict_rep())

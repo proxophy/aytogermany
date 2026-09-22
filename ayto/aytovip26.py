@@ -6,31 +6,12 @@ import itertools
 
 class VIP2026Solver(Solver):
     sm: str = "Laurenz"
+    double_match_for_right: bool = True
 
-    def solution_correct_format(self, sol: Solution) -> dict:
-        if len(sol) > self.season.num_matches:
-            return {"res": False, "reason": "too_many_matches"}
+    def check_multiple_match_logic(self, sol: Solution, end: int) -> dict:
 
-        ls, rs = zip(*sol)
-        if any(l not in self.season.lefts for l in ls):
-            return {
-                "res": False,
-                "reason": "wrongly_written_names_in_lefts",
-                "detail": [c for c in ls if c not in self.season.lefts],
-            }
-        if any(r not in self.season.rights for r in rs):
-            return {
-                "res": False,
-                "reason": "wrongly_written_names_in_rights",
-                "detail": [c for c in rs if c not in self.season.rights],
-            }
-
-        return {"res": True, "reason": ""}
-
-    def solution_possible(self, sol: Solution, end: int, includenight: bool) -> dict:
-
-        if not super().solution_possible(sol, end, includenight)["res"]:
-            return super().solution_possible(sol, end, includenight)
+        if not super().check_multiple_match_logic(sol, end)["res"]:
+            return super().check_multiple_match_logic(sol, end)
 
         pdict = {r: [] for r in self.season.rights}
         for l, r in sol:
@@ -50,15 +31,14 @@ class VIP2026Solver(Solver):
         return {"res": True, "reason": ""}
 
     def generate_complete_solutions(
-        self, sol: Solution, end: int, includenight: bool
+        self, sol: Solution, end: int, include_night: bool
     ) -> list[Solution]:
-        if not self.solution_possible(sol, end, includenight)["res"]:
+        if not self.solution_possible(sol, end, include_night)["res"]:
             return []
-
 
         if (
             len(sol) == self.season.num_matches
-            and self.solution_possible(sol, end, includenight)["res"]
+            and self.solution_possible(sol, end, include_night)["res"]
         ):
             return [sol]
 
@@ -66,7 +46,8 @@ class VIP2026Solver(Solver):
             return Solution(p for p in zip(clefts, ordering))
 
         glefts, _, mmnum = get_candidates(sol)
-        pos_matches = self.possible_matches_for_solution(sol, end, includenight)
+
+        pos_matches = self.possible_matches_for_solution(sol, end, include_night)
         pos_matches.pop(self.sm, None)  # type: ignore
         if self.sm in glefts:
             # remove pair with self.sm if necessary
@@ -86,26 +67,24 @@ class VIP2026Solver(Solver):
             for ps in itertools.product(*pos_matches.values())
             if len(set(ps)) == len(ps)
         ]
-        other_matches_list = list(
+        partial_solutions = list(
             map(lambda p: zip_product(pos_matches.keys(), p), products)
         )
 
         if mmnum > 0:
-            isols = self.merge_mm_in_solution(sol, other_matches_list, end)
+            isols = self.merge_mm_in_solution(sol, partial_solutions)
         else:
             isols = self.merge_mm_not_in_solution(
-                sol, other_matches_list, end, includenight
+                sol, partial_solutions, end, include_night
             )
+
         # add self.sm as double_match
+        sitting_no_matches = self.season.get_sitting_no_matches(sol, end, include_night)
         solutions = [
             s | {(self.sm, r)}
             for r in smmatches
             for s in isols
-            if self.solution_possible(s | {(self.sm, r)}, end, includenight)["res"]
-        ] # todo: fix problem with too many mathes in night
-        unique_sols = set()
+            if (self.sm, r) not in sitting_no_matches
+        ] 
 
-        for sol in solutions:
-            unique_sols.add(sol)
-
-        return list(unique_sols)
+        return solutions

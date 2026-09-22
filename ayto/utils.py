@@ -145,29 +145,6 @@ def sols_as_df(sols) -> pd.DataFrame:
     return df
 
 
-def product_without_reps(arr: list[list]):
-    used = set()
-    current = []
-
-    def rec(i):
-        if i == len(arr):
-            yield current.copy()
-            return
-
-        for x in arr[i]:
-            if x in used:
-                continue
-
-            used.add(x)
-            current.append(x)
-
-            yield from rec(i + 1)
-
-            current.pop()
-            used.remove(x)
-
-    yield from rec(0)
-
 
 def get_season(sn: str) -> Season:
     lefts, rights, nights, matchboxes, mm, solution = read_data_from_excel(sn)
@@ -183,7 +160,7 @@ def get_season(sn: str) -> Season:
             matchboxes,
             solution=solution,
             mm=mm,
-            dmtuple=("Peter", "Max"),
+            double_match_pair=("Peter", "Max"),
         )
     elif sn == "vip2025":
         season = Season(
@@ -194,7 +171,6 @@ def get_season(sn: str) -> Season:
             matchboxes,
             solution=solution,
             mm=mm,
-            two_dms=True,
         )
     elif sn == "vip2026":
         season: Season = Season(

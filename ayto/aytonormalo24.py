@@ -9,7 +9,7 @@ class Normalo2024Solver(Solver):
 
     @functools.cache
     def no_match(self, l: str, r: str, end: int) -> bool:
-        nomatch = super().no_match(l, r, end)
+        """Return whether a pair is known not to be a match up to `end`"""
 
         kpm = self.season.get_pms(end)
         hpm = [e for p in kpm for e in p]
@@ -20,157 +20,63 @@ class Normalo2024Solver(Solver):
             mmls = [p for p in hpm if Counter(hpm)[p] > 1]
             # Normalo 24
             if len(mmls) < 3 and l in mmls and r not in hpm:
-                # Removed for simplicity
                 # we only know two out of three of the multiple matches in Normalo 2024 at episode 10
                 return False
             return True
 
-        return nomatch
-
-    def solution_possible(self, sol: Solution, end: int, includenight: bool) -> dict:
-        pdict = {l: [] for l in self.season.lefts}
-        sm_in_partialsol = False
-        for l, r in sol:
-            pdict[l].append(r)
-            if r == self.season.mm:
-                sm_in_partialsol = True
-
-        # lefts with multiple matches
-        multls = [l for l in self.season.lefts if len(pdict[l]) > 1]
-        if len(multls) > 1:
-            return {"res": False, "reason": f"more_than_one_multiple_match"}
-        elif len(multls) == 1:
-            multl = multls[0]
-            multr = pdict[multl]
-            # sm has to be one of multiple matches
-            if sm_in_partialsol and (multl, self.season.mm) not in sol:  # type: ignore
-                return {
-                    "res": False,
-                    "reason": "multiple_match_not_possible_without_Mela",
-                }
-            elif len(multr) == 3 and self.season.mm not in multr:
-                return {"res": False, "reason": "Mela_not_in_tripple_match"}
-        return super().solution_possible(sol, end, includenight)
-
-    def possible_matches_for_solution(
-        self, sol: Solution, end: int, includenight: bool
-    ) -> dict[str, list[str]]:
-        possible_matches = super().possible_matches_for_solution(sol, end, includenight)
-        # Filter out sm
-        possible_matches = {
-            l: list(filter(lambda r: r != self.season.mm, possible_matches[l]))
-            for l in possible_matches
-        }
-        return possible_matches
-
-    def merge_mm_in_solution(
-        self, sol: Solution, other_matches_list: list[Solution], end: int
-    ) -> list[Solution]:
-        if len(sol) > 0:
-            g_lefts, g_rights = zip(*sol)
-            g_lefts, g_rights = list(g_lefts), list(g_rights)
-        else:
-            g_lefts, g_rights = {}, {}
-
-        not_sm_in_asm = self.season.mm is not None and self.season.mm not in g_rights
-
-        if len(g_lefts) - len(set(g_lefts)) == 2:
-            if self.season.mm not in g_rights:
-                return []
-            return [sol.union(othermatches) for othermatches in other_matches_list]
-
-        elif len(g_lefts) - len(set(g_lefts)) == 1:
-            counter = Counter(g_lefts)
-            smleft = [l for l in self.season.lefts if counter[l] == 2][0]
-            solutions = []
-            for othermatches in other_matches_list:
-                elevenmatches = sol.union(othermatches)
-                _, crights = zip(*elevenmatches)
-                missingright = [r for r in self.season.rights if r not in crights][0]
-                # if we still have to add Mela: skip when somebody else is missing
-                if not_sm_in_asm and missingright != self.season.mm:
-                    continue
-                elif self.no_match(smleft, missingright, end):
-                    continue
-                solutions.append(elevenmatches | {(smleft, missingright)})
-
-            return solutions
-        return []
+        return super().no_match(l, r, end)
 
     def merge_mm_not_in_solution(
         self,
         sol: Solution,
-        other_matches_list: list[Solution],
+        partial_solutions: list[Solution],
         end: int,
-        includenight: bool,
-    ):
-        solutions = []
-        sitting_nomatches: set[Pair] = set()
-        # Consider sitting matches as no matches if not in Solution and we have the right
-        # amount of lights
-        nights = self.season.get_nights(end)
-        if not includenight:
-            nights = nights[:-1]
-        for night in nights:
-            pl: int = len(sol & night.pairs)
-            if pl > night.lights:
-                return []
-            elif pl < night.lights:
-                continue
-            for p in night.pairs - sol:
-                sitting_nomatches.add(p)
-        addmatches_dict = {
+        include_night: bool,
+    ) -> list[Solution]:
+        # for documentation refer to Solver.merge_mm_not_in_solution
+        
+        sitting_nomatches = self.season.get_sitting_no_matches(sol, end, include_night)
+
+        addable_lefts = {
             r: [
-                (l, r)
+                l
                 for l in self.season.lefts
                 if not (self.no_match(l, r, end) or (l, r) in sitting_nomatches)
             ]
             for r in self.season.rights
         }
 
-        for othermatches in other_matches_list:
-            tenmatches = sol.union(othermatches)
+        solutions: list[Solution] = []
 
-            clefts, crights = zip(*tenmatches)
-            missingright = [r for r in self.season.rights if r not in crights][0]
+        for partial_solution in partial_solutions:
+            base_matches = sol.union(partial_solution)
 
-            missingrights = [r for r in self.season.rights if r not in crights]
-            if len(missingrights) == 2:
-                mr1, mr2 = missingrights
-                if self.season.mm in missingrights:
-                    # no multiple seatings, Mela not seated
+            sitting_lefts, sitting_rights = zip(*base_matches)
+            mrs = [r for r in self.season.rights if r not in sitting_rights]
+
+            if len(mrs) == 2:
+                mr1, mr2 = mrs
+                if self.season.mm in mrs:
+                    # no multiple seatings yet , Mela not seated
                     for l in self.season.lefts:
-                        if (l, mr1) in addmatches_dict[mr1] and (
-                            l,
-                            mr2,
-                        ) in addmatches_dict[mr2]:
-                            solutions.append(tenmatches | {(l, mr1), (l, mr2)})
+                        if l in addable_lefts[mr1] and l in addable_lefts[mr2]:
+                            solutions.append(base_matches | {(l, mr1), (l, mr2)})
                 else:
                     # no mutiple seatings, Mela seated
-                    dmleft = [l for (l, r) in tenmatches if r == self.season.mm][0]
-                    if (dmleft, mr1) in addmatches_dict[mr1] and (
-                        dmleft,
-                        mr2,
-                    ) in addmatches_dict[mr2]:
-                        solutions.append(tenmatches | {(dmleft, mr1), (dmleft, mr2)})
-            elif len(missingrights) == 1:
-                counter = Counter(clefts)
-                smleft = [l for l in self.season.lefts if counter[l] == 2][0]
-                solutions = []
-                not_sm_in_asm = (
-                    self.season.mm is not None and self.season.mm not in crights
-                )
-                for othermatches in other_matches_list:
-                    elevenmatches = sol.union(othermatches)
-                    _, crights = zip(*elevenmatches)
-                    missingright = [r for r in self.season.rights if r not in crights][
+                    dmleft = [l for (l, r) in base_matches if r == self.season.mm][
                         0
-                    ]
-                    # if we still have to add Mela: skip when somebody else is missing
-                    if not_sm_in_asm and missingright != self.season.mm:
-                        continue
-                    elif self.no_match(smleft, missingright, end):
-                        continue
-                    solutions.append(elevenmatches | {(smleft, missingright)})
+                    ]  # find partner of Mela
+                    if dmleft in addable_lefts[mr1] and dmleft in addable_lefts[mr2]:
+                        solutions.append(base_matches | {(dmleft, mr1), (dmleft, mr2)})
+
+            elif len(mrs) == 1:
+                counter = Counter(sitting_lefts)
+                # left that already has two matches
+                smleft = [l for l in self.season.lefts if counter[l] == 2][0]
+                # missing right
+                mr = [r for r in self.season.rights if r not in sitting_rights][0]
+                if self.no_match(smleft, mr, end):
+                    continue
+                solutions.append(base_matches | {(smleft, mr)})
 
         return solutions

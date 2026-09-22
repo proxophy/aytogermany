@@ -5,6 +5,43 @@ Pair = tuple[str, str]
 Solution = frozenset[Pair]
 
 
+def double_match_for_right(sol: Solution):
+    rs = []
+    for _, r in sol:
+        if r in rs:
+            return True
+        rs.append(r)
+    return False
+
+
+def get_candidates(sol: Solution):
+    if len(sol) > 0:
+        g_lefts, g_rights = zip(*sol)
+        g_lefts, g_rights = list(g_lefts), list(g_rights)
+    else:
+        g_lefts, g_rights = set(), set()
+    return set(g_lefts), set(g_rights), len(g_lefts) - len(set(g_lefts))
+
+
+def mm_left(sol: Solution) -> str | None:
+    ls = set()
+    for l, _ in sol:
+        if l in ls:
+            return l
+        ls.add(l)
+    return None
+
+
+def dict_rep(sol: Solution) -> dict[str, list[str]]:
+    d = {}
+    for l, r in sol:
+        if l in d:
+            d[l].append(r)
+        else:
+            d[l] = [r]
+    return d
+
+
 @dataclass(frozen=True)
 class Night:
     pairs: set[Pair]
@@ -65,9 +102,8 @@ class Season:
     matchboxes: Matchboxes
     solution: Solution | None = None
     mm: str | None = None
-    dmtuple: tuple[str, str] | None = None
-    dmtupleknown: int = 7
-    two_dms: bool = False
+    double_match_pair: tuple[str, str] | None = None
+    double_match_pair_known: int = 7
 
     def __post_init__(self):
         if not (0 <= len(self.nights) <= 10 and 0 <= len(self.matchboxes)):
@@ -105,3 +141,18 @@ class Season:
     def get_pms(self, end: int = 10) -> list[Pair]:
         end = max(0, min(end, 10))
         return self.matchboxes.get_perfect_matches(end)
+
+
+    def get_sitting_no_matches(self, sol: Solution,  end: int = 10, include_night: bool = True) -> set[Pair]:
+        nights = self.get_nights(end)
+        if not include_night:
+            nights = nights[:-1]
+        sitting_nomatches = set()
+
+        for night in nights:
+            pl: int = len(sol & night.pairs)
+            if pl < night.lights:
+                continue
+            for p in night.pairs - sol:
+                sitting_nomatches.add(p)
+        return sitting_nomatches
