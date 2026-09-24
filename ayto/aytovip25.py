@@ -5,8 +5,9 @@ from .models import *
 
 
 class VIP2025Solver(Solver):
+    two_dms: bool = True
 
-    def check_multiple_match_logic(self, sol: Solution, end: int) -> dict:
+    def check_multiple_match_logic(self, sol: Solution | set[Pair], end: int) -> dict:
         # VIP2025 allows two double matches, one of those must include Jimi
 
         seated_lefts, seated_right = zip(*sol)
@@ -18,8 +19,8 @@ class VIP2025Solver(Solver):
         mult_rights = [
             e for l in mult_lefts for e in sol_dict[l]
         ]  # rights part of multi match
-        mm = self.season.mm if end >= self.season.mm_known_after_week else None
-
+        mm = self.season.get_mm(end)
+        
         # if Jimi is seated and we have two double matches, he must be part of one of them
         if mm in seated_right and len(mult_lefts) == 2 and mm not in mult_rights:
             return {"res": False, "reason": "Jimi_not_in_double_match"}
@@ -27,7 +28,7 @@ class VIP2025Solver(Solver):
         r_counter = Counter(seated_lefts)
         # no tripple matches
         if any([v > 2 for v in r_counter.values()]):
-            return {"res": False, "reason": f"no_tripple_matches_allowed"}
+            return {"res": False, "reason": f"triple_match_not_allowed"}
         return {"res": True, "reason": ""}
 
     def merge_mm_not_in_solution(

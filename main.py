@@ -1,9 +1,9 @@
 import pandas as pd
 from collections import Counter
 
-from ayto import Solver
-from ayto.analysis import plot_probs, analyze_solutions
-from ayto.models import Season, Solution, Pair
+from ayto import Solver, allseasons
+from ayto.analysis import plot_probs, analyze_solutions, matching_night_probs
+from ayto.models import Season, Solution, Pair, get_candidates
 from ayto.utils import get_season, get_solver
 from ayto.aytovip25 import VIP2025Solver
 
@@ -42,7 +42,7 @@ def comparetoao(solver, sols, end):
             reasons.append(spd["reason"])
         elif s not in sols:
             count2 += 1
-            # print(s)
+            print(s)
             # break
 
     print(
@@ -60,6 +60,7 @@ def comparetoao(solver, sols, end):
             # print(s)
             if not spd["res"]:
                 reasons.append(spd["reason"])
+                # print(spd)
                 count2 += 1
     print(Counter(reasons))
     print(f"sols not in solsao: {count}; {count2}")
@@ -119,72 +120,106 @@ def findpsol(sol, solver: Solver, end):
     return psol
 
 
+def toy_example():
+    from ayto.models import Matchboxes, Night
+
+    toy_nights = (
+        Night(
+            set(
+                (
+                    ("A", "1"),
+                    ("B", "3"),
+                    ("C", "4"),
+                    ("D", "5"),
+                    ("E", "2"),
+                )
+            ),
+            1,
+        ),
+        Night(
+            set(
+                (
+                    ("A", "5"),
+                    ("B", "2"),
+                    ("C", "3"),
+                    ("D", "4"),
+                    ("E", "1"),
+                )
+            ),
+            3,
+        ),
+        Night(
+            set(
+                (
+                    ("A", "5"),
+                    ("B", "2"),
+                    ("C", "3"),
+                    ("D", "4"),
+                    ("E", "6"),
+                )
+            ),
+            4,
+        ),
+    )
+    toy_matchboxes = Matchboxes((0,), ((("B", "3")),), (False,))
+    toy_lefts = ("A", "B", "C", "D", "E")
+    toy_rights = ("1", "2", "3", "4", "5", "6")
+    toy_season = Season(
+        "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm="6", num_matches=6
+    )
+    toy_seasonwo = Season(
+        "toy", toy_lefts, toy_rights, toy_nights, Matchboxes(), mm="6", num_matches=6
+    )
+    toy_solver = Solver(toy_season)
+
+    sol = frozenset({("E", "2"), ("E", "6"), ("A", "5"), ("D", "4"), ("C", "3")})
+    print(get_candidates(sol))
+    # solver.generate_complete_solutions(sol, 5, True)
+    sols = toy_solver.solve(5)
+    # sols_as_df(diff).sort_values(by= ["1", "2", "3", "4", "5", "6"]) [toy_rights].to_csv("solsdf.csv")
+
+
 if __name__ == "__main__":
     sn = "vip2025"
 
-    tm = frozenset((str(i), str(i+100)) for i in range(10))
-    tm_t = tuple(tm)
-
     import cProfile
+
     profiler = cProfile.Profile()
     profiler.enable()
 
     season: Season = get_season(sn)
     sol: Solution = season.solution  # type: ignore
     solver: Solver = get_solver(sn)  # type: ignore
-    end = 0
-    sols = solver.solve(end, True, validate=False)
-    profiler.disable()
-    
-    print(len(sols))
-    import pstats
-    p = pstats.Stats(profiler)
-    p.sort_stats('cumulative').print_stats(10)
+    end = 8
+    sols = solver.solve(end)
+    print(len(sols)) 
+
+    # comparetoao(solver, sols, end)
+    # analyze_solutions(sols)
     # print(check_solution_possible(sols, solver, end))
+    # plot_probs(sols)
+
+    sol = frozenset({('Henna', 'Leandro'), ('Sandra', 'Lennert'), ('Viki', 'Jimi'), ('Henna', 'Oliver'), ('Hati', 'Jonny'), ('Joanna', 'Nico'), ('Nelly', 'Calvin O.'), ('Ariel', 'Rob'), ('Viki', 'Kevin'), ('Beverly', 'Calvin S.'), ('Antonia', 'Sidar'), ('Elli', 'Xander')})
+    psol = frozenset({('Viki', 'Kevin'), ('Elli', 'Xander'), ('Hati', 'Jonny'), ('Henna', 'Oliver'), ('Beverly', 'Calvin S.'), ('Nelly', 'Calvin O.'), ('Sandra', 'Lennert'), ('Henna', 'Leandro')})
+    # for psol in solver.generate_partial_solutions(end, True):
+    #     if psol <= sol:
+    #         print(psol)
+
+    from ayto.utils import dict_rep, has_two_dms
+    print(dict_rep(psol), has_two_dms(psol), solver.two_dms)
+    # sols = solver.generate_complete_solutions(psol, end, True)
+    # print("sol ins sols", sol in psol)
+
+    profiler.disable()
+    import pstats
+
+    p = pstats.Stats(profiler)
+    # p.sort_stats("cumulative").print_stats(10)
+    # toy_example()
     exit()
 
-    pos_matches = {
-            "A": ["1", "2"],
-            "B": ["2", "3", "4"],
-            "C": ["3", "4"],
-        }
-    
-    lefts = ["A", "B", "C"]
-    rights = ["1", "2", "3", "4"]
-    from ayto.ayto import compute_matches
-
-    psol = Solution(
-        set(
-            (('Nelly', 'Calvin O.'), ('Beverly', 'Nico'), ('Viki', 'Kevin'), ('Joanna', 'Rob'), ('Elli', 'Xander'), ('Henna', 'Oliver'), ('Hati', 'Sidar'), ('Sandra', 'Lennert'))
-        )
-    )
-
-
-    print(sol.difference(psol))
-    # print(sol.dict_rep())
-    print(psol.issubset(sol))
-    
-
-    # sols = compute_matches(pos_matches, lefts, rights, None)
-    # print(len(sols), sols)
-
-    # psols = solver.generate_partial_solutions(end, True)
-    # print(len(psols))
-    # for p in psols:
-    #     if (p.issubset(sol)):
-    #         print(p)
-    # for psol in psols:
-    sols = solver.generate_complete_solutions(psol, end, True)
-    print("sol in sols", sol in sols)
-    
-    # sols2 = solver.generate_complete_solutions2(psol, end, True)
-    # print(len(sols), len(sols2))
-    # if len(sols) != len(sols2):
-    #     print(f"len(sols) != len(sols2) {len(sols)} {len(sols2)}")
-    # for s in sols:
-    #     if s not in sols2:
-    #         print("not the same", s)
-
-    exit()
-
-    
+    for sn in allseasons:
+        season = get_season(sn)
+        solver = get_solver(sn)
+        print(sn, season.get_black_out_nights())
+        # print(matching_night_probs(solver, 7))

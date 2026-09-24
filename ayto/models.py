@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 from typing import Sequence, Generator
+from collections import Counter
 
 Pair = tuple[str, str]
 Solution = frozenset[Pair]
 
 
-def double_match_for_right(sol: Solution):
+def double_match_for_right(sol: Solution | set[Pair]):
     rs = []
     for _, r in sol:
         if r in rs:
@@ -14,16 +15,17 @@ def double_match_for_right(sol: Solution):
     return False
 
 
-def get_candidates(sol: Solution):
+def get_candidates(sol: Solution | set[Pair]):
     if len(sol) > 0:
         g_lefts, g_rights = zip(*sol)
         g_lefts, g_rights = list(g_lefts), list(g_rights)
     else:
-        g_lefts, g_rights = set(), set()
-    return set(g_lefts), set(g_rights), len(g_lefts) - len(set(g_lefts))
+        return set(), set(), 0
+    d = dict_rep(sol)
+    return set(g_lefts), set(g_rights), max(map(len,d.values()))
 
 
-def mm_left(sol: Solution) -> str | None:
+def mm_left(sol: Solution | set[Pair]) -> str | None:
     ls = set()
     for l, _ in sol:
         if l in ls:
@@ -32,7 +34,13 @@ def mm_left(sol: Solution) -> str | None:
     return None
 
 
-def dict_rep(sol: Solution) -> dict[str, list[str]]:
+def has_two_dms(sol: Solution | set[Pair]) -> bool:
+    sol_dict = dict_rep(sol)
+    # lefts with multiple partners
+    mult_lefts = [l for l, rs in sol_dict.items() if len(rs) > 1]
+    return len(mult_lefts) == 2
+
+def dict_rep(sol: Solution | set[Pair]) -> dict[str, list[str]]:
     d = {}
     for l, r in sol:
         if l in d:
@@ -102,33 +110,29 @@ class Season:
     matchboxes: Matchboxes
     solution: Solution | None = None
     mm: str | None = None
+    num_matches: int = 11
     double_match_pair: tuple[str, str] | None = None
-    double_match_pair_known: int = 7
+    double_match_pair_known: int = 7  # after which episode mm is known
+    mm_known_after_week: int = 0 # after which episode mm is known
+    max_mm_size: int = 2 # max size of multiple match pair
+    mb_reveals_dm: bool = True # if one part of double match is revealed, the other one is revealed immediately after
+
 
     def __post_init__(self):
         if not (0 <= len(self.nights) <= 10 and 0 <= len(self.matchboxes)):
             raise ValueError(
                 f"Invalid number of nights or matchboxes {len(self.nights)} {len(self.matchboxes)}"
             )
-
-    @property
-    # TODO: give as parameter
-    def num_matches(self) -> int:
-        return max(len(self.lefts), len(self.rights)) + (
-            1 if self.name == "vip2026" else 0
-        )
+        if len(set(self.lefts)) != len(self.lefts) or len(set(self.rights)) != len(self.rights):
+            raise ValueError(f"Duplicate names in lefts or rights")
 
     @property
     def num_weeks(self) -> int:
         return len(self.nights)
 
-    @property
-    def mm_known_after_week(self) -> int:
-        return 5 if self.name == "normalo2026" else 0
-
-    @property
-    def max_multiple_match_size(self) -> int:
-        return 3 if self.name == "normalo2024" else 2
+    def get_mm(self, end: int = 10) -> str|None:
+        end = max(0, min(end, 10))
+        return self.mm if end >= self.mm_known_after_week else None
 
     def get_nights(self, end: int = 10) -> Sequence[Night]:
         end = max(0, min(end, 10))
@@ -156,3 +160,15 @@ class Season:
             for p in night.pairs - sol:
                 sitting_nomatches.add(p)
         return sitting_nomatches
+
+    def get_black_out_nights(self):
+        bonights = set()
+        num_known_pms = 0
+        pmls = []
+        for ep, (l, r), res in self.matchboxes:
+            if res and l not in pmls:
+                num_known_pms += 1
+                pmls.append(l)
+            if num_known_pms == self.nights[ep].lights:
+                bonights.add(ep)
+        return bonights

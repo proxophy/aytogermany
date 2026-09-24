@@ -55,7 +55,7 @@ class TestSeasonNumSols(unittest.TestCase):
         row = df.loc[sn]
 
         for i in range(start, 10):
-            with self.subTest(season=sn, episode=i):
+            with self.subTest(episode=i):
                 solver = get_solver(sn)
                 sols = solver.solve(i, True)
 

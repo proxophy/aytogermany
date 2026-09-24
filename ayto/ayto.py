@@ -3,6 +3,22 @@ import functools
 
 from .models import *
 
+allseasons = [
+    "normalo2020",
+    "normalo2021",
+    "normalo2022",
+    "normalo2023",
+    "normalo2024",
+    "normalo2025",
+    "normalo2026",
+    "vip2021",
+    "vip2022",
+    "vip2023",
+    "vip2024",
+    "vip2025",
+    "vip2026",
+    ]
+
 
 def product_without_reps(arr: list[list]):
     used = set()
@@ -38,9 +54,11 @@ class Solver:
     season: Season
     sm = None
     double_match_for_right: bool = False
+    two_dms: bool = False
 
     def __init__(self, season: Season) -> None:
         self.season: Season = season
+        self.bo_nights = self.season.get_black_out_nights()
 
     @functools.cache
     def no_match(self, l: str, r: str, end: int) -> bool:
@@ -55,22 +73,25 @@ class Solver:
         if (l, r) in mb and not mb[(l, r)]:
             return True
 
+        # check for black out nights
+        for bo in self.bo_nights:
+            if bo > end:
+                break
+            if (l, r) in self.season.nights[bo].pairs and (l, r) not in kpm:
+                return True
+
         # one is part of known perfect match
         # consider multiple seated lefts
         # assumption: if dm is not known and you get double match,
         # you find the double match in the same episode
         if (l, r) not in kpm and (l in hpm or r in hpm):
-            if not (
-                self.season.name == "normalo2026"
-                and end >= self.season.mm_known_after_week
-            ):
-                # special case normalo2026: DM (Noel, Alicia) known only after season
-                # but also Alicia only known as mm after week 4
+            # handle special case: for normalo2026, Alicia's match with Noel doesnt get revealed, despite Noel finding his match during the show
+            if self.season.mb_reveals_dm or r != self.season.get_mm():
                 return True
 
         return False
 
-    def solution_has_correct_format(self, sol: Solution) -> dict:
+    def solution_has_correct_format(self, sol: Solution | set[Pair]) -> dict:
         """Check whether a solution has the expected format.
         Returns dict with keys `res`, `reason` and optionally `detail`
         """
@@ -97,7 +118,9 @@ class Solver:
 
         return {"res": True, "reason": ""}
 
-    def solution_possible(self, sol: Solution, end: int, include_night: bool) -> dict:
+    def solution_possible(
+        self, sol: Solution | set[Pair], end: int, include_night: bool
+    ) -> dict:
         """Check whether the solution is feasible up to a given episode
 
         Args:
@@ -138,18 +161,6 @@ class Solver:
         if not double_match_logic["res"]:
             return double_match_logic
 
-        # if solution has num_matches matches
-        if complete:
-            # we must have 10 seated lefts and num_matches rights
-            seated_lefts, seated_rights = zip(*sol)
-            if set(seated_lefts) != set(self.season.lefts) or set(seated_rights) != set(
-                self.season.rights
-            ):
-                return {
-                    "res": False,
-                    "reason": "not_all_candidates_in_complete_solution",
-                }
-
         # number of lights with pairs matching lights in nights
         # if we don't have self.nummatches pairs, we allow lesser lights
         nights = self.season.get_nights(end)
@@ -160,62 +171,46 @@ class Solver:
             sol_lights: int = len(sol & night.pairs)
 
             if sol_lights > night.lights:
-                return {"res": False, "reason": f"too_many_lights_in_night_{i}"}
+                return {"res": False, "reason": "too_many_lights_in_night", "detail": i}
             elif sol_lights < night.lights:
                 if complete:
-                    return {"res": False, "reason": f"not_enough_lights_in_night_{i}"}
+                    return {
+                        "res": False,
+                        "reason": "not_enough_lights_in_night",
+                        "detail": i,
+                    }
             i += 1
 
         return {"res": True, "reason": ""}
 
-    def check_multiple_match_logic(self, sol: Solution, end: int) -> dict:
+    def check_multiple_match_logic(self, sol: Solution | set[Pair], end: int) -> dict:
         """Check whether a solution satisfies the multiple-match constraints up to a given episode.
         Returns dict with keys `res`, `reason` and optionally `detail`
         """
 
-        # For VIP2023, check if double_match_pair=(Max, Peter) have the same match
-        if (
-            self.season.double_match_pair is not None
-            and end >= self.season.double_match_pair_known
-        ):
-            # lefts that partner with double_match_pair
-            dml = [l for (l, r) in sol if r in self.season.double_match_pair]
-            if len(dml) > 1 and dml[0] != dml[1]:
-                return {
-                    "res": False,
-                    "reason": "vip23_double_match_pair_not_same_match",
-                }
-
         sol_dict = dict_rep(sol)
-
         # lefts with multiple partners
         mult_lefts = [l for l, rs in sol_dict.items() if len(rs) > 1]
         # double/tripple match person
-        mm = self.season.mm if end >= self.season.mm_known_after_week else None
+        mm = self.season.get_mm(end)
 
-        if len(mult_lefts) == 2:
-            return {"res": False, "reason": "two_double_matches"}
+        if len(mult_lefts) >= 2:
+            return {"res": False, "reason": "too_many_double_matches"}
 
         elif len(mult_lefts) == 1:
             mult_left = mult_lefts[0]
             mult_rights = sol_dict[mult_left]
-
-            if (
-                (
-                    self.season.double_match_pair is not None
-                    and end >= self.season.double_match_pair_known
-                )
-                and len(mult_rights) == 2
-                and set(self.season.double_match_pair) != set(mult_rights)
-            ):
+            if len(mult_rights) > self.season.max_mm_size:
                 return {
                     "res": False,
-                    "reason": "double_match_lefts_not_double_match_pair",
+                    "reason": "triple_match_not_allowed",
                 }
-            elif mm:  # mm is not None
+
+            if mm:  # mm is not None
                 _, seated_rights = zip(*sol)
+
                 if (
-                    len(mult_rights) == self.season.max_multiple_match_size
+                    len(mult_rights) == self.season.max_mm_size
                     and mm not in sol_dict[mult_left]
                 ):
                     return {
@@ -224,14 +219,12 @@ class Solver:
                         "detail": (mult_left, mult_rights),
                     }
                 elif mm in seated_rights and mm not in sol_dict[mult_left]:
+                    # only used in normalo2024
                     return {
                         "res": False,
                         "reason": "multiple_match_not_possible_without_mm",
                         "detail": (mult_left, mult_rights),
                     }
-
-        elif len(mult_lefts) > 2:
-            return {"res": False, "reason": "too_many_double_matches"}
 
         return {"res": True, "reason": ""}
 
@@ -262,7 +255,7 @@ class Solver:
 
         sitting_nomatches = self.season.get_sitting_no_matches(sol, end, include_night)
 
-        mm = self.season.mm if end >= self.season.mm_known_after_week else None
+        mm = self.season.get_mm(end)
         pos_matches = {
             l: [
                 r
@@ -300,7 +293,7 @@ class Solver:
     ) -> list[Solution]:
         """Merge solution with partial solutions to complete solutions when the multiple match(es) are not present the solution, given `end`(inclusive) and `includenight`"""
 
-        mm = self.season.mm if end >= self.season.mm_known_after_week else None
+        mm = self.season.get_mm(end)
 
         sitting_nomatches = self.season.get_sitting_no_matches(sol, end, include_night)
 
@@ -321,41 +314,28 @@ class Solver:
         solutions = []
 
         for partial_solution in partial_solutions:
-            ten_matches = sol.union(partial_solution)
+            base_matches = sol.union(partial_solution)
 
-            _, sitting_rights = zip(*ten_matches)
+            _, sitting_rights = zip(*base_matches)
             # right that is missing in solution
             mr = [r for r in self.season.rights if r not in sitting_rights][0]
 
-            # VIP 2023: double_match_pair
-            if (
-                self.season.double_match_pair is not None
-                and end >= self.season.double_match_pair_known
-            ):
-                if mr not in self.season.double_match_pair:
-                    continue
-                # find left that pairs with one person of double_match_pair
-                dmleft = [
-                    l for (l, r) in ten_matches if r in self.season.double_match_pair
-                ][0]
-                solutions.append(ten_matches | {(dmleft, mr)})
-
-            # Normalo 2023/24/25/26: dm not known, match mr with everyone possible
-            elif mm is None:
-                solutions.extend([ten_matches | {(l, mr)} for l in addable_lefts[mr]])
-
-            # All other seasons
-            else:
+            if mm:
                 # mm is not None
                 if mr == mm:
-                    solutions.extend(ten_matches | {(l, mr)} for l in addable_lefts[mr])
+                    solutions.extend(
+                        base_matches | {(l, mr)} for l in addable_lefts[mr]
+                    )
                 else:
-                    dmleft = [l for (l, r) in ten_matches if r == mm][
+                    dmleft = [l for (l, r) in base_matches if r == mm][
                         0
                     ]  # left that matches with mm
                     if dmleft not in addable_lefts[mr]:
                         continue
-                    solutions.extend([ten_matches | {(dmleft, mr)}])
+                    solutions.extend([base_matches | {(dmleft, mr)}])
+            else:
+                # Normalo 2023/24/25/26: dm not known, match mr with everyone possible
+                solutions.extend([base_matches | {(l, mr)} for l in addable_lefts[mr]])
 
         return solutions
 
@@ -399,16 +379,13 @@ class Solver:
         partial_solutions = list(
             map(lambda p: zip_product(pos_matches.keys(), p), products)
         )
-
-        if (
-            mm_num == 1
-            and self.season.num_matches == 11
-            or mm_num == 2
-            and self.season.num_matches == 12
-        ):
+        # print(mm_num,self.season.max_mm_size, dict_rep(sol))
+        if (self.two_dms and has_two_dms(sol)) or (not self.two_dms and mm_num == self.season.max_mm_size):
             # Multiple match is already in Solution
             sols = self.merge_mm_in_solution(sol, partial_solutions)
+            print("merge_in", has_two_dms(sol), self.two_dms)
             return sols
+        
         solutions = self.merge_mm_not_in_solution(
             sol, partial_solutions, end, include_night
         )

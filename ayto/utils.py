@@ -5,6 +5,7 @@ from .models import *
 from .aytonormalo24 import Normalo2024Solver
 from .aytovip25 import VIP2025Solver
 from .aytovip26 import VIP2026Solver
+from .aytovip23 import VIP2023Solver
 from .ayto import Solver
 
 
@@ -140,46 +141,29 @@ def read_data_from_excel(
 
 
 def sols_as_df(sols) -> pd.DataFrame:
-    rows = [{l: r for (l, r) in s} for s in sols]
+    rows = [{r: l for (l, r) in s} for s in sols]
     df = pd.DataFrame(rows)
     return df
 
 
-
 def get_season(sn: str) -> Season:
     lefts, rights, nights, matchboxes, mm, solution = read_data_from_excel(sn)
+    args = (sn, lefts, rights, nights, matchboxes, solution, mm)
     if sn == "normalo2024":
-        season = Season(sn, lefts, rights, nights, matchboxes, solution=solution, mm=mm)
+        season = Season(*args, num_matches=12, max_mm_size=3)
+    elif sn == "normalo2026":
+        season = Season(*args, mm_known_after_week=5, mb_reveals_dm=False)
     elif sn == "vip2023":
-        # return
         season = Season(
-            sn,
-            lefts,
-            rights,
-            nights,
-            matchboxes,
-            solution=solution,
-            mm=mm,
+            *args,
             double_match_pair=("Peter", "Max"),
         )
     elif sn == "vip2025":
-        season = Season(
-            sn,
-            lefts,
-            rights,
-            nights,
-            matchboxes,
-            solution=solution,
-            mm=mm,
-        )
+        season = Season(*args, num_matches=12)
     elif sn == "vip2026":
-        season: Season = Season(
-            sn, lefts, rights, nights, matchboxes, solution=solution
-        )
+        season = Season(*args, num_matches=12)
     else:
-        season: Season = Season(
-            sn, lefts, rights, nights, matchboxes, solution=solution, mm=mm
-        )
+        season = Season(*args)
     return season
 
 
@@ -187,6 +171,8 @@ def get_solver(sn: str) -> Solver:
     season = get_season(sn)
     if sn == "normalo2024":
         solver = Normalo2024Solver(season)
+    elif sn == "vip2023":
+        solver = VIP2023Solver(season)
     elif sn == "vip2025":
         solver = VIP2025Solver(season)
     elif sn == "vip2026":
