@@ -1,12 +1,13 @@
-import pandas as pd
-import seaborn as sns
-import matplotlib.pyplot as plt
-from collections import Counter
 import functools
 import time
+from collections import Counter
 
-from .models import Solution
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+
 from .ayto import Solver
+from .models import Solution, mm_left
 
 
 class SolutionSpace:
@@ -33,6 +34,10 @@ class SolutionSpace:
             for (l, r) in self.pairs_counter
         }
 
+    def get_most_likely_pair(self):
+        probs_dict = self.get_pair_probs_dict()
+        return max(probs_dict, key=probs_dict.get)  # type:ignore
+
     def get_no_matches(self) -> list[tuple[str, str]]:
         return [p for p in self.pairs_counter if self.pairs_counter[p] == 0]
 
@@ -50,7 +55,7 @@ class SolutionSpace:
         return [l for l in self.lefts if self.pairs_counter[(l, r)] == 0]
 
     def get_mm_probs(self):
-        mm = [next(s.mm_lefts()) for s in self.sols]
+        mm = [mm_left(s) for s in self.sols]
         return [
             (l, round(v / len(self.sols) * 100, 1)) for (l, v) in Counter(mm).items()
         ]
@@ -77,20 +82,15 @@ def analyze_solutions(sols: list[Solution]):
 
 def matching_night_probs(solver: Solver, episode: int):
     beforenight = solver.solve(episode, False)
-    print(len(beforenight))
     night = solver.season.get_nights(episode)[-1].pairs
-    nightpossol = any([set(night).issubset(sol) for sol in beforenight])
 
     poslights = Counter([len(set(night).intersection(sol)) for sol in beforenight])
     return [
-        (i, round(poslights.get(i, 0) / len(beforenight) * 100, 2))
-        for i in range(0, 11)
+        (i, round(poslights.get(i, 0) / len(beforenight) * 100, 2)) for i in range(11)
     ]
 
 
 def sol_probs(sols: list[Solution], sol: Solution):
-    nightpossol = any([set(sol).issubset(sol) for sol in sols])
-
     lights = Counter([len(s.intersection(sol)) for s in sols])
     probs = [round(lights.get(i, 0) / len(sols) * 100, 2) for i in range(12 + 1)]
     import statistics
@@ -100,6 +100,7 @@ def sol_probs(sols: list[Solution], sol: Solution):
         statistics.median(filter(lambda x: x > 0, probs)),
         max(filter(lambda x: x > 0, probs)),
     )
+
 
 def plot_probs(sols: list[Solution]):
     solspace = SolutionSpace(sols)
@@ -112,13 +113,14 @@ def plot_probs(sols: list[Solution]):
     plt.tight_layout()
     plt.show()
 
+
 def time_it(inner):
     @functools.wraps(inner)
     def c_inner(*args):
         start = time.time()
         res = inner(*args)
         end = time.time()
-        print(f"=== time needed for {inner.__name__}: {(end-start):0.3f}s ===")
+        print(f"=== time needed for {inner.__name__}: {(end - start):0.3f}s ===")
         return res
 
     return c_inner

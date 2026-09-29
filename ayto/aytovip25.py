@@ -1,12 +1,10 @@
 from collections import Counter
 
-from .ayto import Solver, mm_left, dict_rep, get_candidates
+from .ayto import Solver, dict_rep, mm_left
 from .models import *
 
 
 class VIP2025Solver(Solver):
-    two_dms: bool = True
-
     def check_multiple_match_logic(self, sol: Solution | set[Pair], end: int) -> dict:
         # VIP2025 allows two double matches, one of those must include Jimi
 
@@ -20,16 +18,16 @@ class VIP2025Solver(Solver):
             e for l in mult_lefts for e in sol_dict[l]
         ]  # rights part of multi match
         mm = self.season.get_mm(end)
-        
+
         # if Jimi is seated and we have two double matches, he must be part of one of them
         if mm in seated_right and len(mult_lefts) == 2 and mm not in mult_rights:
             return {"res": False, "reason": "Jimi_not_in_double_match"}
 
         r_counter = Counter(seated_lefts)
         # no tripple matches
-        if any([v > 2 for v in r_counter.values()]):
-            return {"res": False, "reason": f"triple_match_not_allowed"}
-        return {"res": True, "reason": ""}
+        if any(v > 2 for v in r_counter.values()):
+            return {"res": False, "reason": "triple_match_not_allowed"}
+        return {"res": True, "reason": None}
 
     def merge_mm_not_in_solution(
         self,
@@ -49,10 +47,9 @@ class VIP2025Solver(Solver):
             for r in self.season.rights
         }
 
-        solutions: list[Solution] = list()
+        solutions: list[Solution] = []
 
         for partial_solution in partial_solutions:
-
             tenplusmatches = sol.union(partial_solution)
             base = tenplusmatches
             _, crights = zip(*tenplusmatches)
@@ -70,9 +67,9 @@ class VIP2025Solver(Solver):
                             x = base | {(l1, r1), (l2, r2)}
                             solutions.append(x)
                 else:
-                    jimipartner = [
+                    jimipartner = next(
                         l for (l, r) in tenplusmatches if r == self.season.mm
-                    ][0]
+                    )
                     # print(jimipartner)
                     if jimipartner in addable_lefts[r1]:
                         solutions.extend(
@@ -94,9 +91,9 @@ class VIP2025Solver(Solver):
                         base | {(l, mr)} for l in addable_lefts[mr] if l != mml
                     )
                 else:
-                    jimipartner = [
+                    jimipartner = next(
                         l for (l, r) in tenplusmatches if r == self.season.mm
-                    ][0]
+                    )
                     d = dict_rep(tenplusmatches)
                     # dont add to Jimi if he's already part of double match
                     if len(d[jimipartner]) == 2:

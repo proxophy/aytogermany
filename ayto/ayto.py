@@ -1,5 +1,5 @@
-import itertools
 import functools
+import itertools
 
 from .models import *
 
@@ -17,7 +17,7 @@ allseasons = [
     "vip2024",
     "vip2025",
     "vip2026",
-    ]
+]
 
 
 def product_without_reps(arr: list[list]):
@@ -59,10 +59,14 @@ class Solver:
     def __init__(self, season: Season) -> None:
         self.season: Season = season
         self.bo_nights = self.season.get_black_out_nights()
+        self.no_match = functools.cache(self.no_match)
 
-    @functools.cache
     def no_match(self, l: str, r: str, end: int) -> bool:
-        """Return whether a pair is known not to be a match up to `end`"""
+        """Return whether `(l, r)` is known not to be a match up to a given episode"""
+        return self.no_match_reason(l, r, end) is not None
+
+    def no_match_reason(self, l: str, r: str, end: int) -> str | None:
+        """Return the reason why `(l, r)` is known not to be a match up to a given episode"""
         end = max(0, min(end, 10))
 
         mb = self.season.get_matchboxes(end)
@@ -71,14 +75,14 @@ class Solver:
 
         # matchbox result was false
         if (l, r) in mb and not mb[(l, r)]:
-            return True
+            return "matchbox_false"
 
         # check for black out nights
         for bo in self.bo_nights:
             if bo > end:
                 break
             if (l, r) in self.season.nights[bo].pairs and (l, r) not in kpm:
-                return True
+                return "sitting_in_blackout_night"
 
         # one is part of known perfect match
         # consider multiple seated lefts
@@ -86,10 +90,17 @@ class Solver:
         # you find the double match in the same episode
         if (l, r) not in kpm and (l in hpm or r in hpm):
             # handle special case: for normalo2026, Alicia's match with Noel doesnt get revealed, despite Noel finding his match during the show
-            if self.season.mb_reveals_dm or r != self.season.get_mm():
-                return True
+            if self.season.mb_reveals_dm:
+                return "member_has_partner_already"
+            else:
+                mm = self.season.get_mm(end)
+                # l cannot be part of multiple match
+                if mm and r != mm and self.no_match(l, mm, end):
+                    return "l_cannot_have_double_match"
+                elif end < self.season.mm_known_after_week:
+                    return "cannot_be_in_double_match"
 
-        return False
+        return None
 
     def solution_has_correct_format(self, sol: Solution | set[Pair]) -> dict:
         """Check whether a solution has the expected format.
@@ -116,72 +127,64 @@ class Solver:
                     "detail": r,
                 }
 
-        return {"res": True, "reason": ""}
+        return {"res": True, "reason": None}
 
     def solution_possible(
         self, sol: Solution | set[Pair], end: int, include_night: bool
-    ) -> dict:
+    ) -> bool:
         """Check whether the solution is feasible up to a given episode
 
         Args:
-            sol (Solution): Solution containing the pairs to cneck
-            end (int): Last episode to consider
-            include_night (bool): Wheter the matching night of the last episode should be considered
+            sol: Solution containing the pairs to cneck
+            end: Last episode to consider
+            include_night: Whether the matching night of the last episode should be considered
 
         Returns:
-            dict: Result of the feasibility check, containing:
-            - ``res`` (bool): Whether the solution is feasible.
-            - ``reason`` (str): Reason for the result.
-            - ``detail``: Additional details about the result, such as
-              the pair that caused the solution to be rejected.
+            `True` if no violation was found, ``False`` otherwise.
         """
+        return self.find_violation(sol, end, include_night) is None
+
+    def find_violation(
+        self, sol: Solution | set[Pair], end: int, include_night: bool
+    ) -> str | None:
+        """Return the first logic violation found in the solution, if any."""
 
         if len(sol) > self.season.num_matches:
-            return {"res": False, "reason": "too_many_matches"}
+            return "too_many_matches"
 
         format_check = self.solution_has_correct_format(sol)
         if not format_check["res"]:
-            return format_check
+            return format_check["res"]
 
         end = max(0, min(end, 10))
 
         # no known no matches
         for pair in sol:
             if self.no_match(*pair, end):
-                return {
-                    "res": False,
-                    "reason": "known_no_match",
-                    "detail": pair,
-                }
+                return "known_no_match"
 
         complete: bool = len(sol) == self.season.num_matches
 
         # check conditions for double matches
         double_match_logic = self.check_multiple_match_logic(sol, end)
         if not double_match_logic["res"]:
-            return double_match_logic
+            return double_match_logic["res"]
 
         # number of lights with pairs matching lights in nights
         # if we don't have self.nummatches pairs, we allow lesser lights
         nights = self.season.get_nights(end)
         if not include_night:
             nights = nights[:-1]
-        i = 0
-        for night in nights:
+
+        for i, night in enumerate(nights):
             sol_lights: int = len(sol & night.pairs)
 
             if sol_lights > night.lights:
-                return {"res": False, "reason": "too_many_lights_in_night", "detail": i}
-            elif sol_lights < night.lights:
-                if complete:
-                    return {
-                        "res": False,
-                        "reason": "not_enough_lights_in_night",
-                        "detail": i,
-                    }
-            i += 1
+                return "too_many_lights_in_night"
+            elif sol_lights < night.lights and complete:
+                return "not_enough_lights_in_night"
 
-        return {"res": True, "reason": ""}
+        return None
 
     def check_multiple_match_logic(self, sol: Solution | set[Pair], end: int) -> dict:
         """Check whether a solution satisfies the multiple-match constraints up to a given episode.
@@ -226,7 +229,7 @@ class Solver:
                         "detail": (mult_left, mult_rights),
                     }
 
-        return {"res": True, "reason": ""}
+        return {"res": True, "reason": None}
 
     def combine_possible_solutions(
         self,
@@ -240,8 +243,7 @@ class Solver:
         m_asm = set()
         for s1, s2 in itertools.product(solutions1, solutions2):
             s3 = s1 | s2
-            pred = self.solution_possible(s3, end, include_night)
-            if pred["res"]:
+            if self.solution_possible(s3, end, include_night):
                 m_asm.add(s3)
 
         return list(m_asm)
@@ -318,7 +320,7 @@ class Solver:
 
             _, sitting_rights = zip(*base_matches)
             # right that is missing in solution
-            mr = [r for r in self.season.rights if r not in sitting_rights][0]
+            mr = next(r for r in self.season.rights if r not in sitting_rights)
 
             if mm:
                 # mm is not None
@@ -327,9 +329,9 @@ class Solver:
                         base_matches | {(l, mr)} for l in addable_lefts[mr]
                     )
                 else:
-                    dmleft = [l for (l, r) in base_matches if r == mm][
-                        0
-                    ]  # left that matches with mm
+                    dmleft = next(
+                        l for (l, r) in base_matches if r == mm
+                    )  # left that matches with mm
                     if dmleft not in addable_lefts[mr]:
                         continue
                     solutions.extend([base_matches | {(dmleft, mr)}])
@@ -355,11 +357,10 @@ class Solver:
                 solution and the known constraints.
         """
 
-        if not self.solution_possible(sol, end, include_night)["res"]:
+        if not self.solution_possible(sol, end, include_night):
             return []
-        if (
-            len(sol) == self.season.num_matches
-            and self.solution_possible(sol, end, include_night)["res"]
+        if len(sol) == self.season.num_matches and self.solution_possible(
+            sol, end, include_night
         ):
             return [sol]
 
@@ -376,16 +377,15 @@ class Solver:
                 list(pos_matches.values())
             )  # itertools.product(*pos_matches.values())
         ]
-        partial_solutions = list(
-            map(lambda p: zip_product(pos_matches.keys(), p), products)
-        )
-        # print(mm_num,self.season.max_mm_size, dict_rep(sol))
-        if (self.two_dms and has_two_dms(sol)) or (not self.two_dms and mm_num == self.season.max_mm_size):
+        partial_solutions = [zip_product(pos_matches.keys(), p) for p in products]
+
+        if (self.season.has_two_dms and has_two_dms(sol)) or (
+            not self.season.has_two_dms and mm_num == self.season.max_mm_size
+        ):
             # Multiple match is already in Solution
             sols = self.merge_mm_in_solution(sol, partial_solutions)
-            print("merge_in", has_two_dms(sol), self.two_dms)
             return sols
-        
+
         solutions = self.merge_mm_not_in_solution(
             sol, partial_solutions, end, include_night
         )
@@ -461,11 +461,11 @@ class Solver:
 
         # the tests should guarantee that all generated solutions are possible
         if validate:
-            solutions = list(
+            solutions = [
                 s
                 for s in solutions_unfiltered
-                if self.solution_possible(s, end, include_night)["res"]
-            )
+                if self.solution_possible(s, end, include_night)
+            ]
         else:
             solutions = list(solutions_unfiltered)
 

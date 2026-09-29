@@ -1,6 +1,6 @@
+import random
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence, Generator
-from collections import Counter
 
 Pair = tuple[str, str]
 Solution = frozenset[Pair]
@@ -22,7 +22,7 @@ def get_candidates(sol: Solution | set[Pair]):
     else:
         return set(), set(), 0
     d = dict_rep(sol)
-    return set(g_lefts), set(g_rights), max(map(len,d.values()))
+    return set(g_lefts), set(g_rights), max(map(len, d.values()))
 
 
 def mm_left(sol: Solution | set[Pair]) -> str | None:
@@ -39,6 +39,7 @@ def has_two_dms(sol: Solution | set[Pair]) -> bool:
     # lefts with multiple partners
     mult_lefts = [l for l, rs in sol_dict.items() if len(rs) > 1]
     return len(mult_lefts) == 2
+
 
 def dict_rep(sol: Solution | set[Pair]) -> dict[str, list[str]]:
     d = {}
@@ -70,7 +71,6 @@ class Matchboxes:
     def __post_init__(self):
         if not (len(self.weeks) == len(self.pairs) == len(self.results)):
             raise ValueError
-        pass
 
     def __getitem__(self, key: Pair) -> bool:
         if key not in self.pairs:
@@ -101,6 +101,11 @@ class Matchboxes:
         return key in self.pairs
 
 
+def matchboxes_from_list(data: list[tuple[int, Pair, bool]]):
+    episodes, pairs, results = zip(*data)
+    return Matchboxes(episodes, pairs, results)
+
+
 @dataclass(frozen=True)
 class Season:
     name: str
@@ -113,24 +118,26 @@ class Season:
     num_matches: int = 11
     double_match_pair: tuple[str, str] | None = None
     double_match_pair_known: int = 7  # after which episode mm is known
-    mm_known_after_week: int = 0 # after which episode mm is known
-    max_mm_size: int = 2 # max size of multiple match pair
-    mb_reveals_dm: bool = True # if one part of double match is revealed, the other one is revealed immediately after
-
+    mm_known_after_week: int = 0  # after which episode mm is known
+    max_mm_size: int = 2  # max size of multiple match pair
+    mb_reveals_dm: bool = True  # if one part of double match is revealed, the other one is revealed immediately after
+    has_two_dms: bool = False
 
     def __post_init__(self):
         if not (0 <= len(self.nights) <= 10 and 0 <= len(self.matchboxes)):
             raise ValueError(
                 f"Invalid number of nights or matchboxes {len(self.nights)} {len(self.matchboxes)}"
             )
-        if len(set(self.lefts)) != len(self.lefts) or len(set(self.rights)) != len(self.rights):
-            raise ValueError(f"Duplicate names in lefts or rights")
+        if len(set(self.lefts)) != len(self.lefts) or len(set(self.rights)) != len(
+            self.rights
+        ):
+            raise ValueError("Duplicate names in lefts or rights")
 
     @property
     def num_weeks(self) -> int:
         return len(self.nights)
 
-    def get_mm(self, end: int = 10) -> str|None:
+    def get_mm(self, end: int = 10) -> str | None:
         end = max(0, min(end, 10))
         return self.mm if end >= self.mm_known_after_week else None
 
@@ -146,8 +153,9 @@ class Season:
         end = max(0, min(end, 10))
         return self.matchboxes.get_perfect_matches(end)
 
-
-    def get_sitting_no_matches(self, sol: Solution,  end: int = 10, include_night: bool = True) -> set[Pair]:
+    def get_sitting_no_matches(
+        self, sol: Solution, end: int = 10, include_night: bool = True
+    ) -> set[Pair]:
         nights = self.get_nights(end)
         if not include_night:
             nights = nights[:-1]
@@ -165,10 +173,27 @@ class Season:
         bonights = set()
         num_known_pms = 0
         pmls = []
+        pms = []
         for ep, (l, r), res in self.matchboxes:
+            if ep >= len(self.nights):
+                continue
             if res and l not in pmls:
+                # add one perfect match per person, ignoring double matches
                 num_known_pms += 1
                 pmls.append(l)
-            if num_known_pms == self.nights[ep].lights:
+                pms.append((l, r))
+            # all known perfect matches must be seated
+            if num_known_pms == self.nights[ep].lights and set(pms).issubset(
+                self.nights[ep].pairs
+            ):
                 bonights.add(ep)
         return bonights
+
+
+def random_night_for_sol(
+    sol: Solution, lefts: list[str], rights: list[str], dm: str | None
+):
+    perm = random.sample(rights, len(lefts))
+    pairs = {(l, r) for l, r in zip(lefts, perm)}
+    lights = len(sol & pairs)
+    return Night(pairs, lights)

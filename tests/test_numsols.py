@@ -1,14 +1,11 @@
-import pandas as pd
 import unittest
 
-# from ayto import *
-from ayto.ayto import Solver
+import pandas as pd
+
 from ayto.utils import get_solver
-from ayto.models import Season
 
 df = pd.read_csv("analytics/num_solutions.csv", index_col=0, header=0)
 df.columns = df.columns.astype(int)
-
 
 
 class TestSeasonNumSols(unittest.TestCase):

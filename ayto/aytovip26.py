@@ -1,14 +1,14 @@
+import itertools
+
 from .ayto import Solver, get_candidates
 from .models import *
-
-import itertools
 
 
 class VIP2026Solver(Solver):
     sm: str = "Laurenz"
     double_match_for_right: bool = True
 
-    def check_multiple_match_logic(self, sol: Solution, end: int) -> dict:
+    def check_multiple_match_logic(self, sol: Solution | set[Pair], end: int) -> dict:
 
         if not super().check_multiple_match_logic(sol, end)["res"]:
             return super().check_multiple_match_logic(sol, end)
@@ -28,17 +28,16 @@ class VIP2026Solver(Solver):
             if len(multils) == 2 and self.sm not in multils:
                 return {"res": False, "reason": "Laurenz_not_in_double_right_match"}
 
-        return {"res": True, "reason": ""}
+        return {"res": True, "reason": None}
 
     def generate_complete_solutions(
         self, sol: Solution, end: int, include_night: bool
     ) -> list[Solution]:
-        if not self.solution_possible(sol, end, include_night)["res"]:
+        if not self.solution_possible(sol, end, include_night):
             return []
 
-        if (
-            len(sol) == self.season.num_matches
-            and self.solution_possible(sol, end, include_night)["res"]
+        if len(sol) == self.season.num_matches and self.solution_possible(
+            sol, end, include_night
         ):
             return [sol]
 
@@ -67,9 +66,7 @@ class VIP2026Solver(Solver):
             for ps in itertools.product(*pos_matches.values())
             if len(set(ps)) == len(ps)
         ]
-        partial_solutions = list(
-            map(lambda p: zip_product(pos_matches.keys(), p), products)
-        )
+        partial_solutions = [zip_product(pos_matches.keys(), p) for p in products]
 
         if mmnum > 0:
             isols = self.merge_mm_in_solution(sol, partial_solutions)
@@ -85,6 +82,6 @@ class VIP2026Solver(Solver):
             for r in smmatches
             for s in isols
             if (self.sm, r) not in sitting_no_matches
-        ] 
+        ]
 
         return solutions

@@ -1,4 +1,5 @@
 import unittest
+
 from ayto.utils import get_solver
 
 
@@ -46,5 +47,5 @@ class TestSeasonSolution(unittest.TestCase):
         solver = get_solver(sn)
         solution = solver.season.solution
         if solution:
-            solpos = solver.solution_possible(solution, 10, True)
-            self.assertTrue(solpos["res"], solpos["reason"])
+            solpos = solver.find_violation(solution, 10, True)
+            self.assertIsNone(solpos, solpos)

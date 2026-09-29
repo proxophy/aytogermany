@@ -1,11 +1,14 @@
-import pandas as pd
+import json
+import random
+import string
 from collections import Counter
 
-from ayto import Solver, allseasons
-from ayto.analysis import plot_probs, analyze_solutions, matching_night_probs
-from ayto.models import Season, Solution, Pair, get_candidates
-from ayto.utils import get_season, get_solver
-from ayto.aytovip25 import VIP2025Solver
+import pandas as pd
+
+from ayto import Solver
+from ayto.analysis import *
+from ayto.models import *
+from ayto.utils import *
 
 
 def appendsol(sn: str, tsol: set[tuple[str, str]]):
@@ -19,7 +22,7 @@ def appendsol(sn: str, tsol: set[tuple[str, str]]):
         dfsol.to_excel(writer, sheet_name="Solution", index=False)
 
 
-def comparetoao(solver, sols, end):
+def comparetoao(solver: Solver, sols, end):
     with open("aodata.txt", "r") as f:
         lines = map(eval, f.readlines())
 
@@ -36,10 +39,10 @@ def comparetoao(solver, sols, end):
     count = count2 = 0
     reasons = []
     for s in solsao:
-        spd = solver.solution_possible(s, end, True)
-        if not spd["res"]:
+        spd = solver.find_violation(s, end, True)
+        if not spd:
             count += 1
-            reasons.append(spd["reason"])
+            reasons.append(spd)
         elif s not in sols:
             count2 += 1
             print(s)
@@ -51,15 +54,14 @@ def comparetoao(solver, sols, end):
     print(len(reasons), Counter(reasons))
 
     count = count2 = 0
-    nomatchp = []
     reasons = []
     for s in sols:
         if s not in solsao:
-            spd = solver.solution_possible(s, end, False)
+            spd = solver.find_violation(s, end, False)
             count += 1
             # print(s)
-            if not spd["res"]:
-                reasons.append(spd["reason"])
+            if not spd:
+                reasons.append(spd)
                 # print(spd)
                 count2 += 1
     print(Counter(reasons))
@@ -68,7 +70,6 @@ def comparetoao(solver, sols, end):
 
 
 def check_ao_data(sols: list[Solution], end, sn):
-    import json
 
     with open("ayto_data.json", encoding="utf-8") as f:
         all_data = json.load(f)
@@ -104,9 +105,9 @@ def iterate_through(solver, start=3):
 def check_solution_possible(sols, solver: Solver, end):
     reasons = []
     for s in sols:
-        p = solver.solution_possible(s, end, True)
-        if not p["res"]:
-            reasons.append(p["reason"])
+        p = solver.find_violation(s, end, True)
+        if p is not None:
+            reasons.append(p)
             # print(s, p["reason"], p.get("detail", ""))
     return Counter(reasons)
 
@@ -121,43 +122,36 @@ def findpsol(sol, solver: Solver, end):
 
 
 def toy_example():
-    from ayto.models import Matchboxes, Night
 
     toy_nights = (
         Night(
-            set(
-                (
-                    ("A", "1"),
-                    ("B", "3"),
-                    ("C", "4"),
-                    ("D", "5"),
-                    ("E", "2"),
-                )
-            ),
+            {
+                ("A", "1"),
+                ("B", "3"),
+                ("C", "4"),
+                ("D", "5"),
+                ("E", "2"),
+            },
             1,
         ),
         Night(
-            set(
-                (
-                    ("A", "5"),
-                    ("B", "2"),
-                    ("C", "3"),
-                    ("D", "4"),
-                    ("E", "1"),
-                )
-            ),
+            {
+                ("A", "5"),
+                ("B", "2"),
+                ("C", "3"),
+                ("D", "4"),
+                ("E", "1"),
+            },
             3,
         ),
         Night(
-            set(
-                (
-                    ("A", "5"),
-                    ("B", "2"),
-                    ("C", "3"),
-                    ("D", "4"),
-                    ("E", "6"),
-                )
-            ),
+            {
+                ("A", "5"),
+                ("B", "2"),
+                ("C", "3"),
+                ("D", "4"),
+                ("E", "6"),
+            },
             4,
         ),
     )
@@ -167,20 +161,178 @@ def toy_example():
     toy_season = Season(
         "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm="6", num_matches=6
     )
-    toy_seasonwo = Season(
-        "toy", toy_lefts, toy_rights, toy_nights, Matchboxes(), mm="6", num_matches=6
-    )
-    toy_solver = Solver(toy_season)
+    solver = Solver(toy_season)
 
-    sol = frozenset({("E", "2"), ("E", "6"), ("A", "5"), ("D", "4"), ("C", "3")})
-    print(get_candidates(sol))
-    # solver.generate_complete_solutions(sol, 5, True)
-    sols = toy_solver.solve(5)
-    # sols_as_df(diff).sort_values(by= ["1", "2", "3", "4", "5", "6"]) [toy_rights].to_csv("solsdf.csv")
+    sols = solver.solve(5)
+    print(len(sols))
+
+
+def simulate_season(n: int = 5, with_dm: bool = True) -> tuple[Season, list[Solution]]:
+
+    def matchbox(sols, i):
+        mp = (random.choice(lefts), random.choice(rights))
+        if mp in solution:
+            sols = [s for s in sols if mp in s]
+            known_pms.append(mp)
+        else:
+            sols = [s for s in sols if mp not in s]
+
+        res = mp in solution
+        mbs.append((i, mp, res))
+        # reveal double match
+        if res and mp[0] == "A":
+            mr = next(iter({"1", dm} - {mp[1]}))
+            np = ("A", mr)
+            mbs.append((i, np, True))
+            sols = [s for s in sols if np in s]
+            known_pms.append(np)
+            # print("double match", mp, mr)
+        elif res:
+            # double not possible with this l
+            sols = [s for s in sols if (mp[0], dm) not in s]
+            for l in lefts:
+                if l == mp[0]:
+                    continue
+                # filter out solutions that have mp[1] with another partner
+                sols = [s for s in sols if (l, mp[1]) not in s]
+            for r in rights:
+                if r == mp[1]:
+                    continue
+                # filter out solutions that have mp[0] with another partner
+                sols = [s for s in sols if (mp[0], r) not in s]
+        return sols
+
+    def pop_dm(sol):
+        mml = mm_left(sol)
+        dmpairs = [(l, r) for (l, r) in sol if l == mml]
+        sol.remove(dmpairs[0])
+
+    lefts = tuple(string.ascii_uppercase)[:n]
+    rights = tuple(str(i) for i in range(1, n + 2))
+    dm = str(n + 1)
+    solution = frozenset({(l, r) for l, r in zip(lefts, rights[:-1])} | {("A", dm)})
+
+    empty_season = Season(
+        "toy",
+        lefts,
+        rights,
+        (),
+        Matchboxes(),
+        mm=dm if with_dm else None,
+        num_matches=n + 1,
+        mm_known_after_week=0,
+    )
+    emptysolver = Solver(empty_season)
+
+    sols = emptysolver.generate_complete_solutions(Solution(), n, True)
+    sols = list(set(sols))
+
+    nights = []
+    mbs = []
+    known_pms = []  # track perfect matches
+
+    # print("before:", len(sols))
+    seated_pairs = set()
+    clights = 0
+
+    i = 0
+    while i < n:
+        sols = matchbox(sols, i)
+
+        # choose new pairs
+        pairs = random.sample(list(seated_pairs), clights)
+        pairs = set()
+        gsols = emptysolver.generate_complete_solutions(frozenset(pairs), n, True)
+
+        seated_pairs = set(
+            random.choice(gsols)
+        )  # choose a random valid pair combination
+        pop_dm(seated_pairs)
+
+        clights = len(seated_pairs & solution)  # determine lights
+        nights.append(Night(seated_pairs, clights))  # type: ignore
+        if clights == 0:
+            # print("blackout night", seated_pairs)
+            sols = [
+                s for s in sols if not any(p in s for p in seated_pairs)
+            ]  # filter out solutions with blackout pairs
+
+        # filter solution by lights
+        sols = [s for s in sols if len(seated_pairs & s) == clights]
+        sols = [s for s in sols if set(known_pms).issubset(s)]
+
+        # print(f"i = {i}, len(sols) = {len(sols)} after {clights} lights")
+        i += 1
+
+    # df = sols_as_df(sols)
+
+    season = Season(
+        "toy",
+        lefts,
+        rights,
+        tuple(nights),
+        matchboxes_from_list(mbs),
+        mm=dm if with_dm else None,
+        num_matches=n + 1,
+        mb_reveals_dm=True,
+        solution=solution,
+        mm_known_after_week=0,
+    )
+
+    return season, sols
+
+
+def check_generated_season(n: int = 5, with_dm: bool = True):
+    season, sols = simulate_season(n, with_dm)
+    solver = Solver(season)
+
+    solution = season.solution
+    assert solution
+
+    for l, r in solution:
+        if solver.no_match(l, r, n - 1):
+            print(season)
+            assert False, "no match in solution"
+
+    for s in sols:
+        if not solver.solution_possible(s, n - 1, True):
+            print(season)
+            assert False, (
+                f"solution in sols not possible {solver.solution_possible(s, n - 1, True)}"
+            )
+
+    if len(sols) != len(solver.solve(n - 1)):
+        print(season)
+        assert False, (
+            f"len(sols) = {len(sols)} != {len(solver.solve(n - 1))} = len(solver.solve(n - 1))"
+        )
+
+    if not solver.solution_possible(sols[0], n - 1, True):
+        print(season)
+        assert False, "solution not possible"
+
+    fsols = {
+        s
+        for s in solver.generate_complete_solutions(frozenset(), n - 1, True)
+        if solver.solution_possible(s, n - 1, True)
+    }
+    if len(sols) != len(fsols):
+        print(season)
+        assert False, "len(sols) != len(fsols)"
+
+    for i in range(n - 1):
+        fsols = {
+            s
+            for s in solver.generate_complete_solutions(frozenset(), i, True)
+            if solver.solution_possible(s, i, True)
+        }
+        if len(fsols) != len(solver.solve(i)):
+            print(season)
+            assert False, "len(fsols) != len(solver.solve(i))"
 
 
 if __name__ == "__main__":
-    sn = "vip2025"
+    sn = "normalo2026"
 
     import cProfile
 
@@ -188,25 +340,28 @@ if __name__ == "__main__":
     profiler.enable()
 
     season: Season = get_season(sn)
-    sol: Solution = season.solution  # type: ignore
+    # sol: Solution = season.solution  # type: ignore
     solver: Solver = get_solver(sn)  # type: ignore
-    end = 8
+    end = 2
     sols = solver.solve(end)
-    print(len(sols)) 
+    print(len(sols))
+    # print(solver.no_match("Julian M", "Linda", 4, True))
+
+    # exit()
+    import tqdm
+
+    # for i in tqdm.trange(0, 100):
+    #     check_generated_season(5, with_dm= True)
 
     # comparetoao(solver, sols, end)
     # analyze_solutions(sols)
     # print(check_solution_possible(sols, solver, end))
     # plot_probs(sols)
 
-    sol = frozenset({('Henna', 'Leandro'), ('Sandra', 'Lennert'), ('Viki', 'Jimi'), ('Henna', 'Oliver'), ('Hati', 'Jonny'), ('Joanna', 'Nico'), ('Nelly', 'Calvin O.'), ('Ariel', 'Rob'), ('Viki', 'Kevin'), ('Beverly', 'Calvin S.'), ('Antonia', 'Sidar'), ('Elli', 'Xander')})
-    psol = frozenset({('Viki', 'Kevin'), ('Elli', 'Xander'), ('Hati', 'Jonny'), ('Henna', 'Oliver'), ('Beverly', 'Calvin S.'), ('Nelly', 'Calvin O.'), ('Sandra', 'Lennert'), ('Henna', 'Leandro')})
     # for psol in solver.generate_partial_solutions(end, True):
     #     if psol <= sol:
     #         print(psol)
 
-    from ayto.utils import dict_rep, has_two_dms
-    print(dict_rep(psol), has_two_dms(psol), solver.two_dms)
     # sols = solver.generate_complete_solutions(psol, end, True)
     # print("sol ins sols", sol in psol)
 
@@ -214,12 +369,4 @@ if __name__ == "__main__":
     import pstats
 
     p = pstats.Stats(profiler)
-    # p.sort_stats("cumulative").print_stats(10)
-    # toy_example()
-    exit()
-
-    for sn in allseasons:
-        season = get_season(sn)
-        solver = get_solver(sn)
-        print(sn, season.get_black_out_nights())
-        # print(matching_night_probs(solver, 7))
+    p.sort_stats("cumulative").print_stats(5)

@@ -1,12 +1,13 @@
-import pandas as pd
-from typing import Sequence
+from collections.abc import Sequence
 
-from .models import *
+import pandas as pd
+
+from .ayto import Solver
 from .aytonormalo24 import Normalo2024Solver
+from .aytovip23 import VIP2023Solver
 from .aytovip25 import VIP2025Solver
 from .aytovip26 import VIP2026Solver
-from .aytovip23 import VIP2023Solver
-from .ayto import Solver
+from .models import *
 
 
 def check_nights(
@@ -15,8 +16,7 @@ def check_nights(
     """Check if nights are fine"""
 
     # make sure all pairs are valid pairs and there are no duplicates
-    ni = 0
-    for night in nights:
+    for i, night in enumerate(nights):
         seated_lefts, seated_rights = [], []
 
         for l, r in night.pairs:
@@ -29,12 +29,13 @@ def check_nights(
                 seated_lefts.append(l)
                 seated_rights.append(r)
             elif l in rights and r in lefts:
-                raise ValueError(f"Pair {(l,r)} is in the wrong order in night {night}")
+                raise ValueError(
+                    f"Pair {(l, r)} is in the wrong order in night {night}"
+                )
             else:
                 raise ValueError(f"{l} or {r} is neither in the list of women or men")
         if not 0 <= night.lights <= 10:
             raise ValueError(f"Number of lights not possible in night {night}")
-        ni += 1
 
 
 def validate_season_args(
@@ -46,8 +47,9 @@ def validate_season_args(
 ):
 
     nummatches = max(len(lefts), len(rights))
+    # todo: remove Laurenz as hardcoded value
     if "Laurenz" not in lefts and (len(lefts) != 10 or len(rights) != nummatches):
-        raise ValueError(f"Not enough or too much women or men")
+        raise ValueError("Not enough or too much women or men")
 
     # check nights
     check_nights(nights, lefts, rights)
@@ -55,20 +57,17 @@ def validate_season_args(
     # matchboxes with results
     pairs = set()
     for n, (l, r), result in matchboxes:
-
         if (l, r) in pairs or (r, l) in pairs:
-            raise ValueError(f"{(l,r)} occurs more than once in matchboxes")
+            raise ValueError(f"{(l, r)} occurs more than once in matchboxes")
         if l in lefts and r in rights:
             pairs.add((l, r))
         elif l in rights and r in lefts:
-            raise ValueError(f"Pair {(l,r)} is in the wrong order in matchboxes")
+            raise ValueError(f"Pair {(l, r)} is in the wrong order in matchboxes")
         else:
             raise ValueError(f"{l} or {r} is not a valid name")
 
     if dm and dm in lefts:
         raise ValueError(f"{dm} is part of lefts (the smaller gender group)")
-
-    return
 
 
 def make_pair_list(lefts: Sequence[str], rights: Sequence[str]) -> tuple[Pair, ...]:
@@ -133,8 +132,7 @@ def read_data_from_excel(
         solution: Solution = Solution(
             make_pair_list(dfsolution["left"].to_list(), dfsolution["right"].to_list())
         )
-
-    except:
+    finally:
         solution: Solution = Solution()
 
     return lefts, rights, nights, matchboxes, dm, solution
@@ -159,7 +157,7 @@ def get_season(sn: str) -> Season:
             double_match_pair=("Peter", "Max"),
         )
     elif sn == "vip2025":
-        season = Season(*args, num_matches=12)
+        season = Season(*args, num_matches=12, has_two_dms=True)
     elif sn == "vip2026":
         season = Season(*args, num_matches=12)
     else:

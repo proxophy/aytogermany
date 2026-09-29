@@ -1,21 +1,18 @@
-import functools
-
-from .ayto import Solver, mm_left, dict_rep, get_candidates
+from .ayto import Solver
 from .models import *
 
 
 class VIP2023Solver(Solver):
-    @functools.cache
-    def no_match(self, l: str, r: str, end: int) -> bool:
+    def no_match_reason(self, l: str, r: str, end: int) -> str | None:
         assert self.season.double_match_pair
         if end >= self.season.double_match_pair_known:
             mb = self.season.get_matchboxes(end)
 
             if r in self.season.double_match_pair:
-                for r in self.season.double_match_pair:
-                    if (l, r) in mb and not mb[(l, r)]:
-                        return True
-        return super().no_match(l, r, end)
+                for dmr in self.season.double_match_pair:
+                    if (l, dmr) in mb and not mb[(l, dmr)]:
+                        return "matchbox_false_for_double_match_pair"
+        return super().no_match_reason(l, r, end)
 
     def check_multiple_match_logic(self, sol: Solution | set[Pair], end: int) -> dict:
         assert self.season.double_match_pair
@@ -56,7 +53,9 @@ class VIP2023Solver(Solver):
         assert self.season.double_match_pair
 
         if end < self.season.double_match_pair_known:
-            return super().merge_mm_not_in_solution(sol, partial_solutions, end, include_night)
+            return super().merge_mm_not_in_solution(
+                sol, partial_solutions, end, include_night
+            )
 
         solutions = []
         for partial_solution in partial_solutions:
@@ -64,14 +63,14 @@ class VIP2023Solver(Solver):
 
             _, sitting_rights = zip(*ten_matches)
             # right that is missing in solution
-            mr = [r for r in self.season.rights if r not in sitting_rights][0]
-            
+            mr = next(r for r in self.season.rights if r not in sitting_rights)
+
             if mr not in self.season.double_match_pair:
                 continue
             # find left that pairs with one person of double_match_pair
-            dmleft = [
+            dmleft = next(
                 l for (l, r) in ten_matches if r in self.season.double_match_pair
-            ][0]
+            )
             solutions.append(ten_matches | {(dmleft, mr)})
 
         return solutions
