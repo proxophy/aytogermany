@@ -43,7 +43,7 @@ class TestSeasonSolution(unittest.TestCase):
     def test_vip2026(self):
         self.check_season("vip2026")
 
-    def check_season(self, sn):
+    def check_season(self, sn: str):
         solver = get_solver(sn)
         solution = solver.season.solution
         if solution:

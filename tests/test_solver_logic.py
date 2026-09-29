@@ -176,18 +176,13 @@ class TestSeasonSolution(unittest.TestCase):
         solver = Solver(toy_season)
         sol1 = {("A", "1"), ("B", "2"), ("C", "3"), ("D", "4"), ("E", "5"), ("E", "6")}
 
-        self.assertTrue(solver.solution_has_correct_format(sol1)["res"])
+        # todo: specify return str
+        self.assertIsNone(solver.find_format_violation(sol1))
         sol1.add(("B", "3"))
-        self.assertFalse(solver.solution_has_correct_format(sol1)["res"])
-        self.assertFalse(
-            solver.solution_has_correct_format({("A", "1"), ("B", "1")})["res"]
-        )
-        self.assertFalse(
-            solver.solution_has_correct_format({("A", "1"), ("B", "2s")})["res"]
-        )
-        self.assertFalse(
-            solver.solution_has_correct_format({("A", "1"), ("Bs", "2")})["res"]
-        )
+        self.assertTrue(solver.find_format_violation(sol1))
+        self.assertTrue(solver.find_format_violation({("A", "1"), ("B", "1")}))
+        self.assertTrue(solver.find_format_violation({("A", "1"), ("B", "2s")}))
+        self.assertTrue(solver.find_format_violation({("A", "1"), ("Bs", "2")}))
 
     def test_solution_possible_reason_no_match(self):
         solver = Solver(toy_season)
@@ -221,10 +216,12 @@ class TestSeasonSolution(unittest.TestCase):
             ("E", "6"),
             ("D", "7"),
         }
-        self.assertFalse(solver.check_multiple_match_logic(sol1, 1)["res"])
+        self.assertEqual(
+            solver.find_multiple_match_violation(sol1, 1), "too_many_double_matches"
+        )
         sol2 = {("A", "1"), ("B", "2"), ("C", "3"), ("D", "4"), ("D", "5"), ("E", "6")}
         self.assertEqual(
-            solver.check_multiple_match_logic(sol2, 1)["reason"],
+            solver.find_multiple_match_violation(sol2, 1),
             "mm_not_in_complete_multiple_match",
         )
         sol3 = {
@@ -234,12 +231,12 @@ class TestSeasonSolution(unittest.TestCase):
             ("B", "2"),
         }
         self.assertEqual(
-            solver.check_multiple_match_logic(sol3, 1)["reason"],
+            solver.find_multiple_match_violation(sol3, 1),
             "too_many_double_matches",
         )
         sol4 = {("A", "1"), ("A", "2"), ("A", "3")}
         self.assertEqual(
-            solver.check_multiple_match_logic(sol4, 1)["reason"],
+            solver.find_multiple_match_violation(sol4, 1),
             "triple_match_not_allowed",
         )
 
@@ -255,7 +252,7 @@ class TestSeasonSolution(unittest.TestCase):
         # season without dm specified
         solver = Solver(toy_season_wo_dm)
         sol1 = {("A", "1"), ("B", "2"), ("C", "3"), ("D", "4"), ("D", "5"), ("E", "6")}
-        self.assertTrue(solver.check_multiple_match_logic(sol1, 2))
+        self.assertFalse(solver.find_multiple_match_violation(sol1, 2))
         sol2 = {
             ("A", "1"),
             ("A", "2"),
@@ -263,12 +260,12 @@ class TestSeasonSolution(unittest.TestCase):
             ("B", "2"),
         }
         self.assertEqual(
-            solver.check_multiple_match_logic(sol2, 1)["reason"],
+            solver.find_multiple_match_violation(sol2, 1),
             "too_many_double_matches",
         )
         sol3 = {("A", "1"), ("A", "2"), ("A", "3")}
         self.assertEqual(
-            solver.check_multiple_match_logic(sol3, 1)["reason"],
+            solver.find_multiple_match_violation(sol3, 1),
             "triple_match_not_allowed",
         )
 
@@ -279,27 +276,27 @@ class TestSeasonSolution(unittest.TestCase):
     def test_check_multiple_match_logic_with_double_match_pair(self):
         solver = VIP2023Solver(toy_season_with_double_match_pair)
         sol1 = {("A", "1"), ("B", "2"), ("C", "3"), ("D", "4"), ("D", "5"), ("A", "6")}
-        self.assertTrue(solver.check_multiple_match_logic(sol1, 3))
+        self.assertTrue(solver.find_multiple_match_violation(sol1, 3))
         sol2 = {
             ("A", "1"),
             ("B", "6"),
         }
         self.assertEqual(
-            solver.check_multiple_match_logic(sol2, 3)["reason"],
+            solver.find_multiple_match_violation(sol2, 3),
             "vip23_double_match_pair_not_same_match",
         )
         sol3 = {("A", "1"), ("A", "2")}
         self.assertEqual(
-            solver.check_multiple_match_logic(sol3, 3)["reason"],
+            solver.find_multiple_match_violation(sol3, 3),
             "double_match_lefts_not_double_match_pair",
         )
         sol4 = {("A", "1"), ("A", "2"), ("A", "3")}
         self.assertEqual(
-            solver.check_multiple_match_logic(sol4, 1)["reason"],
+            solver.find_multiple_match_violation(sol4, 1),
             "triple_match_not_allowed",
         )
 
-    def compare_solve_approaches(self, solver: Solver, end=5):
+    def compare_solve_approaches(self, solver: Solver, end: int = 5):
         season = solver.season
         empty_season = Season(
             "empty",
@@ -317,6 +314,5 @@ class TestSeasonSolution(unittest.TestCase):
         )
         empty_season = Solver(empty_season)
         sols = set(empty_season.generate_complete_solutions(frozenset(), end, True))
-        print(len(sols))
         sols = [s for s in sols if solver.solution_possible(s, end, True)]
         self.assertEqual(len(sols), len(solver.solve(end)))

@@ -1,11 +1,15 @@
 from collections import Counter
+from typing import override
 
 from .ayto import Solver, dict_rep, mm_left
 from .models import *
 
 
 class VIP2025Solver(Solver):
-    def check_multiple_match_logic(self, sol: Solution | set[Pair], end: int) -> dict:
+    @override
+    def find_multiple_match_violation(
+        self, sol: Solution | set[Pair], end: int
+    ) -> str | None:
         # VIP2025 allows two double matches, one of those must include Jimi
 
         seated_lefts, seated_right = zip(*sol)
@@ -21,14 +25,15 @@ class VIP2025Solver(Solver):
 
         # if Jimi is seated and we have two double matches, he must be part of one of them
         if mm in seated_right and len(mult_lefts) == 2 and mm not in mult_rights:
-            return {"res": False, "reason": "Jimi_not_in_double_match"}
+            return "Jimi_not_in_double_match"
 
         r_counter = Counter(seated_lefts)
         # no tripple matches
         if any(v > 2 for v in r_counter.values()):
-            return {"res": False, "reason": "triple_match_not_allowed"}
-        return {"res": True, "reason": None}
+            return "triple_match_not_allowed"
+        return None
 
+    @override
     def merge_mm_not_in_solution(
         self,
         sol: Solution,

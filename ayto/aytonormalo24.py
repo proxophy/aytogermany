@@ -1,10 +1,12 @@
 from collections import Counter
+from typing import override
 
 from .ayto import Solver
 from .models import *
 
 
 class Normalo2024Solver(Solver):
+    @override
     def no_match_reason(self, l: str, r: str, end: int) -> str | None:
         """Return whether a pair is known not to be a match up to `end`"""
 
@@ -23,6 +25,7 @@ class Normalo2024Solver(Solver):
 
         return super().no_match_reason(l, r, end)
 
+    @override
     def merge_mm_not_in_solution(
         self,
         sol: Solution,

@@ -1,8 +1,11 @@
+from typing import override
+
 from .ayto import Solver
 from .models import *
 
 
 class VIP2023Solver(Solver):
+    @override
     def no_match_reason(self, l: str, r: str, end: int) -> str | None:
         assert self.season.double_match_pair
         if end >= self.season.double_match_pair_known:
@@ -14,17 +17,17 @@ class VIP2023Solver(Solver):
                         return "matchbox_false_for_double_match_pair"
         return super().no_match_reason(l, r, end)
 
-    def check_multiple_match_logic(self, sol: Solution | set[Pair], end: int) -> dict:
+    @override
+    def find_multiple_match_violation(
+        self, sol: Solution | set[Pair], end: int
+    ) -> str | None:
         assert self.season.double_match_pair
 
         if end >= self.season.double_match_pair_known:
             # lefts that partner with double_match_pair
             dml = [l for (l, r) in sol if r in self.season.double_match_pair]
             if len(dml) > 1 and dml[0] != dml[1]:
-                return {
-                    "res": False,
-                    "reason": "vip23_double_match_pair_not_same_match",
-                }
+                return "vip23_double_match_pair_not_same_match"
 
             sol_dict = dict_rep(sol)
 
@@ -36,13 +39,11 @@ class VIP2023Solver(Solver):
                 if len(mult_rights) == 2 and set(self.season.double_match_pair) != set(
                     mult_rights
                 ):
-                    return {
-                        "res": False,
-                        "reason": "double_match_lefts_not_double_match_pair",
-                    }
+                    return "double_match_lefts_not_double_match_pair"
 
-        return super().check_multiple_match_logic(sol, end)
+        return super().find_multiple_match_violation(sol, end)
 
+    @override
     def merge_mm_not_in_solution(
         self,
         sol: Solution,
@@ -57,7 +58,7 @@ class VIP2023Solver(Solver):
                 sol, partial_solutions, end, include_night
             )
 
-        solutions = []
+        solutions: list[Solution] = []
         for partial_solution in partial_solutions:
             ten_matches = sol.union(partial_solution)
 

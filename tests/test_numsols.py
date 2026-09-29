@@ -48,7 +48,7 @@ class TestSeasonNumSols(unittest.TestCase):
     def test_vip2026(self):
         self.check_season("vip2026")
 
-    def check_season(self, sn, start=2):
+    def check_season(self, sn: str, start: int = 2):
         row = df.loc[sn]
 
         for i in range(start, 10):
@@ -64,19 +64,4 @@ class TestSeasonNumSols(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    allseasons = [
-        "normalo2020",
-        "normalo2021",
-        "normalo2022",
-        "normalo2023",
-        # "normalo2024",
-        "normalo2025",
-        "normalo2026",
-        "vip2021",
-        "vip2022",
-        "vip2023",
-        "vip2024",
-        # "vip2025",
-        "vip2026",
-    ]
-    unittest.main()
+    _ = unittest.main()

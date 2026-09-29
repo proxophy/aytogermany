@@ -7,7 +7,7 @@ Solution = frozenset[Pair]
 
 
 def double_match_for_right(sol: Solution | set[Pair]):
-    rs = []
+    rs: list[str] = []
     for _, r in sol:
         if r in rs:
             return True
@@ -15,7 +15,7 @@ def double_match_for_right(sol: Solution | set[Pair]):
     return False
 
 
-def get_candidates(sol: Solution | set[Pair]):
+def get_candidates(sol: Solution | set[Pair]) -> tuple[set[str], set[str], int]:
     if len(sol) > 0:
         g_lefts, g_rights = zip(*sol)
         g_lefts, g_rights = list(g_lefts), list(g_rights)
@@ -26,7 +26,7 @@ def get_candidates(sol: Solution | set[Pair]):
 
 
 def mm_left(sol: Solution | set[Pair]) -> str | None:
-    ls = set()
+    ls: set[str] = set()
     for l, _ in sol:
         if l in ls:
             return l
@@ -42,7 +42,7 @@ def has_two_dms(sol: Solution | set[Pair]) -> bool:
 
 
 def dict_rep(sol: Solution | set[Pair]) -> dict[str, list[str]]:
-    d = {}
+    d: dict[str, list[str]] = {}
     for l, r in sol:
         if l in d:
             d[l].append(r)
@@ -159,7 +159,7 @@ class Season:
         nights = self.get_nights(end)
         if not include_night:
             nights = nights[:-1]
-        sitting_nomatches = set()
+        sitting_nomatches: set[Pair] = set()
 
         for night in nights:
             pl: int = len(sol & night.pairs)
@@ -170,10 +170,10 @@ class Season:
         return sitting_nomatches
 
     def get_black_out_nights(self):
-        bonights = set()
+        bonights: set[int] = set()
         num_known_pms = 0
-        pmls = []
-        pms = []
+        pmls: list[str] = []
+        pms: set[Pair] = set()
         for ep, (l, r), res in self.matchboxes:
             if ep >= len(self.nights):
                 continue
@@ -181,18 +181,16 @@ class Season:
                 # add one perfect match per person, ignoring double matches
                 num_known_pms += 1
                 pmls.append(l)
-                pms.append((l, r))
+                pms.add((l, r))
             # all known perfect matches must be seated
-            if num_known_pms == self.nights[ep].lights and set(pms).issubset(
+            if num_known_pms == self.nights[ep].lights and (pms).issubset(
                 self.nights[ep].pairs
             ):
                 bonights.add(ep)
         return bonights
 
 
-def random_night_for_sol(
-    sol: Solution, lefts: list[str], rights: list[str], dm: str | None
-):
+def random_night_for_sol(sol: Solution, lefts: list[str], rights: list[str]):
     perm = random.sample(rights, len(lefts))
     pairs = {(l, r) for l, r in zip(lefts, perm)}
     lights = len(sol & pairs)

@@ -16,8 +16,9 @@ def check_nights(
     """Check if nights are fine"""
 
     # make sure all pairs are valid pairs and there are no duplicates
-    for i, night in enumerate(nights):
-        seated_lefts, seated_rights = [], []
+    for i, night in enumerate(nights):  # pyright: ignore[reportUnusedVariable]
+        seated_lefts: list[str] = []
+        seated_rights: list[str] = []
 
         for l, r in night.pairs:
             if l in lefts and r in rights:
@@ -55,8 +56,8 @@ def validate_season_args(
     check_nights(nights, lefts, rights)
 
     # matchboxes with results
-    pairs = set()
-    for n, (l, r), result in matchboxes:
+    pairs: set[Pair] = set()
+    for _, (l, r), _ in matchboxes:
         if (l, r) in pairs or (r, l) in pairs:
             raise ValueError(f"{(l, r)} occurs more than once in matchboxes")
         if l in lefts and r in rights:
@@ -86,9 +87,11 @@ def read_data_from_excel(
     str | None,
     Solution,
 ]:
-    dfcand = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Candidates", header=0)
-    lefts: tuple[str] = tuple(dfcand["left"].dropna().tolist())
-    rights: tuple[str] = tuple(dfcand["right"].dropna().tolist())
+    dfcand: pd.DataFrame = pd.read_excel(
+        f"data/{sn}.xlsx", sheet_name="Candidates", header=0
+    )
+    lefts: tuple[str, ...] = tuple(dfcand["left"].dropna().tolist())
+    rights: tuple[str, ...] = tuple(dfcand["right"].dropna().tolist())
     dmlist = dfcand["mm"].dropna().tolist() if "mm" in dfcand.columns else []
     if len(dmlist) > 1:
         raise ValueError(f"More than one DM in Candidates sheet for {sn}")
@@ -97,10 +100,12 @@ def read_data_from_excel(
         dm = dfcand["mm"].dropna().tolist()[0] if "mm" in dfcand.columns else None
 
     dfnights = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Nights", header=0)
+    nights: tuple[Night, ...] = ()
     if sn != "vip2026":
-        nights: tuple[Night, ...] = tuple(
+        nights = tuple(
             Night(
-                set(make_pair_list(list(dfnights.columns[:-1]), row[:-1])), int(row[-1])
+                set(make_pair_list(list(dfnights.columns[:-1]), row[:-1])),
+                int(row[-1]),  # pyright: ignore[reportAny]
             )
             for row in dfnights.values.tolist()
         )
@@ -110,11 +115,10 @@ def read_data_from_excel(
             for row in dfnights.values.tolist()
         ]
         pairspnight = [
-            tuple(filter(lambda x: isinstance(x[1], str), pairs))
-            for pairs in pairspnight
+            tuple(filter(lambda x: not pd.isna(x[1]), pairs)) for pairs in pairspnight
         ]
-        nights: tuple[Night, ...] = tuple(
-            Night(set(pairspnight[i]), int(dfnights["lights"][i]))
+        nights = tuple(
+            Night(set(pairspnight[i]), int(dfnights["lights"].iloc[i]))  # pyright: ignore[reportAny]
             for i in range(dfnights.shape[0])
         )
 
@@ -126,19 +130,19 @@ def read_data_from_excel(
     )
 
     validate_season_args(lefts, rights, nights, matchboxes, dm)
-
+    solution: Solution = Solution()
     try:
         dfsolution = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Solution", header=0)
-        solution: Solution = Solution(
+        solution = Solution(
             make_pair_list(dfsolution["left"].to_list(), dfsolution["right"].to_list())
         )
-    finally:
-        solution: Solution = Solution()
+    except ValueError:
+        solution = Solution()
 
     return lefts, rights, nights, matchboxes, dm, solution
 
 
-def sols_as_df(sols) -> pd.DataFrame:
+def sols_as_df(sols: list[Solution]) -> pd.DataFrame:
     rows = [{r: l for (l, r) in s} for s in sols]
     df = pd.DataFrame(rows)
     return df

@@ -1,10 +1,13 @@
-import functools
 import time
 from collections import Counter
+from collections.abc import Callable
+from functools import wraps
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+
+from ayto.models import Pair
 
 from .ayto import Solver
 from .models import Solution, mm_left
@@ -22,8 +25,8 @@ class SolutionSpace:
         clefts, crights = zip(*sols[0])
         self.lefts = list(set(clefts))
         self.rights = list(set(crights))
-        self.allpairs = [(l, r) for l in self.lefts for r in self.rights]
-        self.pairs_counter = Counter([p for s in self.sols for p in s])
+        self.allpairs: list[Pair] = [(l, r) for l in self.lefts for r in self.rights]
+        self.pairs_counter: Counter[Pair] = Counter([p for s in self.sols for p in s])
         for l, r in self.allpairs:
             if (l, r) not in self.pairs_counter:
                 self.pairs_counter[(l, r)] = 0
@@ -34,9 +37,9 @@ class SolutionSpace:
             for (l, r) in self.pairs_counter
         }
 
-    def get_most_likely_pair(self):
+    def get_most_likely_pair(self) -> Pair:
         probs_dict = self.get_pair_probs_dict()
-        return max(probs_dict, key=probs_dict.get)  # type:ignore
+        return max(probs_dict, key=lambda x: probs_dict.get(x, 0))
 
     def get_no_matches(self) -> list[tuple[str, str]]:
         return [p for p in self.pairs_counter if self.pairs_counter[p] == 0]
@@ -61,7 +64,7 @@ class SolutionSpace:
         ]
 
 
-def index_to_episode(i):
+def index_to_episode(i: int) -> int:
     return 2 * (i + 1) + 1
 
 
@@ -109,18 +112,16 @@ def plot_probs(sols: list[Solution]):
     my_cmap = sns.light_palette((0.2, 0.7, 0.2), as_cmap=True)
     my_cmap.set_under((1, 0.7, 0.7))
     my_cmap.set_over((0.2, 0.8, 0.2))
-    sns.heatmap(df, vmin=1e-5, vmax=100 - 1e-5, cmap=my_cmap, annot=True, fmt=".0f")
+    _ = sns.heatmap(df, vmin=1e-5, vmax=100 - 1e-5, cmap=my_cmap, annot=True, fmt=".0f")  # pyright: ignore[reportUnknownMemberType]
     plt.tight_layout()
-    plt.show()
+    plt.show()  # pyright: ignore[reportUnknownMemberType]
 
 
-def time_it(inner):
-    @functools.wraps(inner)
-    def c_inner(*args):
+def time_it[**P, R](inner: Callable[P, R]) -> None:
+    @wraps(inner)
+    def c_inner(*args: P.args, **kwargs: P.kwargs) -> R:
         start = time.time()
-        res = inner(*args)
+        res = inner(*args, **kwargs)
         end = time.time()
         print(f"=== time needed for {inner.__name__}: {(end - start):0.3f}s ===")
         return res
-
-    return c_inner

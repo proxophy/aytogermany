@@ -1,5 +1,6 @@
 import functools
 import itertools
+from collections.abc import Generator, Iterable
 
 from .models import *
 
@@ -20,11 +21,11 @@ allseasons = [
 ]
 
 
-def product_without_reps(arr: list[list]):
-    used = set()
-    current = []
+def product_without_reps(arr: list[list[str]]) -> Generator[list[str], str, None]:
+    used: set[str] = set()
+    current: list[str] = []
 
-    def rec(i):
+    def rec(i: int) -> Generator[list[str], str, None]:
         if i == len(arr):
             yield current.copy()
             return
@@ -38,7 +39,7 @@ def product_without_reps(arr: list[list]):
 
             yield from rec(i + 1)
 
-            current.pop()
+            _ = current.pop()
             used.remove(x)
 
     yield from rec(0)
@@ -52,15 +53,14 @@ class Solver:
     """
 
     season: Season
-    sm = None
+    sm: str | None = None
     double_match_for_right: bool = False
-    two_dms: bool = False
 
     def __init__(self, season: Season) -> None:
-        self.season: Season = season
-        self.bo_nights = self.season.get_black_out_nights()
-        self.no_match = functools.cache(self.no_match)
-
+        self.season = season
+        self.bo_nights: set[int] = self.season.get_black_out_nights()
+       
+    @functools.lru_cache  # noqa: B019
     def no_match(self, l: str, r: str, end: int) -> bool:
         """Return whether `(l, r)` is known not to be a match up to a given episode"""
         return self.no_match_reason(l, r, end) is not None
@@ -102,32 +102,21 @@ class Solver:
 
         return None
 
-    def solution_has_correct_format(self, sol: Solution | set[Pair]) -> dict:
-        """Check whether a solution has the expected format.
-        Returns dict with keys `res`, `reason` and optionally `detail`
-        """
+    def find_format_violation(self, sol: Solution | set[Pair]) -> str | None:
+        """Return the first fomrat violation found in the solution, if any" """
 
         if len(sol) > self.season.num_matches:
-            return {"res": False, "reason": "too_many_matches"}
+            return "too_many_matches"
 
         if not self.double_match_for_right and double_match_for_right(sol):
-            return {"res": False, "reason": "double_match_for_right"}
+            return "double_match_for_right"
 
         for l, r in sol:
             if l not in self.season.lefts:
-                return {
-                    "res": False,
-                    "reason": "wrongly_written_names_as_left",
-                    "detail": l,
-                }
+                return "wrongly_written_names_as_left"
             elif r not in self.season.rights:
-                return {
-                    "res": False,
-                    "reason": "wrongly_written_names_as_right",
-                    "detail": r,
-                }
-
-        return {"res": True, "reason": None}
+                return "wrongly_written_names_as_right"
+        return None
 
     def solution_possible(
         self, sol: Solution | set[Pair], end: int, include_night: bool
@@ -147,14 +136,14 @@ class Solver:
     def find_violation(
         self, sol: Solution | set[Pair], end: int, include_night: bool
     ) -> str | None:
-        """Return the first logic violation found in the solution, if any."""
+        """Return the first logic violation found in the solution, if any"""
 
         if len(sol) > self.season.num_matches:
             return "too_many_matches"
 
-        format_check = self.solution_has_correct_format(sol)
-        if not format_check["res"]:
-            return format_check["res"]
+        format_check = self.find_format_violation(sol)
+        if format_check is not None:
+            return format_check
 
         end = max(0, min(end, 10))
 
@@ -166,9 +155,9 @@ class Solver:
         complete: bool = len(sol) == self.season.num_matches
 
         # check conditions for double matches
-        double_match_logic = self.check_multiple_match_logic(sol, end)
-        if not double_match_logic["res"]:
-            return double_match_logic["res"]
+        double_match_check = self.find_multiple_match_violation(sol, end)
+        if double_match_check is not None:
+            return double_match_check
 
         # number of lights with pairs matching lights in nights
         # if we don't have self.nummatches pairs, we allow lesser lights
@@ -176,7 +165,7 @@ class Solver:
         if not include_night:
             nights = nights[:-1]
 
-        for i, night in enumerate(nights):
+        for _, night in enumerate(nights):
             sol_lights: int = len(sol & night.pairs)
 
             if sol_lights > night.lights:
@@ -186,10 +175,10 @@ class Solver:
 
         return None
 
-    def check_multiple_match_logic(self, sol: Solution | set[Pair], end: int) -> dict:
-        """Check whether a solution satisfies the multiple-match constraints up to a given episode.
-        Returns dict with keys `res`, `reason` and optionally `detail`
-        """
+    def find_multiple_match_violation(
+        self, sol: Solution | set[Pair], end: int
+    ) -> str | None:
+        """Return the first multiple-match violation found in the solution, if any"""
 
         sol_dict = dict_rep(sol)
         # lefts with multiple partners
@@ -198,16 +187,13 @@ class Solver:
         mm = self.season.get_mm(end)
 
         if len(mult_lefts) >= 2:
-            return {"res": False, "reason": "too_many_double_matches"}
+            return "too_many_double_matches"
 
         elif len(mult_lefts) == 1:
             mult_left = mult_lefts[0]
             mult_rights = sol_dict[mult_left]
             if len(mult_rights) > self.season.max_mm_size:
-                return {
-                    "res": False,
-                    "reason": "triple_match_not_allowed",
-                }
+                return "triple_match_not_allowed"
 
             if mm:  # mm is not None
                 _, seated_rights = zip(*sol)
@@ -216,20 +202,12 @@ class Solver:
                     len(mult_rights) == self.season.max_mm_size
                     and mm not in sol_dict[mult_left]
                 ):
-                    return {
-                        "res": False,
-                        "reason": "mm_not_in_complete_multiple_match",
-                        "detail": (mult_left, mult_rights),
-                    }
+                    return "mm_not_in_complete_multiple_match"
                 elif mm in seated_rights and mm not in sol_dict[mult_left]:
                     # only used in normalo2024
-                    return {
-                        "res": False,
-                        "reason": "multiple_match_not_possible_without_mm",
-                        "detail": (mult_left, mult_rights),
-                    }
+                    return "multiple_match_not_possible_without_mm"
 
-        return {"res": True, "reason": None}
+        return None
 
     def combine_possible_solutions(
         self,
@@ -240,7 +218,7 @@ class Solver:
     ) -> list[Solution]:
         """Combines solutions from two lists and keeps feasible combinations, given `end`(inclusive) and `include_night`"""
 
-        m_asm = set()
+        m_asm: set[Solution] = set()
         for s1, s2 in itertools.product(solutions1, solutions2):
             s3 = s1 | s2
             if self.solution_possible(s3, end, include_night):
@@ -313,7 +291,7 @@ class Solver:
             for r in self.season.rights
         }
 
-        solutions = []
+        solutions: list[Solution] = []
 
         for partial_solution in partial_solutions:
             base_matches = sol.union(partial_solution)
@@ -364,7 +342,7 @@ class Solver:
         ):
             return [sol]
 
-        def zip_product(clefts, ordering) -> Solution:
+        def zip_product(clefts: Iterable[str], ordering: Iterable[str]) -> Solution:
             return Solution(p for p in zip(clefts, ordering))
 
         _, _, mm_num = get_candidates(sol)
@@ -413,7 +391,7 @@ class Solver:
             nights = nights[:-1]
         kpm = self.season.get_pms(end)
 
-        pairs_per_night = []
+        pairs_per_night: list[list[Solution]] = []
         for night in nights:
             invalid_pairs = list(
                 filter(lambda p: self.no_match(*p, end) or p in kpm, night.pairs)

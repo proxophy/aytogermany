@@ -1,9 +1,11 @@
+# pyright: standard
+
 import json
 import random
 import string
+import sys
 from collections import Counter
-
-import pandas as pd
+from typing import Any
 
 from ayto import Solver
 from ayto.analysis import *
@@ -11,23 +13,12 @@ from ayto.models import *
 from ayto.utils import *
 
 
-def appendsol(sn: str, tsol: set[tuple[str, str]]):
-    plefts, prights = zip(*tsol)
-    dfsol = pd.DataFrame(data={"left": plefts, "right": prights})
-    dfsol = dfsol.sort_values(by=["left", "right"]).reset_index(drop=True)
-    print(dfsol)
-    with pd.ExcelWriter(
-        f"data/{sn}.xlsx", engine="openpyxl", mode="a", if_sheet_exists="replace"
-    ) as writer:
-        dfsol.to_excel(writer, sheet_name="Solution", index=False)
-
-
-def comparetoao(solver: Solver, sols, end):
+def comparetoao(solver: Solver, sols: list[Solution], end: int):
     with open("aodata.txt", "r") as f:
         lines = map(eval, f.readlines())
 
-    def parse_sol(ld):
-        pairs = set()
+    def parse_sol(ld: dict[str, list[str]]):
+        pairs: set[Pair] = set()
         for l, rs in ld.items():
             for r in rs:
                 pairs.add((l, r))
@@ -37,10 +28,10 @@ def comparetoao(solver: Solver, sols, end):
 
     print("lengths", len(solsao), len(sols))
     count = count2 = 0
-    reasons = []
+    reasons: list[str] = []
     for s in solsao:
         spd = solver.find_violation(s, end, True)
-        if not spd:
+        if spd is not None:
             count += 1
             reasons.append(spd)
         elif s not in sols:
@@ -60,7 +51,7 @@ def comparetoao(solver: Solver, sols, end):
             spd = solver.find_violation(s, end, False)
             count += 1
             # print(s)
-            if not spd:
+            if spd is not None:
                 reasons.append(spd)
                 # print(spd)
                 count2 += 1
@@ -72,11 +63,12 @@ def comparetoao(solver: Solver, sols, end):
 def check_ao_data(sols: list[Solution], end, sn):
 
     with open("ayto_data.json", encoding="utf-8") as f:
-        all_data = json.load(f)
-    season_data = all_data[sn]
-    weeks = season_data["weeks"]
+        all_data: dict[str, Any] = json.load(f)  # pyright: ignore[reportExplicitAny]
+
+    season_data: dict[str, Any] = all_data[sn]  # pyright: ignore[reportExplicitAny, reportAny]
+    weeks: dict[str, Any] = season_data["weeks"]  # pyright: ignore[reportExplicitAny, reportAny]
     # print("end", end)
-    for week in weeks[: end + 1]:
+    for week in weeks[: end + 1]:  # pyright: ignore[reportArgumentType]
         # print("week number", week["number"])
         for event in week["events"]:
             if event["type"] == "box":
@@ -250,7 +242,7 @@ def simulate_season(n: int = 5, with_dm: bool = True) -> tuple[Season, list[Solu
         pop_dm(seated_pairs)
 
         clights = len(seated_pairs & solution)  # determine lights
-        nights.append(Night(seated_pairs, clights))  # type: ignore
+        nights.append(Night(seated_pairs, clights))
         if clights == 0:
             # print("blackout night", seated_pairs)
             sols = [
@@ -332,7 +324,7 @@ def check_generated_season(n: int = 5, with_dm: bool = True):
 
 
 if __name__ == "__main__":
-    sn = "normalo2026"
+    sn = "normalo2020"
 
     import cProfile
 
@@ -340,15 +332,17 @@ if __name__ == "__main__":
     profiler.enable()
 
     season: Season = get_season(sn)
-    # sol: Solution = season.solution  # type: ignore
-    solver: Solver = get_solver(sn)  # type: ignore
-    end = 2
+    # sol: Solution = season.solution 
+    solver: Solver = get_solver(sn)  
+    end = 6
     sols = solver.solve(end)
     print(len(sols))
+    # plot_probs(sols)
     # print(solver.no_match("Julian M", "Linda", 4, True))
 
-    # exit()
-    import tqdm
+    sys.exit()
+
+    import tqdm  # noqa: F401
 
     # for i in tqdm.trange(0, 100):
     #     check_generated_season(5, with_dm= True)

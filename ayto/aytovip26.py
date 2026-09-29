@@ -1,19 +1,25 @@
 import itertools
+from collections.abc import Iterable
+from typing import override
 
 from .ayto import Solver, get_candidates
 from .models import *
 
 
 class VIP2026Solver(Solver):
-    sm: str = "Laurenz"
+    sm: str | None = "Laurenz"
     double_match_for_right: bool = True
 
-    def check_multiple_match_logic(self, sol: Solution | set[Pair], end: int) -> dict:
+    @override
+    def find_multiple_match_violation(
+        self, sol: Solution | set[Pair], end: int
+    ) -> str | None:
 
-        if not super().check_multiple_match_logic(sol, end)["res"]:
-            return super().check_multiple_match_logic(sol, end)
+        supercheck = super().find_multiple_match_violation(sol, end)
+        if supercheck is not None:
+            return supercheck
 
-        pdict = {r: [] for r in self.season.rights}
+        pdict: dict[str, list[str]] = {r: [] for r in self.season.rights}
         for l, r in sol:
             pdict[r].append(l)
 
@@ -21,15 +27,16 @@ class VIP2026Solver(Solver):
             r for r in self.season.rights if len(pdict[r]) > 1
         ]  # rights with multiple matches
         if len(mutiplers) > 1:
-            return {"res": False, "reason": "more_than_one_double_right_match"}
+            return "more_than_one_double_right_match"
         elif len(mutiplers) == 1:
             multir = mutiplers[0]
             multils = pdict[multir]
             if len(multils) == 2 and self.sm not in multils:
-                return {"res": False, "reason": "Laurenz_not_in_double_right_match"}
+                return "Laurenz_not_in_double_right_match"
 
-        return {"res": True, "reason": None}
+        return None
 
+    @override
     def generate_complete_solutions(
         self, sol: Solution, end: int, include_night: bool
     ) -> list[Solution]:
@@ -41,13 +48,17 @@ class VIP2026Solver(Solver):
         ):
             return [sol]
 
-        def zip_product(clefts, ordering) -> Solution:
+        def zip_product(clefts: Iterable[str], ordering: Iterable[str]) -> Solution:
             return Solution(p for p in zip(clefts, ordering))
+
+        assert self.sm
 
         glefts, _, mmnum = get_candidates(sol)
 
-        pos_matches = self.possible_matches_for_solution(sol, end, include_night)
-        pos_matches.pop(self.sm, None)  # type: ignore
+        pos_matches: dict[str, list[str]] = self.possible_matches_for_solution(
+            sol, end, include_night
+        )
+        _ = pos_matches.pop(self.sm, None)
         if self.sm in glefts:
             # remove pair with self.sm if necessary
             smmatches = [r for l, r in sol if l == self.sm]
@@ -58,7 +69,7 @@ class VIP2026Solver(Solver):
             smmatches = [
                 r
                 for r in self.season.rights
-                if not self.no_match(self.sm, r, end)  # type: ignore
+                if not self.no_match(self.sm, r, end) 
             ]
 
         products = [
