@@ -8,7 +8,7 @@ from .models import *
 class VIP2025Solver(Solver):
     @override
     def find_multiple_match_violation(
-        self, sol: Solution | set[Pair], end: int
+        self, sol: Solution, end: int
     ) -> str | None:
         # VIP2025 allows two double matches, one of those must include Jimi
 

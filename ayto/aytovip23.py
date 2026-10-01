@@ -19,7 +19,7 @@ class VIP2023Solver(Solver):
 
     @override
     def find_multiple_match_violation(
-        self, sol: Solution | set[Pair], end: int
+        self, sol: Solution, end: int
     ) -> str | None:
         assert self.season.double_match_pair
 

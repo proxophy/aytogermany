@@ -2,7 +2,7 @@ import itertools
 from collections.abc import Iterable
 from typing import override
 
-from .ayto import Solver, get_candidates
+from .ayto import Solver
 from .models import *
 
 
@@ -12,7 +12,7 @@ class VIP2026Solver(Solver):
 
     @override
     def find_multiple_match_violation(
-        self, sol: Solution | set[Pair], end: int
+        self, sol: Solution, end: int
     ) -> str | None:
 
         supercheck = super().find_multiple_match_violation(sol, end)
@@ -64,7 +64,7 @@ class VIP2026Solver(Solver):
             smmatches = [r for l, r in sol if l == self.sm]
             # print(smmatches)
             # isol = set(sol)
-            sol = sol.difference({(self.sm, smmatches[0])})
+            sol = Solution(sol.difference({(self.sm, smmatches[0])}))
         else:
             smmatches = [
                 r
@@ -89,7 +89,7 @@ class VIP2026Solver(Solver):
         # add self.sm as double_match
         sitting_no_matches = self.season.get_sitting_no_matches(sol, end, include_night)
         solutions = [
-            s | {(self.sm, r)}
+            Solution(s | {(self.sm, r)})
             for r in smmatches
             for s in isols
             if (self.sm, r) not in sitting_no_matches

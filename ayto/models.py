@@ -5,8 +5,11 @@ from dataclasses import dataclass
 Pair = tuple[str, str]
 Solution = frozenset[Pair]
 
+# class Solution(frozenset[Pair]):
 
-def double_match_for_right(sol: Solution | set[Pair]):
+
+def double_match_for_right(sol: Solution) -> bool:
+    """Return whether solution has a double match for a right"""
     rs: list[str] = []
     for _, r in sol:
         if r in rs:
@@ -15,7 +18,8 @@ def double_match_for_right(sol: Solution | set[Pair]):
     return False
 
 
-def get_candidates(sol: Solution | set[Pair]) -> tuple[set[str], set[str], int]:
+def get_candidates(sol: Solution) -> tuple[set[str], set[str], int]:
+    """Return sets of lefts and rights in solution and size of the maximum multuple match"""
     if len(sol) > 0:
         g_lefts, g_rights = zip(*sol)
         g_lefts, g_rights = list(g_lefts), list(g_rights)
@@ -25,7 +29,8 @@ def get_candidates(sol: Solution | set[Pair]) -> tuple[set[str], set[str], int]:
     return set(g_lefts), set(g_rights), max(map(len, d.values()))
 
 
-def mm_left(sol: Solution | set[Pair]) -> str | None:
+def mm_left(sol: Solution) -> str | None:
+    """Return first left with multiple match or `None` if there isn't any"""
     ls: set[str] = set()
     for l, _ in sol:
         if l in ls:
@@ -34,14 +39,16 @@ def mm_left(sol: Solution | set[Pair]) -> str | None:
     return None
 
 
-def has_two_dms(sol: Solution | set[Pair]) -> bool:
+def has_two_dms(sol: Solution) -> bool:
+    """Return wheter there are two double matches in a solution"""
     sol_dict = dict_rep(sol)
     # lefts with multiple partners
     mult_lefts = [l for l, rs in sol_dict.items() if len(rs) > 1]
     return len(mult_lefts) == 2
 
 
-def dict_rep(sol: Solution | set[Pair]) -> dict[str, list[str]]:
+def dict_rep(sol: Solution) -> dict[str, list[str]]:
+    """Return dict representation of set of pairs"""
     d: dict[str, list[str]] = {}
     for l, r in sol:
         if l in d:
@@ -113,14 +120,16 @@ class Season:
     rights: tuple[str, ...]
     nights: tuple[Night, ...]
     matchboxes: Matchboxes
-    solution: Solution | None = None
+    solution: Solution = Solution()  # noqa: RUF009
     mm: str | None = None
     num_matches: int = 11
     double_match_pair: tuple[str, str] | None = None
     double_match_pair_known: int = 7  # after which episode mm is known
     mm_known_after_week: int = 0  # after which episode mm is known
     max_mm_size: int = 2  # max size of multiple match pair
-    mb_reveals_dm: bool = True  # if one part of double match is revealed, the other one is revealed immediately after
+    mb_reveals_dm: bool = (
+        True  # if one part of double match is revealed, the other one is revealed immediately after
+    )
     has_two_dms: bool = False
 
     def __post_init__(self):

@@ -102,7 +102,7 @@ class Solver:
 
         return None
 
-    def find_format_violation(self, sol: Solution | set[Pair]) -> str | None:
+    def find_format_violation(self, sol: Solution) -> str | None:
         """Return the first fomrat violation found in the solution, if any" """
 
         if len(sol) > self.season.num_matches:
@@ -119,7 +119,7 @@ class Solver:
         return None
 
     def solution_possible(
-        self, sol: Solution | set[Pair], end: int, include_night: bool
+        self, sol: Solution, end: int, include_night: bool
     ) -> bool:
         """Check whether the solution is feasible up to a given episode
 
@@ -134,7 +134,7 @@ class Solver:
         return self.find_violation(sol, end, include_night) is None
 
     def find_violation(
-        self, sol: Solution | set[Pair], end: int, include_night: bool
+        self, sol: Solution, end: int, include_night: bool
     ) -> str | None:
         """Return the first logic violation found in the solution, if any"""
 
@@ -176,7 +176,7 @@ class Solver:
         return None
 
     def find_multiple_match_violation(
-        self, sol: Solution | set[Pair], end: int
+        self, sol: Solution, end: int
     ) -> str | None:
         """Return the first multiple-match violation found in the solution, if any"""
 
@@ -220,7 +220,7 @@ class Solver:
 
         m_asm: set[Solution] = set()
         for s1, s2 in itertools.product(solutions1, solutions2):
-            s3 = s1 | s2
+            s3 = Solution(s1 | s2)
             if self.solution_possible(s3, end, include_night):
                 m_asm.add(s3)
 
@@ -261,7 +261,7 @@ class Solver:
                 "merge_mm_in_solution shouldn't be called if muliple match(es) are not in Solution"
             )
 
-        sols = [sol.union(partial_solution) for partial_solution in partial_solutions]
+        sols = [Solution(sol.union(partial_solution)) for partial_solution in partial_solutions]
         return sols
 
     def merge_mm_not_in_solution(
@@ -304,7 +304,7 @@ class Solver:
                 # mm is not None
                 if mr == mm:
                     solutions.extend(
-                        base_matches | {(l, mr)} for l in addable_lefts[mr]
+                        Solution(base_matches | {(l, mr)}) for l in addable_lefts[mr]
                     )
                 else:
                     dmleft = next(
@@ -312,10 +312,10 @@ class Solver:
                     )  # left that matches with mm
                     if dmleft not in addable_lefts[mr]:
                         continue
-                    solutions.extend([base_matches | {(dmleft, mr)}])
+                    solutions.append(Solution(base_matches | {(dmleft, mr)}))
             else:
                 # Normalo 2023/24/25/26: dm not known, match mr with everyone possible
-                solutions.extend([base_matches | {(l, mr)} for l in addable_lefts[mr]])
+                solutions.extend([Solution(base_matches | {(l, mr)}) for l in addable_lefts[mr]])
 
         return solutions
 
