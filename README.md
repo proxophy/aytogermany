@@ -24,3 +24,14 @@ uv run main.py vip2026 --analyze
 # Plot the match probabilities
 uv run main.py vip2026 --plot
 ```
+
+### Tests
+
+There are three test files:
+- test_numsols.py: compare the number of solutions from the solver to precomputed and tested numbers
+- test_seasonsolution.py: tests if the season's solution is possible with the constraints for a simple sanity check
+- test_solver_logic.py: Tests that cover smaller pieces of the logic, not covering everything currently
+
+```shell
+ uv run python -m unittest discover -s tests -v
+```

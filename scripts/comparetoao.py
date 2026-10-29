@@ -76,3 +76,37 @@ def check_ao_data(sols: list[Solution], end, sn):
             # else:
             #     print("other event", event)
     return True, None
+
+
+def iterate_ao_data(sn):
+
+    with open("ayto_data.json", encoding="utf-8") as f:
+        all_data = json.load(f)  
+
+    season_data = all_data[sn]  
+    weeks = season_data["weeks"]  
+    print(season_data.keys())
+
+    for week in weeks: 
+        print("week number", week["number"])
+        for event in week["events"]:
+        
+            if event["type"] == "box":
+                a, b = event["pair"]
+                print(event["type"], a,b)
+            else:
+                print(event["type"])
+                
+            # elif event["type"] == "matching_night":
+            #     lights = sum(1 for a, b in event["pairs"] if (a, b) in sols)
+            #     if lights != event["lights"]:
+            #         return False, event
+            # else:
+            #     print("other event", event)
+        print("-----")
+    return 
+
+
+if __name__ == "__main__":
+    # uv run python -m scripts.comparetoao
+    iterate_ao_data("s5vip")

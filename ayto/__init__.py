@@ -1,6 +1,7 @@
 from .analysis import (
     SolutionSpace,
     analyze_solutions,
+    df_for_probs,
     matching_night_probs,
     plot_probs,
     sol_probs,
@@ -27,6 +28,7 @@ __all__ = [
     "VIP2026Solver",
     "allseasons",
     "analyze_solutions",
+    "df_for_probs",
     "get_season",
     "get_solver",
     "matching_night_probs",

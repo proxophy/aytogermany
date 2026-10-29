@@ -27,9 +27,9 @@ class SolutionSpace:
         self.rights = list(set(crights))
         self.allpairs: list[Pair] = [(l, r) for l in self.lefts for r in self.rights]
         self.pairs_counter: Counter[Pair] = Counter([p for s in self.sols for p in s])
-        for l, r in self.allpairs:
-            if (l, r) not in self.pairs_counter:
-                self.pairs_counter[(l, r)] = 0
+        for p in self.allpairs:
+            if p not in self.pairs_counter:
+                self.pairs_counter[p] = 0
 
     def get_pair_probs_dict(self):
         return {
@@ -104,6 +104,12 @@ def sol_probs(sols: list[Solution], sol: Solution):
         max(filter(lambda x: x > 0, probs)),
     )
 
+
+def df_for_probs(sols: list[Solution]):
+    solspace = SolutionSpace(sols)
+    probs = solspace.get_pair_probs_dict()
+    df = pd.Series(probs).unstack(fill_value=0)
+    return df
 
 def plot_probs(sols: list[Solution]):
     solspace = SolutionSpace(sols)

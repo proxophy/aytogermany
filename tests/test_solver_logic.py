@@ -102,6 +102,7 @@ toy_season2 = Season(
     mb_reveals_dm=True,
 )
 
+# todo: type this
 
 class TestSeasonSolution(unittest.TestCase):
     def test_no_match_matchbox(self):
