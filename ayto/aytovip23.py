@@ -6,7 +6,7 @@ from .models import *
 
 class VIP2023Solver(Solver):
     @override
-    def no_match_reason(self, l: str, r: str, end: int) -> str | None:
+    def no_match_reason(self, l: str, r: str, end: int, include_night : bool) -> str | None:
         assert self.season.double_match_pair
         if end >= self.season.double_match_pair_known:
             mb = self.season.get_matchboxes(end)
@@ -15,11 +15,11 @@ class VIP2023Solver(Solver):
                 for dmr in self.season.double_match_pair:
                     if (l, dmr) in mb and not mb[(l, dmr)]:
                         return "matchbox_false_for_double_match_pair"
-        return super().no_match_reason(l, r, end)
+        return super().no_match_reason(l, r, end, include_night)
 
     @override
     def find_multiple_match_violation(
-        self, sol: Solution, end: int
+        self, sol: SolutionType, end: int
     ) -> str | None:
         assert self.season.double_match_pair
 

@@ -7,7 +7,9 @@ from .models import *
 
 class Normalo2024Solver(Solver):
     @override
-    def no_match_reason(self, l: str, r: str, end: int) -> str | None:
+    def no_match_reason(
+        self, l: str, r: str, end: int, include_night: bool
+    ) -> str | None:
         """Return whether a pair is known not to be a match up to `end`"""
 
         kpm = self.season.get_pms(end)
@@ -23,7 +25,7 @@ class Normalo2024Solver(Solver):
                 return None
             return "tripple_match_already_exists"
 
-        return super().no_match_reason(l, r, end)
+        return super().no_match_reason(l, r, end, include_night)
 
     @override
     def merge_mm_not_in_solution(
@@ -41,7 +43,7 @@ class Normalo2024Solver(Solver):
             r: [
                 l
                 for l in self.season.lefts
-                if not (self.no_match(l, r, end) or (l, r) in sitting_nomatches)
+                if not (self.no_match(l, r, end, include_night) or (l, r) in sitting_nomatches)
             ]
             for r in self.season.rights
         }
@@ -75,7 +77,7 @@ class Normalo2024Solver(Solver):
                 smleft = next(l for l in self.season.lefts if counter[l] == 2)
                 # missing right
                 mr = next(r for r in self.season.rights if r not in sitting_rights)
-                if self.no_match(smleft, mr, end):
+                if self.no_match(smleft, mr, end, include_night):
                     continue
                 solutions.append(base_matches | {(smleft, mr)})
 

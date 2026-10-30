@@ -1,7 +1,9 @@
 import json
+import os
+
 import pandas as pd
 
-from ayto import Solver, df_for_probs, get_season, get_solver
+from ayto import Solver, allseasons, df_for_probs, get_season, get_solver
 
 
 def get_stats(solver: Solver, end: int):
@@ -41,8 +43,9 @@ def nights_to_df(sn : str):
 def export_excel(sn : str):
     d = pd.read_excel( f"data/{sn}.xlsx", sheet_name=None)
     print(d.keys())
+    os.mkdir(f"data/csv/{sn}")
     for k, v in d.items():
-        v.to_csv(f"data/csv/{sn}_{k}.csv", index=False)
+        v.to_csv(f"data/csv/{sn}/{k.lower()}.csv", index=False)
 
 
 if __name__ == "__main__":
@@ -52,7 +55,8 @@ if __name__ == "__main__":
     # for sn in allseasons:
     #     export_season_results(sn)
     solver = get_solver(sn)
-    export_excel(sn)
+    for sn in allseasons:
+        export_excel(sn)
 
     # df, _ = get_stats(solver, 6)
     # nights_to_df(sn)

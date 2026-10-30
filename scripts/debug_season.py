@@ -1,6 +1,6 @@
 from collections import Counter
 
-from ayto import Solution, Solver
+from ayto import Solution, Solver, get_season
 
 # pyright: standard
 
@@ -30,3 +30,9 @@ def findpsol(sol, solver: Solver, end):
         if sol in solver.generate_complete_solutions(p, end, True):
             return p
     return psol
+
+
+if __name__ == "__main__":
+    # uv run python -m scripts.debug_season
+    sn = get_season("normalo2024")
+    print(sn.get_matchboxes(3, True))

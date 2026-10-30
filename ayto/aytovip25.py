@@ -8,7 +8,7 @@ from .models import *
 class VIP2025Solver(Solver):
     @override
     def find_multiple_match_violation(
-        self, sol: Solution, end: int
+        self, sol: SolutionType, end: int
     ) -> str | None:
         # VIP2025 allows two double matches, one of those must include Jimi
 
@@ -47,7 +47,7 @@ class VIP2025Solver(Solver):
             r: [
                 l
                 for l in self.season.lefts
-                if not (self.no_match(l, r, end) or (l, r) in sitting_nomatches)
+                if not (self.no_match(l, r, end, include_night) or (l, r) in sitting_nomatches)
             ]
             for r in self.season.rights
         }

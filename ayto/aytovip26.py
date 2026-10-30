@@ -12,7 +12,7 @@ class VIP2026Solver(Solver):
 
     @override
     def find_multiple_match_violation(
-        self, sol: Solution, end: int
+        self, sol: SolutionType, end: int
     ) -> str | None:
 
         supercheck = super().find_multiple_match_violation(sol, end)
@@ -69,7 +69,7 @@ class VIP2026Solver(Solver):
             smmatches = [
                 r
                 for r in self.season.rights
-                if not self.no_match(self.sm, r, end) 
+                if not self.no_match(self.sm, r, end, include_night) 
             ]
 
         products = [

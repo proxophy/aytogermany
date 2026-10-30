@@ -104,9 +104,8 @@ def iterate_ao_data(sn):
             # else:
             #     print("other event", event)
         print("-----")
-    return 
 
 
 if __name__ == "__main__":
     # uv run python -m scripts.comparetoao
-    iterate_ao_data("s5vip")
+    iterate_ao_data("s5")

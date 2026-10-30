@@ -175,7 +175,8 @@ def check_generated_season(n: int = 5, with_dm: bool = True):
     assert solution
 
     for l, r in solution:
-        if solver.no_match(l, r, n - 1):
+        ## todo: check include_night
+        if solver.no_match(l, r, n - 1, True):
             print(season)
             assert False, "no match in solution"
 

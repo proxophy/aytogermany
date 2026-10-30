@@ -57,7 +57,7 @@ def validate_season_args(
 
     # matchboxes with results
     pairs: set[Pair] = set()
-    for _, (l, r), _ in matchboxes:
+    for _, (l, r), _, _ in matchboxes:
         if (l, r) in pairs or (r, l) in pairs:
             raise ValueError(f"{(l, r)} occurs more than once in matchboxes")
         if l in lefts and r in rights:
@@ -87,9 +87,9 @@ def read_data_from_excel(
     str | None,
     Solution,
 ]:
-    dfcand: pd.DataFrame = pd.read_excel(
-        f"data/{sn}.xlsx", sheet_name="Candidates", header=0
-    )
+
+    dfs = pd.read_excel(f"data/{sn}.xlsx", sheet_name=None, header=0)
+    dfcand: pd.DataFrame = dfs["Candidates"]
     lefts: tuple[str, ...] = tuple(dfcand["left"].dropna().tolist())
     rights: tuple[str, ...] = tuple(dfcand["right"].dropna().tolist())
     dmlist = dfcand["mm"].dropna().tolist() if "mm" in dfcand.columns else []
@@ -99,7 +99,7 @@ def read_data_from_excel(
     if sn == "normalo2024":
         dm = dfcand["mm"].dropna().tolist()[0] if "mm" in dfcand.columns else None
 
-    dfnights = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Nights", header=0)
+    dfnights = dfs["Nights"]
     nights: tuple[Night, ...] = ()
     if sn != "vip2026":
         nights = tuple(
@@ -118,25 +118,31 @@ def read_data_from_excel(
             tuple(filter(lambda x: not pd.isna(x[1]), pairs)) for pairs in pairspnight
         ]
         nights = tuple(
-            Night(set(pairspnight[i]), int(dfnights["lights"].iloc[i]))  # pyright: ignore[reportAny]
+            Night(
+                set(pairspnight[i]),
+                int(dfnights["lights"].iloc[i]),  # pyright: ignore[reportAny]
+            )
             for i in range(dfnights.shape[0])
         )
 
-    dfmatchboxes = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Matchboxes", header=0)
+    dfmatchboxes = dfs["Matchboxes"]
     matchboxes: Matchboxes = Matchboxes(
         tuple(dfmatchboxes["episode"].to_list()),
-        make_pair_list(dfmatchboxes["left"].to_list(), dfmatchboxes["right"].to_list()),
+        make_pair_list(
+            dfmatchboxes.iloc[:, 1].to_list(), dfmatchboxes.iloc[:, 2].to_list()
+        ),
         tuple(dfmatchboxes["result"].to_list()),
+        bfs=tuple(dfmatchboxes["before_night"].to_list()),
     )
 
     validate_season_args(lefts, rights, nights, matchboxes, dm)
     solution: Solution = Solution()
-    try:
-        dfsolution = pd.read_excel(f"data/{sn}.xlsx", sheet_name="Solution", header=0)
+    dfsolution = dfs.get("Solution")
+    if dfsolution is not None:
         solution = Solution(
             make_pair_list(dfsolution["left"].to_list(), dfsolution["right"].to_list())
         )
-    except ValueError:
+    else:
         solution = Solution()
 
     return lefts, rights, nights, matchboxes, dm, solution

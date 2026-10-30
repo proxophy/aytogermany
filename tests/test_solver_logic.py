@@ -41,7 +41,7 @@ toy_nights = (
         4,
     ),
 )
-toy_matchboxes = Matchboxes((0,), (("B", "3"),), (False,))
+toy_matchboxes = Matchboxes((0,), (("B", "3"),), (False,), (True,))
 toy_lefts = ("A", "B", "C", "D", "E")
 toy_rights = ("1", "2", "3", "4", "5", "6")
 toy_season = Season(
@@ -56,7 +56,7 @@ toy_season_with_double_match_pair = Season(
     toy_lefts,
     toy_rights,
     toy_nights,
-    Matchboxes((0,), (("B", "1"),), (False,)),
+    Matchboxes((0,), (("B", "1"),), (False,), (True,)),
     mm="6",
     double_match_pair=("1", "6"),
     double_match_pair_known=0,
@@ -89,6 +89,7 @@ toy_season2 = Season(
         weeks=(0, 1, 2, 3, 4),
         pairs=(("A", "2"), ("D", "2"), ("D", "2"), ("D", "1"), ("C", "5")),
         results=(False, False, False, False, False),
+        bfs=(True, True, True, True, True,),
     ),
     solution=frozenset(
         {("A", "1"), ("A", "6"), ("E", "5"), ("C", "3"), ("B", "2"), ("D", "4")}
@@ -104,72 +105,73 @@ toy_season2 = Season(
 
 # todo: type this
 
+
 class TestSeasonSolution(unittest.TestCase):
     def test_no_match_matchbox(self):
         self.assertEqual(
-            normalo2020.no_match_reason("Ivana", "Mo", 2), "matchbox_false"
+            normalo2020.no_match_reason("Ivana", "Mo", 2, True), "matchbox_false"
         )
 
     def test_no_match_matchbox_end(self):
-        self.assertIsNone(normalo2020.no_match_reason("Luisa", "Ferhat", 2))
+        self.assertIsNone(normalo2020.no_match_reason("Luisa", "Ferhat", 2, True))
         self.assertEqual(
-            normalo2020.no_match_reason("Luisa", "Ferhat", 10), "matchbox_false"
+            normalo2020.no_match_reason("Luisa", "Ferhat", 10, True), "matchbox_false"
         )
 
     def test_no_match_bo_night(self):
         self.assertEqual(
-            normalo2020.no_match_reason("Nadine", "Dominic", 10),
+            normalo2020.no_match_reason("Nadine", "Dominic", 10, True),
             "sitting_in_blackout_night",
         )
 
     def test_no_match_bo_night_end(self):
-        self.assertIsNone(normalo2020.no_match_reason("Madleine", "Ferhat", 2))
+        self.assertIsNone(normalo2020.no_match_reason("Madleine", "Ferhat", 2, True))
         self.assertEqual(
-            normalo2020.no_match_reason("Madleine", "Ferhat", 3),
+            normalo2020.no_match_reason("Madleine", "Ferhat", 3, True),
             "sitting_in_blackout_night",
         )
 
     def test_no_match_double_match(self):
         self.assertEqual(
-            normalo2020.no_match_reason("Sabrina", "Mo", 2),
+            normalo2020.no_match_reason("Sabrina", "Mo", 2, True),
             "member_has_partner_already",
         )
         self.assertEqual(
-            normalo2020.no_match_reason("Aline", "Ferhat", 2),
+            normalo2020.no_match_reason("Aline", "Ferhat", 2, True),
             "member_has_partner_already",
         )
-        self.assertIsNone(normalo2020.no_match_reason("Aline", "Mo", 2))
+        self.assertIsNone(normalo2020.no_match_reason("Aline", "Mo", 2, True))
 
     def test_no_match_double_match_pair(self):
         self.assertEqual(
-            vip2023.no_match_reason("Sabrina", "Max", 7),
+            vip2023.no_match_reason("Sabrina", "Max", 7, True),
             "matchbox_false_for_double_match_pair",
         )
         self.assertEqual(
-            vip2023.no_match_reason("Sabrina", "Peter", 7),
+            vip2023.no_match_reason("Sabrina", "Peter", 7, True),
             "matchbox_false_for_double_match_pair",
         )
 
     def test_no_match_tripple_match(self):
-        self.assertIsNone(normalo2024.no_match_reason("Gerrit", "Edda", 3))
-        self.assertIsNone(normalo2024.no_match_reason("Gerrit", "Pia", 3))
+        self.assertIsNone(normalo2024.no_match_reason("Gerrit", "Edda", 3, True))
+        self.assertIsNone(normalo2024.no_match_reason("Gerrit", "Pia", 3, True))
         self.assertEqual(
-            normalo2024.no_match_reason("Gerrit", "Edda", 4),
+            normalo2024.no_match_reason("Gerrit", "Edda", 4, True),
             "tripple_match_already_exists",
         )
 
     def test_no_match_dm_later_known(self):
-        self.assertIsNone(normalo2026.no_match_reason("Noel", "Alicia", 5))
-        self.assertIsNone(normalo2026.no_match_reason("Noel", "Alicia", 6))
+        self.assertIsNone(normalo2026.no_match_reason("Noel", "Alicia", 5, True))
+        self.assertIsNone(normalo2026.no_match_reason("Noel", "Alicia", 6, True))
         self.assertEqual(
-            normalo2026.no_match_reason("Julian M", "Alicia", 4), "matchbox_false"
+            normalo2026.no_match_reason("Julian M", "Alicia", 4, True), "matchbox_false"
         )
         self.assertEqual(
-            normalo2026.no_match_reason("Julian M", "Linda", 4),
+            normalo2026.no_match_reason("Julian M", "Linda", 4, True),
             "cannot_be_in_double_match",
         )
         self.assertEqual(
-            normalo2026.no_match_reason("Julian M", "Linda", 6),
+            normalo2026.no_match_reason("Julian M", "Linda", 6, True),
             "l_cannot_have_double_match",
         )
 

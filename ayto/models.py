@@ -4,11 +4,12 @@ from dataclasses import dataclass
 
 Pair = tuple[str, str]
 Solution = frozenset[Pair]
+SolutionType = Solution | set[Pair]
 
 # class Solution(frozenset[Pair]):
 
 
-def double_match_for_right(sol: Solution) -> bool:
+def double_match_for_right(sol: SolutionType) -> bool:
     """Return whether solution has a double match for a right"""
     rs: list[str] = []
     for _, r in sol:
@@ -18,7 +19,7 @@ def double_match_for_right(sol: Solution) -> bool:
     return False
 
 
-def get_candidates(sol: Solution) -> tuple[set[str], set[str], int]:
+def get_candidates(sol: SolutionType) -> tuple[set[str], set[str], int]:
     """Return sets of lefts and rights in solution and size of the maximum multuple match"""
     if len(sol) > 0:
         g_lefts, g_rights = zip(*sol)
@@ -29,7 +30,7 @@ def get_candidates(sol: Solution) -> tuple[set[str], set[str], int]:
     return set(g_lefts), set(g_rights), max(map(len, d.values()))
 
 
-def mm_left(sol: Solution) -> str | None:
+def mm_left(sol: SolutionType) -> str | None:
     """Return first left with multiple match or `None` if there isn't any"""
     ls: set[str] = set()
     for l, _ in sol:
@@ -39,7 +40,7 @@ def mm_left(sol: Solution) -> str | None:
     return None
 
 
-def has_two_dms(sol: Solution) -> bool:
+def has_two_dms(sol: SolutionType) -> bool:
     """Return wheter there are two double matches in a solution"""
     sol_dict = dict_rep(sol)
     # lefts with multiple partners
@@ -47,7 +48,7 @@ def has_two_dms(sol: Solution) -> bool:
     return len(mult_lefts) == 2
 
 
-def dict_rep(sol: Solution) -> dict[str, list[str]]:
+def dict_rep(sol: SolutionType) -> dict[str, list[str]]:
     """Return dict representation of set of pairs"""
     d: dict[str, list[str]] = {}
     for l, r in sol:
@@ -74,10 +75,13 @@ class Matchboxes:
     weeks: tuple[int, ...] = ()
     pairs: tuple[Pair, ...] = ()
     results: tuple[bool, ...] = ()
+    bfs: tuple[bool, ...] = ()
 
     def __post_init__(self):
-        if not (len(self.weeks) == len(self.pairs) == len(self.results)):
-            raise ValueError
+        if not (
+            len(self.weeks) == len(self.pairs) == len(self.results) == len(self.bfs)
+        ):
+            raise ValueError(len(self.weeks), len(self.pairs) , len(self.results) , len(self.bfs))
 
     def __getitem__(self, key: Pair) -> bool:
         if key not in self.pairs:
@@ -86,7 +90,7 @@ class Matchboxes:
         return self.results[idx]
 
     def __iter__(self):
-        return zip(self.weeks, self.pairs, self.results)
+        return zip(self.weeks, self.pairs, self.results, self.bfs)
 
     def __len__(self):
         return len(self.weeks)
@@ -100,17 +104,33 @@ class Matchboxes:
             if self.results[i] and self.weeks[i] <= end
         ]
 
-    def get_matchboxes_until_week(self, end: int):
-        c = sum(1 for e in self.weeks if e <= end)
-        return Matchboxes(self.weeks[:c], self.pairs[:c], self.results[:c])
+    def get_matchboxes_until_week(self, end: int, include_night: bool):
+        weeks: list[int] = []
+        pairs: list[Pair] = []
+        results: list[bool] =[]
+        bfs: list[bool] = []
+        for w, p, r, bf in self:
+            if w > end:
+                break
+            if not include_night and w == end and not bf:
+                break
+            weeks.append(w)
+            pairs.append(p)
+            results.append(r)
+            bfs.append(bf)
+
+
+        return Matchboxes(
+          tuple(weeks), tuple(pairs), tuple(results), tuple(bfs)
+        )
 
     def __contains__(self, key: Pair):
         return key in self.pairs
 
 
-def matchboxes_from_list(data: list[tuple[int, Pair, bool]]):
-    episodes, pairs, results = zip(*data)
-    return Matchboxes(episodes, pairs, results)
+def matchboxes_from_list(data: list[tuple[int, Pair, bool, bool]]):
+    episodes, pairs, results, bfs = zip(*data)
+    return Matchboxes(episodes, pairs, results, bfs)
 
 
 @dataclass(frozen=True)
@@ -154,9 +174,9 @@ class Season:
         end = max(0, min(end, 10))
         return self.nights[: (end + 1)]
 
-    def get_matchboxes(self, end: int = 10) -> Matchboxes:
+    def get_matchboxes(self, end: int = 10, include_night: bool = True) -> Matchboxes:
         end = max(0, min(end, 10))
-        return self.matchboxes.get_matchboxes_until_week(end)
+        return self.matchboxes.get_matchboxes_until_week(end, include_night)
 
     def get_pms(self, end: int = 10) -> list[Pair]:
         end = max(0, min(end, 10))
@@ -183,8 +203,8 @@ class Season:
         num_known_pms = 0
         pmls: list[str] = []
         pms: set[Pair] = set()
-        for ep, (l, r), res in self.matchboxes:
-            if ep >= len(self.nights):
+        for ep, (l, r), res, bf in self.matchboxes:
+            if ep >= len(self.nights) or (ep == len(self.nights) - 1 and not bf):
                 continue
             if res and l not in pmls:
                 # add one perfect match per person, ignoring double matches

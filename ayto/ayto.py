@@ -61,15 +61,15 @@ class Solver:
         self.bo_nights: set[int] = self.season.get_black_out_nights()
        
     @functools.lru_cache  # noqa: B019
-    def no_match(self, l: str, r: str, end: int) -> bool:
+    def no_match(self, l: str, r: str, end: int, include_night : bool) -> bool:
         """Return whether `(l, r)` is known not to be a match up to a given episode"""
-        return self.no_match_reason(l, r, end) is not None
+        return self.no_match_reason(l, r, end, include_night) is not None
 
-    def no_match_reason(self, l: str, r: str, end: int) -> str | None:
+    def no_match_reason(self, l: str, r: str, end: int, include_night : bool) -> str | None:
         """Return the reason why `(l, r)` is known not to be a match up to a given episode"""
         end = max(0, min(end, 10))
 
-        mb = self.season.get_matchboxes(end)
+        mb = self.season.get_matchboxes(end, include_night)
         kpm = self.season.get_pms(end)
         hpm = [e for pp in kpm for e in pp]
 
@@ -95,14 +95,14 @@ class Solver:
             else:
                 mm = self.season.get_mm(end)
                 # l cannot be part of multiple match
-                if mm and r != mm and self.no_match(l, mm, end):
+                if mm and r != mm and self.no_match(l, mm, end, include_night):
                     return "l_cannot_have_double_match"
                 elif end < self.season.mm_known_after_week:
                     return "cannot_be_in_double_match"
 
         return None
 
-    def find_format_violation(self, sol: Solution) -> str | None:
+    def find_format_violation(self, sol: Solution | set[Pair]) -> str | None:
         """Return the first fomrat violation found in the solution, if any" """
 
         if len(sol) > self.season.num_matches:
@@ -134,7 +134,7 @@ class Solver:
         return self.find_violation(sol, end, include_night) is None
 
     def find_violation(
-        self, sol: Solution, end: int, include_night: bool
+        self, sol: SolutionType, end: int, include_night: bool
     ) -> str | None:
         """Return the first logic violation found in the solution, if any"""
 
@@ -149,7 +149,7 @@ class Solver:
 
         # no known no matches
         for pair in sol:
-            if self.no_match(*pair, end):
+            if self.no_match(*pair, end, include_night):
                 return "known_no_match"
 
         complete: bool = len(sol) == self.season.num_matches
@@ -176,7 +176,7 @@ class Solver:
         return None
 
     def find_multiple_match_violation(
-        self, sol: Solution, end: int
+        self, sol: SolutionType, end: int
     ) -> str | None:
         """Return the first multiple-match violation found in the solution, if any"""
 
@@ -240,7 +240,7 @@ class Solver:
             l: [
                 r
                 for r in self.season.rights
-                if not self.no_match(l, r, end)
+                if not self.no_match(l, r, end, include_night)
                 and not (l, r) in sitting_nomatches
                 and r != mm
                 and r not in sitting_rights
@@ -283,7 +283,7 @@ class Solver:
                 l
                 for l in self.season.lefts
                 if not (
-                    self.no_match(l, r, end)
+                    self.no_match(l, r, end, include_night)
                     or (l, r) in sitting_nomatches
                     or (self.sm and l == self.sm)
                 )
@@ -394,7 +394,7 @@ class Solver:
         pairs_per_night: list[list[Solution]] = []
         for night in nights:
             invalid_pairs = list(
-                filter(lambda p: self.no_match(*p, end) or p in kpm, night.pairs)
+                filter(lambda p: self.no_match(*p, end, include_night) or p in kpm, night.pairs)
             )
             definite_matches = list(filter(lambda p: p in kpm, night.pairs))
             remaining = set(night.pairs) - set(definite_matches) - set(invalid_pairs)
