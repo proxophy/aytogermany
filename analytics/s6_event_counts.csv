@@ -1,0 +1,22 @@
+season,week,event_number,event_type,event_title,solutions_before,solutions_after,solutions_removed
+s6,1,0,entry,Einzug,199584000,199584000,0
+s6,1,1,box,Match Box,199584000,179625600,19958400
+s6,1,2,matching_night,Matching Night,179625600,33752266,145873334
+s6,2,1,box,Match Box,33752266,33752266,0
+s6,2,2,matching_night,Matching Night,33752266,3045867,30706399
+s6,3,1,box,Match Box,3045867,1826680,1219187
+s6,3,2,matching_night,Matching Night,1826680,215729,1610951
+s6,4,1,box,Match Box,215729,7376,208353
+s6,4,2,matching_night,Matching Night,7376,3065,4311
+s6,5,1,box,Match Box,3065,2303,762
+s6,5,2,matching_night,Matching Night,2303,1263,1040
+s6,6,1,box,Match Box,1263,1263,0
+s6,6,2,matching_night,Matching Night,1263,67,1196
+s6,7,1,box,Match Box,67,67,0
+s6,7,2,matching_night,Matching Night,67,11,56
+s6,8,1,box,Match Box,11,11,0
+s6,8,2,matching_night,Matching Night,11,5,6
+s6,9,1,box,Match Box,5,5,0
+s6,9,2,matching_night,Matching Night,5,4,1
+s6,10,1,box,Match Box,4,3,1
+s6,10,2,matching_night,Matching Night,3,3,0

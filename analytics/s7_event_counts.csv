@@ -1,0 +1,24 @@
+season,week,event_number,event_type,event_title,solutions_before,solutions_after,solutions_removed
+s7,1,0,entry,Einzug,199584000,199584000,0
+s7,1,1,box,Match Box,199584000,179625600,19958400
+s7,1,2,matching_night,Matching Night,179625600,11182756,168442844
+s7,2,1,box,Match Box,11182756,11182756,0
+s7,2,2,matching_night,Matching Night,11182756,3104931,8077825
+s7,3,1,box,Match Box,3104931,2839433,265498
+s7,3,2,matching_night,Matching Night,2839433,1177404,1662029
+s7,4,1,box,Match Box,1177404,69303,1108101
+s7,4,2,matching_night,Matching Night verkauft,69303,69303,0
+s7,5,1,box,Match Box,69303,62415,6888
+s7,5,2,matching_night,Matching Night,62415,7893,54522
+s7,6,1,box,Match Box,7893,7893,0
+s7,6,2,cast_change,Ciao Alicia,7893,1611,6282
+s7,6,3,matching_night,Matching Night,1611,187,1424
+s7,7,1,box,Match Box,187,88,99
+s7,7,2,matching_night,Matching Night,88,88,0
+s7,8,1,box,Match Box,88,88,0
+s7,8,2,matching_night,Matching Night,88,16,72
+s7,9,1,box,Match Box,16,16,0
+s7,9,2,matching_night,Matching Night,16,8,8
+s7,10,1,box,Match Box,8,8,0
+s7,10,2,matching_night,Matching Night,8,8,0
+s7,11,1,solution,Auflösung / Reunion,8,1,7

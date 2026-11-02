@@ -1,0 +1,21 @@
+season,week,event_number,event_type,event_title,solutions_before,solutions_after,solutions_removed
+s1vip,1,0,entry,Einzug,36288000,36288000,0
+s1vip,1,1,box,Match Box,36288000,32659200,3628800
+s1vip,1,2,matching_night,Matching Night,32659200,2051760,30607440
+s1vip,2,1,box,Match Box,2051760,139041,1912719
+s1vip,3,1,box,Match Box,139041,128781,10260
+s1vip,3,2,matching_night,Matching Night,128781,49698,79083
+s1vip,4,1,box,Match Box,49698,49698,0
+s1vip,4,2,matching_night,Matching Night,49698,7703,41995
+s1vip,5,1,box,Match Box,7703,7703,0
+s1vip,5,2,matching_night,Matching Night,7703,1552,6151
+s1vip,6,1,box,Match Box,1552,1432,120
+s1vip,6,2,matching_night,Matching Night,1432,522,910
+s1vip,7,1,box,Match Box,522,274,248
+s1vip,7,2,matching_night,Matching Night,274,53,221
+s1vip,8,1,box,Match Box,53,53,0
+s1vip,8,2,matching_night,Matching Night,53,29,24
+s1vip,9,1,box,Match Box,29,19,10
+s1vip,9,2,matching_night,Matching Night,19,8,11
+s1vip,10,1,box,Match Box,8,6,2
+s1vip,10,2,matching_night,Matching Night,6,1,5

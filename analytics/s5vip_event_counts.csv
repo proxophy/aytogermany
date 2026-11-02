@@ -1,0 +1,26 @@
+season,week,event_number,event_type,event_title,solutions_before,solutions_after,solutions_removed
+s5vip,1,0,entry,Einzug,199584000,199584000,0
+s5vip,1,1,box,Match Box,199584000,199584000,0
+s5vip,1,2,matching_night,Matching Night,199584000,37045170,162538830
+s5vip,2,1,box,Match Box,37045170,6074073,30971097
+s5vip,2,2,matching_night,Matching Night,6074073,2384998,3689075
+s5vip,3,1,box,Match Box,2384998,2080112,304886
+s5vip,3,2,matching_night,Matching Night,2080112,770771,1309341
+s5vip,4,1,box,Match Box,770771,674911,95860
+s5vip,4,2,matching_night,Matching Night,674911,125998,548913
+s5vip,4,3,box,Match Box,125998,97475,28523
+s5vip,5,1,cast_change,,97475,779800,-682325
+s5vip,5,2,box,Match Box,779800,692049,87751
+s5vip,5,3,matching_night,Matching Night,692049,131330,560719
+s5vip,6,1,box,Match Box,131330,53165,78165
+s5vip,6,2,matching_night,Matching Night,53165,12039,41126
+s5vip,6,3,box,Match Box,12039,9749,2290
+s5vip,7,1,box,Match Box,9749,7531,2218
+s5vip,7,2,matching_night,Matching Night,7531,452,7079
+s5vip,8,1,box,Match Box,452,439,13
+s5vip,8,2,matching_night,Matching Night,439,266,173
+s5vip,9,1,matching_night,Matching Night,266,140,126
+s5vip,9,2,box,Match Box,140,105,35
+s5vip,10,1,box,Match Box,105,105,0
+s5vip,10,2,matching_night,Matching Night,105,22,83
+s5vip,11,1,solution,Auflösung,22,1,21

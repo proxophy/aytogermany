@@ -7776,7 +7776,8 @@
     },
     "style": {
       "background": "insta_styles/image_backgrounds/ayto_s6vip.png",
-      "face_layer": "insta_styles/image_face_layers/ayto_s6vip_initial.png"
+      "face_layer": "insta_styles/image_face_layers/ayto_s6vip_initial.png",
+      "villa_faces": "insta_styles/s6vip_faces"
     },
     "weeks": [
       {
@@ -8072,6 +8073,274 @@
                 ]
               }
             }
+          }
+        ]
+      },
+      {
+        "number": 5,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Emma",
+              "Laurenz"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "matching_night",
+            "lights": 3,
+            "automatic_lights": 1,
+            "pairs": [
+              [
+                "Laurenz",
+                "Zoe"
+              ],
+              [
+                "Brian",
+                "Alexandra"
+              ],
+              [
+                "Germain",
+                "Emma"
+              ],
+              [
+                "Marwin",
+                "Francesca"
+              ],
+              [
+                "Daymian",
+                "Jenny"
+              ],
+              [
+                "Robin",
+                "Joena"
+              ],
+              [
+                "Bennett",
+                "Christin"
+              ],
+              [
+                "Cansin",
+                "Julia"
+              ],
+              [
+                "Raul",
+                "Michelle"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 6,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Raul",
+              "Michelle"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 5,
+            "automatic_lights": 1,
+            "pairs": [
+              [
+                "Brian",
+                "Alexandra"
+              ],
+              [
+                "Robin",
+                "Joena"
+              ],
+              [
+                "Daymian",
+                "Jenny"
+              ],
+              [
+                "Cansin",
+                "Zoe"
+              ],
+              [
+                "Fabi",
+                "Michelle"
+              ],
+              [
+                "Laurenz",
+                "Emma"
+              ],
+              [
+                "Bennett",
+                "Christin"
+              ],
+              [
+                "Marwin",
+                "Francesca"
+              ],
+              [
+                "Germain",
+                "Julia"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 7,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Daymian",
+              "Jenny"
+            ],
+            "result": "yes"
+          },
+          {
+            "type": "matching_night",
+            "lights": 5,
+            "automatic_lights": 2,
+            "pairs": [
+              [
+                "Laurenz",
+                "Emma"
+              ],
+              [
+                "Brian",
+                "Zoe"
+              ],
+              [
+                "Fabi",
+                "Michelle"
+              ],
+              [
+                "Robin",
+                "Joena"
+              ],
+              [
+                "Germain",
+                "Julia"
+              ],
+              [
+                "Bennett",
+                "Christin"
+              ],
+              [
+                "Marwin",
+                "Francesca"
+              ],
+              [
+                "Raul",
+                "Alexandra"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 8,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Fabi",
+              "Zoe"
+            ],
+            "result": "sold"
+          },
+          {
+            "type": "matching_night",
+            "lights": 6,
+            "automatic_lights": 2,
+            "pairs": [
+              [
+                "Raul",
+                "Francesca"
+              ],
+              [
+                "Robin",
+                "Joena"
+              ],
+              [
+                "Cansin",
+                "Zoe"
+              ],
+              [
+                "Bennett",
+                "Christin"
+              ],
+              [
+                "Brian",
+                "Julia"
+              ],
+              [
+                "Fabi",
+                "Michelle"
+              ],
+              [
+                "Laurenz",
+                "Emma"
+              ],
+              [
+                "Germain",
+                "Alexandra"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "number": 9,
+        "events": [
+          {
+            "type": "box",
+            "pair": [
+              "Germain",
+              "Alexandra"
+            ],
+            "result": "no"
+          },
+          {
+            "type": "matching_night",
+            "lights": 8,
+            "automatic_lights": 2,
+            "pairs": [
+              [
+                "Germain",
+                "Michelle"
+              ],
+              [
+                "Laurenz",
+                "Emma"
+              ],
+              [
+                "Robin",
+                "Joena"
+              ],
+              [
+                "Brian",
+                "Julia"
+              ],
+              [
+                "Raul",
+                "Alexandra"
+              ],
+              [
+                "Marwin",
+                "Francesca"
+              ],
+              [
+                "Bennett",
+                "Christin"
+              ],
+              [
+                "Cansin",
+                "Zoe"
+              ]
+            ]
           }
         ]
       }

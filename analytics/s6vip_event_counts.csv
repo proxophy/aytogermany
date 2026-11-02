@@ -1,0 +1,23 @@
+season,week,event_number,event_type,event_title,solutions_before,solutions_after,solutions_removed
+s6vip,1,0,entry,Einzug,3628800,3628800,0
+s6vip,1,1,box,Match Box,3628800,3265920,362880
+s6vip,1,2,box,Match Box,3265920,2943360,322560
+s6vip,1,3,cast_change,Nachkommerin Joena,161844480,161844480,0
+s6vip,1,4,matching_night,Matching Night,161844480,10309492,151534988
+s6vip,2,1,box,Match Box,10309492,7331118,2978374
+s6vip,2,2,matching_night,Matching Night,7331118,991745,6339373
+s6vip,3,1,box,Match Box,991745,10903,980842
+s6vip,3,*9,matching_night,Matching Night,10903,1679,9224
+s6vip,4,1,box,Match Box,1679,1237,442
+s6vip,4,2,matching_night,Matching Night,1237,25,1212
+s6vip,4,3,cast_change,Nachkommer Laurenz,25,225,-200
+s6vip,5,1,box,Match Box,225,225,0
+s6vip,5,2,matching_night,Matching Night,225,50,175
+s6vip,6,1,box,Match Box,50,50,0
+s6vip,6,2,matching_night,Matching Night,50,11,39
+s6vip,7,1,box,Match Box,11,2,9
+s6vip,7,2,matching_night,Matching Night,2,1,1
+s6vip,8,1,box,Match Box,1,1,0
+s6vip,8,2,matching_night,Matching Night,1,1,0
+s6vip,9,1,box,Match Box,1,1,0
+s6vip,9,2,matching_night,Matching Night,1,1,0
