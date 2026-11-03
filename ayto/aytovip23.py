@@ -9,7 +9,7 @@ class VIP2023Solver(Solver):
     def no_match_reason(self, l: str, r: str, end: int, include_night : bool) -> str | None:
         assert self.season.double_match_pair
         if end >= self.season.double_match_pair_known:
-            mb = self.season.get_matchboxes(end)
+            mb = self._matchbox_cache.get((end, include_night), Matchboxes())
 
             if r in self.season.double_match_pair:
                 for dmr in self.season.double_match_pair:
@@ -59,6 +59,9 @@ class VIP2023Solver(Solver):
             )
 
         solutions: list[Solution] = []
+        sitting_nomatches = self.season.get_sitting_no_matches(sol, end, include_night)
+
+
         for partial_solution in partial_solutions:
             ten_matches = sol.union(partial_solution)
 
@@ -72,6 +75,8 @@ class VIP2023Solver(Solver):
             dmleft = next(
                 l for (l, r) in ten_matches if r in self.season.double_match_pair
             )
+            if (dmleft, mr) in sitting_nomatches:
+                continue
             solutions.append(ten_matches | {(dmleft, mr)})
 
         return solutions

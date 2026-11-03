@@ -58,20 +58,33 @@ class Solver:
 
     def __init__(self, season: Season) -> None:
         self.season = season
-        self.bo_nights: set[int] = self.season.get_black_out_nights()
-       
-    @functools.lru_cache  # noqa: B019
-    def no_match(self, l: str, r: str, end: int, include_night : bool) -> bool:
+        self.bo_nights: list[int] = self.season.get_black_out_nights()
+        self._no_match_cache: dict[tuple[str, str, int, bool], bool] = {}
+        self._matchbox_cache: dict[tuple[int, bool], Matchboxes] = {}
+        self._pms_cache: dict[tuple[int, bool], list[Pair]] = {}
+        for i in range(self.season.num_weeks):
+            for b in [True, False]:
+                self._matchbox_cache[(i, b)] = self.season.get_matchboxes(i, b)
+                self._pms_cache[(i, b)] = self.season.get_pms(i, b)
+
+    def no_match(self, l: str, r: str, end: int, include_night: bool) -> bool:
         """Return whether `(l, r)` is known not to be a match up to a given episode"""
-        return self.no_match_reason(l, r, end, include_night) is not None
+        key = (l, r, end, include_night)
+        cached = self._no_match_cache.get(key)
+        if cached is None:
+            cached = self.no_match_reason(l, r, end, include_night) is not None
+            self._no_match_cache[key] = cached
+        return cached
 
-    def no_match_reason(self, l: str, r: str, end: int, include_night : bool) -> str | None:
+    def no_match_reason(
+        self, l: str, r: str, end: int, include_night: bool
+    ) -> str | None:
         """Return the reason why `(l, r)` is known not to be a match up to a given episode"""
-        end = max(0, min(end, 10))
-
-        mb = self.season.get_matchboxes(end, include_night)
-        kpm = self.season.get_pms(end)
-        hpm = [e for pp in kpm for e in pp]
+        stop = max(0, min(end, self.season.num_weeks - 1))
+        mb = self._matchbox_cache.get((stop, include_night), Matchboxes())
+        kpm = self._pms_cache.get((stop, include_night), [])
+        pm_lefts = {a for a, _ in kpm}
+        pm_rights = {b for _, b in kpm}
 
         # matchbox result was false
         if (l, r) in mb and not mb[(l, r)]:
@@ -79,7 +92,7 @@ class Solver:
 
         # check for black out nights
         for bo in self.bo_nights:
-            if bo > end:
+            if bo > end or (bo == end and not include_night):
                 break
             if (l, r) in self.season.nights[bo].pairs and (l, r) not in kpm:
                 return "sitting_in_blackout_night"
@@ -88,7 +101,7 @@ class Solver:
         # consider multiple seated lefts
         # assumption: if dm is not known and you get double match,
         # you find the double match in the same episode
-        if (l, r) not in kpm and (l in hpm or r in hpm):
+        if (l, r) not in kpm and (l in pm_lefts or r in pm_rights):
             # handle special case: for normalo2026, Alicia's match with Noel doesnt get revealed, despite Noel finding his match during the show
             if self.season.mb_reveals_dm:
                 return "member_has_partner_already"
@@ -108,7 +121,7 @@ class Solver:
         if len(sol) > self.season.num_matches:
             return "too_many_matches"
 
-        if not self.double_match_for_right and double_match_for_right(sol):
+        if not self.double_match_for_right and has_dm_for_right(sol):
             return "double_match_for_right"
 
         for l, r in sol:
@@ -118,9 +131,7 @@ class Solver:
                 return "wrongly_written_names_as_right"
         return None
 
-    def solution_possible(
-        self, sol: Solution, end: int, include_night: bool
-    ) -> bool:
+    def solution_possible(self, sol: Solution, end: int, include_night: bool) -> bool:
         """Check whether the solution is feasible up to a given episode
 
         Args:
@@ -138,11 +149,7 @@ class Solver:
     ) -> str | None:
         """Return the first logic violation found in the solution, if any"""
 
-        if len(sol) > self.season.num_matches:
-            return "too_many_matches"
-
-        format_check = self.find_format_violation(sol)
-        if format_check is not None:
+        if (format_check := self.find_format_violation(sol)) is not None:
             return format_check
 
         end = max(0, min(end, 10))
@@ -161,9 +168,7 @@ class Solver:
 
         # number of lights with pairs matching lights in nights
         # if we don't have self.nummatches pairs, we allow lesser lights
-        nights = self.season.get_nights(end)
-        if not include_night:
-            nights = nights[:-1]
+        nights = self.season.get_nights(end, include_night)
 
         for _, night in enumerate(nights):
             sol_lights: int = len(sol & night.pairs)
@@ -175,9 +180,7 @@ class Solver:
 
         return None
 
-    def find_multiple_match_violation(
-        self, sol: SolutionType, end: int
-    ) -> str | None:
+    def find_multiple_match_violation(self, sol: SolutionType, end: int) -> str | None:
         """Return the first multiple-match violation found in the solution, if any"""
 
         sol_dict = dict_rep(sol)
@@ -261,7 +264,10 @@ class Solver:
                 "merge_mm_in_solution shouldn't be called if muliple match(es) are not in Solution"
             )
 
-        sols = [Solution(sol.union(partial_solution)) for partial_solution in partial_solutions]
+        sols = [
+            Solution(sol.union(partial_solution))
+            for partial_solution in partial_solutions
+        ]
         return sols
 
     def merge_mm_not_in_solution(
@@ -315,7 +321,9 @@ class Solver:
                     solutions.append(Solution(base_matches | {(dmleft, mr)}))
             else:
                 # Normalo 2023/24/25/26: dm not known, match mr with everyone possible
-                solutions.extend([Solution(base_matches | {(l, mr)}) for l in addable_lefts[mr]])
+                solutions.extend(
+                    [Solution(base_matches | {(l, mr)}) for l in addable_lefts[mr]]
+                )
 
         return solutions
 
@@ -337,9 +345,7 @@ class Solver:
 
         if not self.solution_possible(sol, end, include_night):
             return []
-        if len(sol) == self.season.num_matches and self.solution_possible(
-            sol, end, include_night
-        ):
+        if len(sol) == self.season.num_matches:
             return [sol]
 
         def zip_product(clefts: Iterable[str], ordering: Iterable[str]) -> Solution:
@@ -353,7 +359,7 @@ class Solver:
             list(ps)
             for ps in product_without_reps(
                 list(pos_matches.values())
-            )  # itertools.product(*pos_matches.values())
+            )  
         ]
         partial_solutions = [zip_product(pos_matches.keys(), p) for p in products]
 
@@ -386,24 +392,32 @@ class Solver:
                 results and known constraints.
         """
 
-        nights = self.season.get_nights(end)
-        if not include_night:
-            nights = nights[:-1]
-        kpm = self.season.get_pms(end)
+        nights = self.season.get_nights(end, include_night)
+        kpm = self.season.get_pms(end, include_night)
+
+        if len(nights) == 0:
+            return [Solution(kpm)]
 
         pairs_per_night: list[list[Solution]] = []
-        for night in nights:
+        for i, night in enumerate(nights):
             invalid_pairs = list(
-                filter(lambda p: self.no_match(*p, end, include_night) or p in kpm, night.pairs)
+                filter(
+                    lambda p: self.no_match(*p, end, include_night) or p in kpm,
+                    night.pairs,
+                )
             )
             definite_matches = list(filter(lambda p: p in kpm, night.pairs))
             remaining = set(night.pairs) - set(definite_matches) - set(invalid_pairs)
 
+            missinglights = night.lights - len(definite_matches)
+            if missinglights < 0:
+                raise ValueError(
+                    f"{self.season.name}, night {i}: {len(definite_matches)} known perfect  \
+                    matches are seated but the night only has {night.lights} lights"
+                )
             combinations = [
                 Solution(set(comb).union(kpm))
-                for comb in itertools.combinations(
-                    remaining, night.lights - len(definite_matches)
-                )
+                for comb in itertools.combinations(remaining, missinglights)
             ]
 
             pairs_per_night.append(combinations)

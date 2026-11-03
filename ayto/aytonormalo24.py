@@ -12,13 +12,14 @@ class Normalo2024Solver(Solver):
     ) -> str | None:
         """Return whether a pair is known not to be a match up to `end`"""
 
-        kpm = self.season.get_pms(end)
+        kpm = self.season.get_pms(end, include_night)
         hpm = [e for p in kpm for e in p]
 
+        counts = Counter(hpm)
         if (l, r) not in kpm and l in hpm:
             # lefts with multiple matches from matchboxes, appear x times
             # for x perfect matches
-            mmls = [p for p in hpm if Counter(hpm)[p] > 1]
+            mmls = [p for p in hpm if counts[p] > 1]
             # Normalo 24
             if len(mmls) < 3 and l in mmls and r not in hpm:
                 # we only know two out of three of the multiple matches in Normalo 2024 at episode 10
@@ -43,7 +44,10 @@ class Normalo2024Solver(Solver):
             r: [
                 l
                 for l in self.season.lefts
-                if not (self.no_match(l, r, end, include_night) or (l, r) in sitting_nomatches)
+                if not (
+                    self.no_match(l, r, end, include_night)
+                    or (l, r) in sitting_nomatches
+                )
             ]
             for r in self.season.rights
         }
@@ -77,7 +81,10 @@ class Normalo2024Solver(Solver):
                 smleft = next(l for l in self.season.lefts if counter[l] == 2)
                 # missing right
                 mr = next(r for r in self.season.rights if r not in sitting_rights)
-                if self.no_match(smleft, mr, end, include_night):
+                if (
+                    self.no_match(smleft, mr, end, include_night)
+                    or (smleft, mr) in sitting_nomatches
+                ):
                     continue
                 solutions.append(base_matches | {(smleft, mr)})
 

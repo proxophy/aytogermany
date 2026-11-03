@@ -3,14 +3,10 @@ from collections import Counter
 from collections.abc import Callable
 from functools import wraps
 
-import matplotlib.pyplot as plt
 import pandas as pd
-import seaborn as sns
-
-from ayto.models import Pair
 
 from .ayto import Solver
-from .models import Solution, mm_left
+from .models import Pair, Solution, mm_left
 
 
 class SolutionSpace:
@@ -22,9 +18,11 @@ class SolutionSpace:
     def __init__(self, sols: list[Solution]):
         self.sols = sols
         self.numsols = len(sols)
+        if len(sols) == 0:
+            raise ValueError("No solutions provided")
         clefts, crights = zip(*sols[0])
-        self.lefts = list(set(clefts))
-        self.rights = list(set(crights))
+        self.lefts = sorted(set(clefts))
+        self.rights = sorted(set(crights))
         self.allpairs: list[Pair] = [(l, r) for l in self.lefts for r in self.rights]
         self.pairs_counter: Counter[Pair] = Counter([p for s in self.sols for p in s])
         for p in self.allpairs:
@@ -86,16 +84,18 @@ def analyze_solutions(sols: list[Solution]):
 def matching_night_probs(solver: Solver, episode: int):
     beforenight = solver.solve(episode, False)
     night = solver.season.get_nights(episode)[-1].pairs
-
+    if len(beforenight) == 0:
+        raise ValueError(f"no solutions left before the night of episode {episode}")
     poslights = Counter([len(set(night).intersection(sol)) for sol in beforenight])
     return [
-        (i, round(poslights.get(i, 0) / len(beforenight) * 100, 2)) for i in range(11)
+        (i, round(poslights.get(i, 0) / len(beforenight) * 100, 2))
+        for i in range(solver.season.max_lights + 1)
     ]
 
 
 def sol_probs(sols: list[Solution], sol: Solution):
     lights = Counter([len(s.intersection(sol)) for s in sols])
-    probs = [round(lights.get(i, 0) / len(sols) * 100, 2) for i in range(12 + 1)]
+    probs = [round(lights.get(i, 0) / len(sols) * 100, 2) for i in range(len(sol) + 1)]
     import statistics
 
     return (
@@ -111,19 +111,25 @@ def df_for_probs(sols: list[Solution]):
     df = pd.Series(probs).unstack(fill_value=0)
     return df
 
+
 def plot_probs(sols: list[Solution]):
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
     solspace = SolutionSpace(sols)
     probs = solspace.get_pair_probs_dict()
     df = pd.Series(probs).unstack(fill_value=0)
     my_cmap = sns.light_palette((0.2, 0.7, 0.2), as_cmap=True)
     my_cmap.set_under((1, 0.7, 0.7))
     my_cmap.set_over((0.2, 0.8, 0.2))
-    _ = sns.heatmap(df, vmin=1e-5, vmax=100 - 1e-5, cmap=my_cmap, annot=True, fmt=".0f")  # pyright: ignore[reportUnknownMemberType]
+    _ = sns.heatmap(  # pyright: ignore[reportUnknownMemberType]
+        df, vmin=1e-5, vmax=100 - 1e-5, cmap=my_cmap, annot=True, fmt=".0f"
+    )
     plt.tight_layout()
     plt.show()  # pyright: ignore[reportUnknownMemberType]
 
 
-def time_it[**P, R](inner: Callable[P, R]) -> None:
+def time_it[**P, R](inner: Callable[P, R]) -> Callable[P, R]:
     @wraps(inner)
     def c_inner(*args: P.args, **kwargs: P.kwargs) -> R:
         start = time.time()
@@ -131,3 +137,5 @@ def time_it[**P, R](inner: Callable[P, R]) -> None:
         end = time.time()
         print(f"=== time needed for {inner.__name__}: {(end - start):0.3f}s ===")
         return res
+
+    return c_inner

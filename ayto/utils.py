@@ -96,15 +96,13 @@ def read_data_from_excel(
     if len(dmlist) > 1:
         raise ValueError(f"More than one DM in Candidates sheet for {sn}")
     dm: str | None = dmlist[0] if len(dmlist) == 1 else None
-    if sn == "normalo2024":
-        dm = dfcand["mm"].dropna().tolist()[0] if "mm" in dfcand.columns else None
 
     dfnights = dfs["Nights"]
     nights: tuple[Night, ...] = ()
     if sn != "vip2026":
         nights = tuple(
             Night(
-                set(make_pair_list(list(dfnights.columns[:-1]), row[:-1])),
+                frozenset(make_pair_list(list(dfnights.columns[:-1]), row[:-1])),
                 int(row[-1]),  # pyright: ignore[reportAny]
             )
             for row in dfnights.values.tolist()
@@ -119,7 +117,7 @@ def read_data_from_excel(
         ]
         nights = tuple(
             Night(
-                set(pairspnight[i]),
+                frozenset(pairspnight[i]),
                 int(dfnights["lights"].iloc[i]),  # pyright: ignore[reportAny]
             )
             for i in range(dfnights.shape[0])

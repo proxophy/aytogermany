@@ -1,6 +1,7 @@
 import random
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import override
 
 Pair = tuple[str, str]
 Solution = frozenset[Pair]
@@ -9,7 +10,7 @@ SolutionType = Solution | set[Pair]
 # class Solution(frozenset[Pair]):
 
 
-def double_match_for_right(sol: SolutionType) -> bool:
+def has_dm_for_right(sol: SolutionType) -> bool:
     """Return whether solution has a double match for a right"""
     rs: list[str] = []
     for _, r in sol:
@@ -61,10 +62,11 @@ def dict_rep(sol: SolutionType) -> dict[str, list[str]]:
 
 @dataclass(frozen=True)
 class Night:
-    pairs: set[Pair]
+    pairs: frozenset[Pair] | set[Pair]
     lights: int
 
     def __post_init__(self):
+        object.__setattr__(self, "pairs", frozenset(self.pairs))
         if not 0 <= self.lights <= len(self.pairs):
             raise ValueError("Invalid number of lights")
 
@@ -81,7 +83,12 @@ class Matchboxes:
         if not (
             len(self.weeks) == len(self.pairs) == len(self.results) == len(self.bfs)
         ):
-            raise ValueError(len(self.weeks), len(self.pairs) , len(self.results) , len(self.bfs))
+            raise ValueError(
+                len(self.weeks), len(self.pairs), len(self.results), len(self.bfs)
+            )
+        l = self.weeks
+        if not all(l[i] <= l[i+1] for i in range(len(l) - 1)):
+            raise ValueError("weeks in matchbox list must be increasing")
 
     def __getitem__(self, key: Pair) -> bool:
         if key not in self.pairs:
@@ -95,19 +102,31 @@ class Matchboxes:
     def __len__(self):
         return len(self.weeks)
 
-    def get_perfect_matches(self, end: int = -1) -> list[Pair]:
-        if end == -1:
-            end = max(self.weeks)
-        return [
-            self.pairs[i]
-            for i in range(len(self.results))
-            if self.results[i] and self.weeks[i] <= end
-        ]
+    def __contains__(self, key: Pair):
+        return key in self.pairs
+
+    @override
+    def __str__(self):
+        s = ""
+        for w, p, r, bf in self:
+            s += f"{w}: {p} -> {r}, bf={bf}\n"
+        return s
+
+    def get_perfect_matches(self, end: int = 9, include_night: bool = False):
+        pm_pairs: list[Pair] = []
+        for w, p, r, bf in self:
+            if w > end:
+                break
+            if not include_night and w == end and not bf:
+                break
+            if r:
+                pm_pairs.append(p)
+        return pm_pairs
 
     def get_matchboxes_until_week(self, end: int, include_night: bool):
         weeks: list[int] = []
         pairs: list[Pair] = []
-        results: list[bool] =[]
+        results: list[bool] = []
         bfs: list[bool] = []
         for w, p, r, bf in self:
             if w > end:
@@ -119,13 +138,9 @@ class Matchboxes:
             results.append(r)
             bfs.append(bf)
 
+        return Matchboxes(tuple(weeks), tuple(pairs), tuple(results), tuple(bfs))
 
-        return Matchboxes(
-          tuple(weeks), tuple(pairs), tuple(results), tuple(bfs)
-        )
-
-    def __contains__(self, key: Pair):
-        return key in self.pairs
+    
 
 
 def matchboxes_from_list(data: list[tuple[int, Pair, bool, bool]]):
@@ -143,6 +158,7 @@ class Season:
     solution: Solution = Solution()  # noqa: RUF009
     mm: str | None = None
     num_matches: int = 11
+    max_lights: int = 10
     double_match_pair: tuple[str, str] | None = None
     double_match_pair_known: int = 7  # after which episode mm is known
     mm_known_after_week: int = 0  # after which episode mm is known
@@ -166,28 +182,24 @@ class Season:
     def num_weeks(self) -> int:
         return len(self.nights)
 
-    def get_mm(self, end: int = 10) -> str | None:
-        end = max(0, min(end, 10))
+    def get_mm(self, end: int = 9) -> str | None:
+        end = max(0, min(end, self.num_weeks-1))
         return self.mm if end >= self.mm_known_after_week else None
 
-    def get_nights(self, end: int = 10) -> Sequence[Night]:
-        end = max(0, min(end, 10))
-        return self.nights[: (end + 1)]
+    def get_nights(self, end: int = 9, include_night: bool = True) -> Sequence[Night]:
+        end = max(0, end) + (1 if include_night else 0)
+        return self.nights[: end]
 
-    def get_matchboxes(self, end: int = 10, include_night: bool = True) -> Matchboxes:
-        end = max(0, min(end, 10))
+    def get_matchboxes(self, end: int = 9, include_night: bool = True) -> Matchboxes:
         return self.matchboxes.get_matchboxes_until_week(end, include_night)
 
-    def get_pms(self, end: int = 10) -> list[Pair]:
-        end = max(0, min(end, 10))
-        return self.matchboxes.get_perfect_matches(end)
+    def get_pms(self, end: int = 9, include_night: bool = True) -> list[Pair]:
+        return self.matchboxes.get_perfect_matches(end, include_night)
 
     def get_sitting_no_matches(
-        self, sol: Solution, end: int = 10, include_night: bool = True
+        self, sol: Solution, end: int = 9, include_night: bool = True
     ) -> set[Pair]:
-        nights = self.get_nights(end)
-        if not include_night:
-            nights = nights[:-1]
+        nights = self.get_nights(end, include_night)
         sitting_nomatches: set[Pair] = set()
 
         for night in nights:
@@ -198,24 +210,33 @@ class Season:
                 sitting_nomatches.add(p)
         return sitting_nomatches
 
-    def get_black_out_nights(self):
-        bonights: set[int] = set()
+    def get_black_out_nights(self, end: int = 9, include_night: bool = True):
+        end = max(0, end) + (1 if include_night else 0)
+
+        bonights: list[int] = []
         num_known_pms = 0
         pmls: list[str] = []
         pms: set[Pair] = set()
+        known_pms_per_ep = [0 for _ in range(end+1)]
         for ep, (l, r), res, bf in self.matchboxes:
-            if ep >= len(self.nights) or (ep == len(self.nights) - 1 and not bf):
-                continue
+            if ep >=end:
+                break
+            if ep == end and not include_night and not bf:
+                break # skip matchbox after last night 
             if res and l not in pmls:
                 # add one perfect match per person, ignoring double matches
                 num_known_pms += 1
                 pmls.append(l)
                 pms.add((l, r))
-            # all known perfect matches must be seated
-            if num_known_pms == self.nights[ep].lights and (pms).issubset(
+            known_pms_per_ep[ep] = num_known_pms
+
+        for ep in range(min(self.num_weeks, end + 1)):
+            known_pms_per_ep[ep] = max(known_pms_per_ep[ep], known_pms_per_ep[ep - 1] if ep > 0 else 0)
+            
+            if known_pms_per_ep[ep] == self.nights[ep].lights and pms.issubset(
                 self.nights[ep].pairs
             ):
-                bonights.add(ep)
+                bonights.append(ep)
         return bonights
 
 
@@ -223,4 +244,4 @@ def random_night_for_sol(sol: Solution, lefts: list[str], rights: list[str]):
     perm = random.sample(rights, len(lefts))
     pairs = {(l, r) for l, r in zip(lefts, perm)}
     lights = len(sol & pairs)
-    return Night(pairs, lights)
+    return Night((pairs), lights)

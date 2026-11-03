@@ -44,7 +44,7 @@ def toy_example():
     toy_lefts = ("A", "B", "C", "D", "E")
     toy_rights = ("1", "2", "3", "4", "5", "6")
     toy_season = Season(
-        "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm="6", num_matches=6
+        "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm="6", num_matches=6, max_lights=5
     )
     solver = Solver(toy_season)
 
@@ -63,12 +63,12 @@ def simulate_season(n: int = 5, with_dm: bool = True) -> tuple[Season, list[Solu
             sols = [s for s in sols if mp not in s]
 
         res = mp in solution
-        mbs.append((i, mp, res))
+        mbs.append((i, mp, res, True))
         # reveal double match
         if res and mp[0] == "A":
             mr = next(iter({"1", dm} - {mp[1]}))
             np = ("A", mr)
-            mbs.append((i, np, True))
+            mbs.append((i, np, True, True))
             sols = [s for s in sols if np in s]
             known_pms.append(np)
             # print("double match", mp, mr)
@@ -105,6 +105,7 @@ def simulate_season(n: int = 5, with_dm: bool = True) -> tuple[Season, list[Solu
         Matchboxes(),
         mm=dm if with_dm else None,
         num_matches=n + 1,
+        max_lights=n,
         mm_known_after_week=0,
     )
     emptysolver = Solver(empty_season)
@@ -159,6 +160,7 @@ def simulate_season(n: int = 5, with_dm: bool = True) -> tuple[Season, list[Solu
         matchboxes_from_list(mbs),
         mm=dm if with_dm else None,
         num_matches=n + 1,
+        max_lights=n,
         mb_reveals_dm=True,
         solution=solution,
         mm_known_after_week=0,
@@ -215,3 +217,12 @@ def check_generated_season(n: int = 5, with_dm: bool = True):
         if len(fsols) != len(solver.solve(i)):
             print(season)
             assert False, "len(fsols) != len(solver.solve(i))"
+
+if __name__ == "__main__":
+    # uv run python -m scripts.artificial_seasons
+    season, _ = simulate_season(5)
+    # print(season.get_matchboxes(7, False))
+    solver = Solver(season)
+    sols = solver.solve(0, False)
+    print(len(sols))
+    print(solver.season.get_matchboxes(0, False))

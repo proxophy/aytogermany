@@ -1,8 +1,7 @@
-import itertools
 from collections.abc import Iterable
 from typing import override
 
-from .ayto import Solver
+from .ayto import Solver, product_without_reps
 from .models import *
 
 
@@ -11,9 +10,7 @@ class VIP2026Solver(Solver):
     double_match_for_right: bool = True
 
     @override
-    def find_multiple_match_violation(
-        self, sol: SolutionType, end: int
-    ) -> str | None:
+    def find_multiple_match_violation(self, sol: SolutionType, end: int) -> str | None:
 
         supercheck = super().find_multiple_match_violation(sol, end)
         if supercheck is not None:
@@ -69,14 +66,10 @@ class VIP2026Solver(Solver):
             smmatches = [
                 r
                 for r in self.season.rights
-                if not self.no_match(self.sm, r, end, include_night) 
+                if not self.no_match(self.sm, r, end, include_night)
             ]
 
-        products = [
-            list(ps)
-            for ps in itertools.product(*pos_matches.values())
-            if len(set(ps)) == len(ps)
-        ]
+        products = [list(ps) for ps in product_without_reps(list(pos_matches.values()))]
         partial_solutions = [zip_product(pos_matches.keys(), p) for p in products]
 
         if mmnum > 0:

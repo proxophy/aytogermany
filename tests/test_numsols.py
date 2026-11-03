@@ -4,9 +4,9 @@ import pandas as pd
 
 from ayto.utils import get_solver
 
-df = pd.read_csv("analytics/num_solutions.csv", index_col=0, header=0)
-df.columns = df.columns.astype(int)
-
+df = pd.read_csv("analytics/num_solutions_extended.csv", index_col=0)
+df.index = df.index.str.strip()
+df.columns = df.columns.astype(str).str.strip()
 
 class TestSeasonNumSols(unittest.TestCase):
     def test_normalo2020(self):
@@ -49,7 +49,6 @@ class TestSeasonNumSols(unittest.TestCase):
         self.check_season("vip2026")
 
     def check_season(self, sn: str, start: int = 2):
-        row = df.loc[sn]
 
         for i in range(start, 10):
             with self.subTest(episode=i):
@@ -58,8 +57,15 @@ class TestSeasonNumSols(unittest.TestCase):
 
                 self.assertEqual(
                     len(sols),
-                    row[i],
-                    f"{sn} i={i}: got {len(sols)}, expected {row[i]}",
+                    df.loc[sn, str(i)],
+                    f"{sn} i={i}: got {len(sols)}, expected {df.loc[sn, str(i)]}",
+                )
+
+                solsf = [s for s in sols if solver.solution_possible(s, i, True)]
+                self.assertEqual(
+                    len(sols),
+                    len(solsf),
+                    f"{sn} i={i}: number of solutions != number of filtered solutions",
                 )
 
 

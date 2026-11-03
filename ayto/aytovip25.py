@@ -1,18 +1,17 @@
 from collections import Counter
 from typing import override
 
-from .ayto import Solver, dict_rep, mm_left
+from .ayto import Solver
 from .models import *
 
 
 class VIP2025Solver(Solver):
     @override
-    def find_multiple_match_violation(
-        self, sol: SolutionType, end: int
-    ) -> str | None:
+    def find_multiple_match_violation(self, sol: SolutionType, end: int) -> str | None:
         # VIP2025 allows two double matches, one of those must include Jimi
 
-        seated_lefts, seated_right = zip(*sol)
+        seated_lefts = [l for l, _ in sol]
+        seated_rights = [r for _, r in sol]
         sol_dict = dict_rep(sol)
 
         mult_lefts = [
@@ -24,7 +23,7 @@ class VIP2025Solver(Solver):
         mm = self.season.get_mm(end)
 
         # if Jimi is seated and we have two double matches, he must be part of one of them
-        if mm in seated_right and len(mult_lefts) == 2 and mm not in mult_rights:
+        if mm in seated_rights and len(mult_lefts) == 2 and mm not in mult_rights:
             return "Jimi_not_in_double_match"
 
         r_counter = Counter(seated_lefts)
@@ -47,7 +46,10 @@ class VIP2025Solver(Solver):
             r: [
                 l
                 for l in self.season.lefts
-                if not (self.no_match(l, r, end, include_night) or (l, r) in sitting_nomatches)
+                if not (
+                    self.no_match(l, r, end, include_night)
+                    or (l, r) in sitting_nomatches
+                )
             ]
             for r in self.season.rights
         }
