@@ -1,10 +1,10 @@
 from typing import override
 
-from .ayto import Solver
-from .models import *
+from .season import *
+from .solver import Solver
 
 
-class VIP2023Solver(Solver):
+class DoubleMatchPairSolver(Solver):
     @override
     def no_match_reason(self, l: str, r: str, end: int, include_night : bool) -> str | None:
         assert self.season.double_match_pair
@@ -27,7 +27,7 @@ class VIP2023Solver(Solver):
             # lefts that partner with double_match_pair
             dml = [l for (l, r) in sol if r in self.season.double_match_pair]
             if len(dml) > 1 and dml[0] != dml[1]:
-                return "vip23_double_match_pair_not_same_match"
+                return "double_match_pair_not_same_match"
 
             sol_dict = dict_rep(sol)
 

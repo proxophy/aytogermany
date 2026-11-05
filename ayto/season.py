@@ -77,17 +77,23 @@ class Matchboxes:
     weeks: tuple[int, ...] = ()
     pairs: tuple[Pair, ...] = ()
     results: tuple[bool, ...] = ()
-    bfs: tuple[bool, ...] = ()
+    before_night: tuple[bool, ...] = ()
 
     def __post_init__(self):
         if not (
-            len(self.weeks) == len(self.pairs) == len(self.results) == len(self.bfs)
+            len(self.weeks)
+            == len(self.pairs)
+            == len(self.results)
+            == len(self.before_night)
         ):
             raise ValueError(
-                len(self.weeks), len(self.pairs), len(self.results), len(self.bfs)
+                len(self.weeks),
+                len(self.pairs),
+                len(self.results),
+                len(self.before_night),
             )
         l = self.weeks
-        if not all(l[i] <= l[i+1] for i in range(len(l) - 1)):
+        if not all(l[i] <= l[i + 1] for i in range(len(l) - 1)):
             raise ValueError("weeks in matchbox list must be increasing")
 
     def __getitem__(self, key: Pair) -> bool:
@@ -97,7 +103,7 @@ class Matchboxes:
         return self.results[idx]
 
     def __iter__(self):
-        return zip(self.weeks, self.pairs, self.results, self.bfs)
+        return zip(self.weeks, self.pairs, self.results, self.before_night)
 
     def __len__(self):
         return len(self.weeks)
@@ -140,8 +146,6 @@ class Matchboxes:
 
         return Matchboxes(tuple(weeks), tuple(pairs), tuple(results), tuple(bfs))
 
-    
-
 
 def matchboxes_from_list(data: list[tuple[int, Pair, bool, bool]]):
     episodes, pairs, results, bfs = zip(*data)
@@ -156,19 +160,19 @@ class Season:
     nights: tuple[Night, ...]
     matchboxes: Matchboxes
     solution: Solution = Solution()  # noqa: RUF009
-    mm: str | None = None
-    num_matches: int = 11
-    max_lights: int = 10
-    double_match_pair: tuple[str, str] | None = None
-    double_match_pair_known: int = 7  # after which episode mm is known
-    mm_known_after_week: int = 0  # after which episode mm is known
-    max_mm_size: int = 2  # max size of multiple match pair
-    mb_reveals_dm: bool = (
+    match_model: str = "base"
+    mm_person: str | None = None
+
+    mm_known_from_week: int = 0  # from which episode mm is known
+    matchbox_reveals_dm: bool = (
         True  # if one part of double match is revealed, the other one is revealed immediately after
     )
-    has_two_dms: bool = False
+    double_match_pair: tuple[str, str] | None = None
+    double_match_pair_known: int = 10  # from which episode double match pair is known
+    extra_left: str | None = None  # left that is part of double match for right
 
     def __post_init__(self):
+        # todo: write / put together validation for season data
         if not (0 <= len(self.nights) <= 10 and 0 <= len(self.matchboxes)):
             raise ValueError(
                 f"Invalid number of nights or matchboxes {len(self.nights)} {len(self.matchboxes)}"
@@ -177,18 +181,55 @@ class Season:
             self.rights
         ):
             raise ValueError("Duplicate names in lefts or rights")
+        if self.double_match_pair and self.match_model != "double_match_pair":
+            raise ValueError(
+                f"double_match_pair is set but match_model is {self.match_model} (it should be 'double_match_pair')"
+            )
+        if self.extra_left and self.match_model != "double_match_for_right":
+            raise ValueError(
+                f"extra_left is set but match_model is {self.match_model} (it should be 'double_match_for_right')"
+            )
 
     @property
     def num_weeks(self) -> int:
         return len(self.nights)
 
+    @property
+    def two_dms(self) -> bool:
+        return self.match_model == "two_double_matches"
+
+    @property
+    def double_match_for_right(self) -> bool:
+        return self.match_model == "double_match_for_right"
+
+    @property
+    def max_mm_size(self) -> int:
+        return 3 if self.match_model == "triple_match" else 2
+
+    @property
+    def num_matches(self) -> int:
+        if self.match_model in (
+            "triple_match",
+            "two_double_matches",
+            "double_match_for_right",
+        ):
+            return self.max_lights + 2
+        else:
+            return self.max_lights + 1
+
+    @property
+    def max_lights(self) -> int:
+        return min(len(self.lefts), len(self.rights)) - (
+            1 if self.match_model == "double_match_for_right" else 0
+        )
+
     def get_mm(self, end: int = 9) -> str | None:
-        end = max(0, min(end, self.num_weeks-1))
-        return self.mm if end >= self.mm_known_after_week else None
+        end = max(0, min(end, self.num_weeks - 1))
+        return self.mm_person if end >= self.mm_known_from_week else None
 
     def get_nights(self, end: int = 9, include_night: bool = True) -> Sequence[Night]:
         end = max(0, end) + (1 if include_night else 0)
-        return self.nights[: end]
+        return self.nights[:end]
 
     def get_matchboxes(self, end: int = 9, include_night: bool = True) -> Matchboxes:
         return self.matchboxes.get_matchboxes_until_week(end, include_night)
@@ -217,12 +258,12 @@ class Season:
         num_known_pms = 0
         pmls: list[str] = []
         pms: set[Pair] = set()
-        known_pms_per_ep = [0 for _ in range(end+1)]
+        known_pms_per_ep = [0 for _ in range(end + 1)]
         for ep, (l, r), res, bf in self.matchboxes:
-            if ep >=end:
+            if ep >= end:
                 break
             if ep == end and not include_night and not bf:
-                break # skip matchbox after last night 
+                break  # skip matchbox after last night
             if res and l not in pmls:
                 # add one perfect match per person, ignoring double matches
                 num_known_pms += 1
@@ -231,8 +272,10 @@ class Season:
             known_pms_per_ep[ep] = num_known_pms
 
         for ep in range(min(self.num_weeks, end + 1)):
-            known_pms_per_ep[ep] = max(known_pms_per_ep[ep], known_pms_per_ep[ep - 1] if ep > 0 else 0)
-            
+            known_pms_per_ep[ep] = max(
+                known_pms_per_ep[ep], known_pms_per_ep[ep - 1] if ep > 0 else 0
+            )
+
             if known_pms_per_ep[ep] == self.nights[ep].lights and pms.issubset(
                 self.nights[ep].pairs
             ):

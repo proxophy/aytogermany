@@ -6,27 +6,27 @@ from .analysis import (
     plot_probs,
     sol_probs,
 )
-from .ayto import Solver, allseasons
-from .aytonormalo24 import Normalo2024Solver
-from .aytovip23 import VIP2023Solver
-from .aytovip25 import VIP2025Solver
-from .aytovip26 import VIP2026Solver
-from .models import Matchboxes, Night, Pair, Season, Solution
+from .double_match_for_right_solver import DoubleMatchForRightSolver
+from .double_match_pair_solver import DoubleMatchPairSolver
+from .season import Matchboxes, Night, Pair, Season, Solution
+from .solver import ALL_SEASONS, Solver
+from .triple_match_solver import TripleMatchSolver
+from .two_double_matches_solver import TwoDoubleMatchesSolver
 from .utils import get_season, get_solver
 
 __all__ = [
+    "ALL_SEASONS",
+    "DoubleMatchForRightSolver",
+    "DoubleMatchPairSolver",
     "Matchboxes",
     "Night",
-    "Normalo2024Solver",
     "Pair",
     "Season",
     "Solution",
     "SolutionSpace",
     "Solver",
-    "VIP2023Solver",
-    "VIP2025Solver",
-    "VIP2026Solver",
-    "allseasons",
+    "TripleMatchSolver",
+    "TwoDoubleMatchesSolver",
     "analyze_solutions",
     "df_for_probs",
     "get_season",

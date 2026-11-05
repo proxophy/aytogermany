@@ -2,7 +2,7 @@ import random
 import string
 
 from ayto import Matchboxes, Night, Season, Solution, Solver
-from ayto.models import matchboxes_from_list, mm_left
+from ayto.season import matchboxes_from_list, mm_left
 
 # pyright: standard
 
@@ -44,7 +44,7 @@ def toy_example():
     toy_lefts = ("A", "B", "C", "D", "E")
     toy_rights = ("1", "2", "3", "4", "5", "6")
     toy_season = Season(
-        "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm="6", num_matches=6, max_lights=5
+        "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm_person="6", num_matches=6, max_lights=5
     )
     solver = Solver(toy_season)
 
@@ -103,10 +103,10 @@ def simulate_season(n: int = 5, with_dm: bool = True) -> tuple[Season, list[Solu
         rights,
         (),
         Matchboxes(),
-        mm=dm if with_dm else None,
+        mm_person=dm if with_dm else None,
         num_matches=n + 1,
         max_lights=n,
-        mm_known_after_week=0,
+        mm_known_from_week=0,
     )
     emptysolver = Solver(empty_season)
 
@@ -158,12 +158,12 @@ def simulate_season(n: int = 5, with_dm: bool = True) -> tuple[Season, list[Solu
         rights,
         tuple(nights),
         matchboxes_from_list(mbs),
-        mm=dm if with_dm else None,
+        mm_person=dm if with_dm else None,
         num_matches=n + 1,
         max_lights=n,
-        mb_reveals_dm=True,
+        matchbox_reveals_dm=True,
         solution=solution,
-        mm_known_after_week=0,
+        mm_known_from_week=0,
     )
 
     return season, sols

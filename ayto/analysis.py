@@ -5,8 +5,8 @@ from functools import wraps
 
 import pandas as pd
 
-from .ayto import Solver
-from .models import Pair, Solution, mm_left
+from .season import Pair, Solution, mm_left
+from .solver import Solver
 
 
 class SolutionSpace:

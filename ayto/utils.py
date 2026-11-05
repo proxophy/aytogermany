@@ -2,12 +2,12 @@ from collections.abc import Sequence
 
 import pandas as pd
 
-from .ayto import Solver
-from .aytonormalo24 import Normalo2024Solver
-from .aytovip23 import VIP2023Solver
-from .aytovip25 import VIP2025Solver
-from .aytovip26 import VIP2026Solver
-from .models import *
+from .double_match_for_right_solver import DoubleMatchForRightSolver
+from .double_match_pair_solver import DoubleMatchPairSolver
+from .season import *
+from .solver import Solver
+from .triple_match_solver import TripleMatchSolver
+from .two_double_matches_solver import TwoDoubleMatchesSolver
 
 
 def check_nights(
@@ -48,8 +48,7 @@ def validate_season_args(
 ):
 
     nummatches = max(len(lefts), len(rights))
-    # todo: remove Laurenz as hardcoded value
-    if "Laurenz" not in lefts and (len(lefts) != 10 or len(rights) != nummatches):
+    if len(lefts) != len(rights) and (len(lefts) != 10 or len(rights) != nummatches):
         raise ValueError("Not enough or too much women or men")
 
     # check nights
@@ -88,7 +87,7 @@ def read_data_from_excel(
     Solution,
 ]:
 
-    dfs = pd.read_excel(f"data/{sn}.xlsx", sheet_name=None, header=0)
+    dfs = pd.read_excel(f"data/seasons/{sn}.xlsx", sheet_name=None, header=0)
     dfcand: pd.DataFrame = dfs["Candidates"]
     lefts: tuple[str, ...] = tuple(dfcand["left"].dropna().tolist())
     rights: tuple[str, ...] = tuple(dfcand["right"].dropna().tolist())
@@ -130,7 +129,7 @@ def read_data_from_excel(
             dfmatchboxes.iloc[:, 1].to_list(), dfmatchboxes.iloc[:, 2].to_list()
         ),
         tuple(dfmatchboxes["result"].to_list()),
-        bfs=tuple(dfmatchboxes["before_night"].to_list()),
+        before_night=tuple(dfmatchboxes["before_night"].to_list()),
     )
 
     validate_season_args(lefts, rights, nights, matchboxes, dm)
@@ -153,36 +152,30 @@ def sols_as_df(sols: list[Solution]) -> pd.DataFrame:
 
 
 def get_season(sn: str) -> Season:
-    lefts, rights, nights, matchboxes, mm, solution = read_data_from_excel(sn)
-    args = (sn, lefts, rights, nights, matchboxes, solution, mm)
-    if sn == "normalo2024":
-        season = Season(*args, num_matches=12, max_mm_size=3)
-    elif sn == "normalo2026":
-        season = Season(*args, mm_known_after_week=5, mb_reveals_dm=False)
-    elif sn == "vip2023":
-        season = Season(
-            *args,
-            double_match_pair=("Peter", "Max"),
-        )
-    elif sn == "vip2025":
-        season = Season(*args, num_matches=12, has_two_dms=True)
-    elif sn == "vip2026":
-        season = Season(*args, num_matches=12)
-    else:
-        season = Season(*args)
+    import json
+    lefts, rights, nights, matchboxes, _, solution = read_data_from_excel(sn)
+    args = (sn, lefts, rights, nights, matchboxes, solution)
+    with open(f"data/season_configs/{sn}.json") as f:
+        logic_args: dict[str, object] = json.load(f)  # pyright: ignore[reportAny]
+    season = Season(*args, **logic_args)  # pyright: ignore[reportArgumentType]
+    
     return season
 
 
 def get_solver(sn: str) -> Solver:
     season = get_season(sn)
-    if sn == "normalo2024":
-        solver = Normalo2024Solver(season)
-    elif sn == "vip2023":
-        solver = VIP2023Solver(season)
-    elif sn == "vip2025":
-        solver = VIP2025Solver(season)
-    elif sn == "vip2026":
-        solver = VIP2026Solver(season)
-    else:
-        solver = Solver(season)
+    match season.match_model:
+        case "base":
+            solver = Solver(season)
+        case "double_match_pair":
+            solver = DoubleMatchPairSolver(season)
+        case "two_double_matches":
+            solver = TwoDoubleMatchesSolver(season)
+        case "double_match_for_right":
+            solver = DoubleMatchForRightSolver(season)
+        case "triple_match":
+            solver = TripleMatchSolver(season)
+        case _:
+            raise ValueError(f"Unknown match model {season.match_model} for season {sn}")
+
     return solver

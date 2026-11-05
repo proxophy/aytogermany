@@ -1,11 +1,11 @@
 from collections import Counter
 from typing import override
 
-from .ayto import Solver
-from .models import *
+from .season import *
+from .solver import Solver
 
 
-class VIP2025Solver(Solver):
+class TwoDoubleMatchesSolver(Solver):
     @override
     def find_multiple_match_violation(self, sol: SolutionType, end: int) -> str | None:
         # VIP2025 allows two double matches, one of those must include Jimi
@@ -27,7 +27,7 @@ class VIP2025Solver(Solver):
             return "Jimi_not_in_double_match"
 
         r_counter = Counter(seated_lefts)
-        # no tripple matches
+        # no triple matches
         if any(v > 2 for v in r_counter.values()):
             return "triple_match_not_allowed"
         return None
@@ -65,7 +65,7 @@ class VIP2025Solver(Solver):
             if len(missingrights) == 2:
                 # add two matches
                 r1, r2 = missingrights
-                if r1 == self.season.mm or r2 == self.season.mm:
+                if r1 == self.season.mm_person or r2 == self.season.mm_person:
                     for l1 in addable_lefts[r1]:
                         for l2 in addable_lefts[r2]:
                             if l1 == l2:
@@ -75,7 +75,7 @@ class VIP2025Solver(Solver):
                             solutions.append(x)
                 else:
                     jimipartner = next(
-                        l for (l, r) in tenplusmatches if r == self.season.mm
+                        l for (l, r) in tenplusmatches if r == self.season.mm_person
                     )
                     # print(jimipartner)
                     if jimipartner in addable_lefts[r1]:
@@ -93,13 +93,13 @@ class VIP2025Solver(Solver):
             elif len(missingrights) == 1:
                 mr = missingrights[0]
                 mml = mm_left(tenplusmatches)
-                if mr == self.season.mm:
+                if mr == self.season.mm_person:
                     solutions.extend(
                         base | {(l, mr)} for l in addable_lefts[mr] if l != mml
                     )
                 else:
                     jimipartner = next(
-                        l for (l, r) in tenplusmatches if r == self.season.mm
+                        l for (l, r) in tenplusmatches if r == self.season.mm_person
                     )
                     d = dict_rep(tenplusmatches)
                     # dont add to Jimi if he's already part of double match

@@ -46,6 +46,8 @@ class TestSeasonSolution(unittest.TestCase):
     def check_season(self, sn: str):
         solver = get_solver(sn)
         solution = solver.season.solution
+        self.assertIsNotNone(solution, f"No solution found for season {sn}")
         if solution:
+            self.assertEqual(len(solution), solver.season.num_matches)
             solpos = solver.find_violation(solution, 10, True)
             self.assertIsNone(solpos, solpos)

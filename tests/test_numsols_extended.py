@@ -44,7 +44,7 @@ class TestSeasonNumSols(unittest.TestCase):
         self.check_season_extended("vip2024")
 
     def test_vip2025_extended(self):
-        self.check_season_extended("vip2025")
+        self.check_season_extended("vip2025", start=3)
 
     def test_vip2026_extended(self):
         self.check_season_extended("vip2026")

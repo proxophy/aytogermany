@@ -1,7 +1,7 @@
 import unittest
 
-from ayto import Solver, VIP2023Solver
-from ayto.models import Matchboxes, Night, Season
+from ayto import DoubleMatchPairSolver, Solver
+from ayto.season import Matchboxes, Night, Season
 from ayto.utils import get_solver
 
 normalo2020 = get_solver("normalo2020")
@@ -45,7 +45,7 @@ toy_matchboxes = Matchboxes((0,), (("B", "3"),), (False,), (True,))
 toy_lefts = ("A", "B", "C", "D", "E")
 toy_rights = ("1", "2", "3", "4", "5", "6")
 toy_season = Season(
-    "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm="6", num_matches=6
+    "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm_person="6", num_matches=6
 )
 toy_season_wo_dm = Season(
     "toy_wo_dm", toy_lefts, toy_rights, toy_nights, toy_matchboxes, num_matches=6
@@ -57,7 +57,7 @@ toy_season_with_double_match_pair = Season(
     toy_rights,
     toy_nights,
     Matchboxes((0,), (("B", "1"),), (False,), (True,)),
-    mm="6",
+    mm_person="6",
     double_match_pair=("1", "6"),
     double_match_pair_known=0,
     num_matches=6,
@@ -89,18 +89,18 @@ toy_season2 = Season(
         weeks=(0, 1, 2, 3, 4),
         pairs=(("A", "2"), ("D", "2"), ("D", "2"), ("D", "1"), ("C", "5")),
         results=(False, False, False, False, False),
-        bfs=(True, True, True, True, True,),
+        before_night=(True, True, True, True, True,),
     ),
     solution=frozenset(
         {("A", "1"), ("A", "6"), ("E", "5"), ("C", "3"), ("B", "2"), ("D", "4")}
     ),
-    mm="6",
+    mm_person="6",
     num_matches=6,
     double_match_pair=None,
     double_match_pair_known=7,
-    mm_known_after_week=0,
+    mm_known_from_week=0,
     max_mm_size=2,
-    mb_reveals_dm=True,
+    matchbox_reveals_dm=True,
 )
 
 # todo: type this
@@ -152,12 +152,12 @@ class TestSeasonSolution(unittest.TestCase):
             "matchbox_false_for_double_match_pair",
         )
 
-    def test_no_match_tripple_match(self):
+    def test_no_match_triple_match(self):
         self.assertIsNone(normalo2024.no_match_reason("Gerrit", "Edda", 3, True))
         self.assertIsNone(normalo2024.no_match_reason("Gerrit", "Pia", 3, True))
         self.assertEqual(
             normalo2024.no_match_reason("Gerrit", "Edda", 4, True),
-            "tripple_match_already_exists",
+            "triple_match_already_exists",
         )
 
     def test_no_match_dm_later_known(self):
@@ -277,7 +277,7 @@ class TestSeasonSolution(unittest.TestCase):
         self.compare_solve_approaches(solver)
 
     def test_check_multiple_match_logic_with_double_match_pair(self):
-        solver = VIP2023Solver(toy_season_with_double_match_pair)
+        solver = DoubleMatchPairSolver(toy_season_with_double_match_pair)
         sol1 = {("A", "1"), ("B", "2"), ("C", "3"), ("D", "4"), ("D", "5"), ("A", "6")}
         self.assertTrue(solver.find_multiple_match_violation(sol1, 3))
         sol2 = {
@@ -286,7 +286,7 @@ class TestSeasonSolution(unittest.TestCase):
         }
         self.assertEqual(
             solver.find_multiple_match_violation(sol2, 3),
-            "vip23_double_match_pair_not_same_match",
+            "double_match_pair_not_same_match",
         )
         sol3 = {("A", "1"), ("A", "2")}
         self.assertEqual(
@@ -307,13 +307,13 @@ class TestSeasonSolution(unittest.TestCase):
             season.rights,
             (),
             Matchboxes(),
-            mm=season.mm,
+            mm_person=season.mm_person,
             num_matches=season.num_matches,
             double_match_pair=season.double_match_pair,
             double_match_pair_known=season.double_match_pair_known,
-            mm_known_after_week=season.mm_known_after_week,
+            mm_known_from_week=season.mm_known_from_week,
             max_mm_size=season.max_mm_size,
-            mb_reveals_dm=season.mb_reveals_dm,
+            matchbox_reveals_dm=season.matchbox_reveals_dm,
         )
         empty_season = Solver(empty_season)
         sols = set(empty_season.generate_complete_solutions(frozenset(), end, True))

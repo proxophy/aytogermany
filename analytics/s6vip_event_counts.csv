@@ -7,7 +7,7 @@ s6vip,1,4,matching_night,Matching Night,161844480,10309492,151534988
 s6vip,2,1,box,Match Box,10309492,7331118,2978374
 s6vip,2,2,matching_night,Matching Night,7331118,991745,6339373
 s6vip,3,1,box,Match Box,991745,10903,980842
-s6vip,3,*9,matching_night,Matching Night,10903,1679,9224
+s6vip,3,2,matching_night,Matching Night,10903,1679,9224
 s6vip,4,1,box,Match Box,1679,1237,442
 s6vip,4,2,matching_night,Matching Night,1237,25,1212
 s6vip,4,3,cast_change,Nachkommer Laurenz,25,225,-200

@@ -1,13 +1,11 @@
 from collections.abc import Iterable
 from typing import override
 
-from .ayto import Solver, product_without_reps
-from .models import *
+from .season import *
+from .solver import Solver, product_without_reps
 
 
-class VIP2026Solver(Solver):
-    sm: str | None = "Laurenz"
-    double_match_for_right: bool = True
+class DoubleMatchForRightSolver(Solver):
 
     @override
     def find_multiple_match_violation(self, sol: SolutionType, end: int) -> str | None:
@@ -28,7 +26,7 @@ class VIP2026Solver(Solver):
         elif len(mutiplers) == 1:
             multir = mutiplers[0]
             multils = pdict[multir]
-            if len(multils) == 2 and self.sm not in multils:
+            if len(multils) == 2 and self.season.extra_left not in multils:
                 return "Laurenz_not_in_double_right_match"
 
         return None
@@ -48,25 +46,25 @@ class VIP2026Solver(Solver):
         def zip_product(clefts: Iterable[str], ordering: Iterable[str]) -> Solution:
             return Solution(p for p in zip(clefts, ordering))
 
-        assert self.sm
+        assert self.season.extra_left
 
         glefts, _, mmnum = get_candidates(sol)
 
         pos_matches: dict[str, list[str]] = self.possible_matches_for_solution(
             sol, end, include_night
         )
-        _ = pos_matches.pop(self.sm, None)
-        if self.sm in glefts:
+        _ = pos_matches.pop(self.season.extra_left, None)
+        if self.season.extra_left in glefts:
             # remove pair with self.sm if necessary
-            smmatches = [r for l, r in sol if l == self.sm]
+            smmatches = [r for l, r in sol if l == self.season.extra_left]
             # print(smmatches)
             # isol = set(sol)
-            sol = Solution(sol.difference({(self.sm, smmatches[0])}))
+            sol = Solution(sol.difference({(self.season.extra_left, smmatches[0])}))
         else:
             smmatches = [
                 r
                 for r in self.season.rights
-                if not self.no_match(self.sm, r, end, include_night)
+                if not self.no_match(self.season.extra_left, r, end, include_night)
             ]
 
         products = [list(ps) for ps in product_without_reps(list(pos_matches.values()))]
@@ -82,10 +80,10 @@ class VIP2026Solver(Solver):
         # add self.sm as double_match
         sitting_no_matches = self.season.get_sitting_no_matches(sol, end, include_night)
         solutions = [
-            Solution(s | {(self.sm, r)})
+            Solution(s | {(self.season.extra_left, r)})
             for r in smmatches
             for s in isols
-            if (self.sm, r) not in sitting_no_matches
+            if (self.season.extra_left, r) not in sitting_no_matches
         ]
 
         return solutions

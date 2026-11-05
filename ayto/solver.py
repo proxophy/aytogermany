@@ -2,9 +2,9 @@ import functools
 import itertools
 from collections.abc import Generator, Iterable
 
-from .models import *
+from .season import *
 
-allseasons = [
+ALL_SEASONS = [
     "normalo2020",
     "normalo2021",
     "normalo2022",
@@ -53,8 +53,6 @@ class Solver:
     """
 
     season: Season
-    sm: str | None = None
-    double_match_for_right: bool = False
 
     def __init__(self, season: Season) -> None:
         self.season = season
@@ -103,14 +101,14 @@ class Solver:
         # you find the double match in the same episode
         if (l, r) not in kpm and (l in pm_lefts or r in pm_rights):
             # handle special case: for normalo2026, Alicia's match with Noel doesnt get revealed, despite Noel finding his match during the show
-            if self.season.mb_reveals_dm:
+            if self.season.matchbox_reveals_dm:
                 return "member_has_partner_already"
             else:
                 mm = self.season.get_mm(end)
                 # l cannot be part of multiple match
                 if mm and r != mm and self.no_match(l, mm, end, include_night):
                     return "l_cannot_have_double_match"
-                elif end < self.season.mm_known_after_week:
+                elif end < self.season.mm_known_from_week:
                     return "cannot_be_in_double_match"
 
         return None
@@ -121,7 +119,7 @@ class Solver:
         if len(sol) > self.season.num_matches:
             return "too_many_matches"
 
-        if not self.double_match_for_right and has_dm_for_right(sol):
+        if not self.season.double_match_for_right and has_dm_for_right(sol):
             return "double_match_for_right"
 
         for l, r in sol:
@@ -186,7 +184,7 @@ class Solver:
         sol_dict = dict_rep(sol)
         # lefts with multiple partners
         mult_lefts = [l for l, rs in sol_dict.items() if len(rs) > 1]
-        # double/tripple match person
+        # double/triple match person
         mm = self.season.get_mm(end)
 
         if len(mult_lefts) >= 2:
@@ -291,7 +289,7 @@ class Solver:
                 if not (
                     self.no_match(l, r, end, include_night)
                     or (l, r) in sitting_nomatches
-                    or (self.sm and l == self.sm)
+                    or (self.season.extra_left and l == self.season.extra_left)
                 )
             ]
             for r in self.season.rights
@@ -363,8 +361,8 @@ class Solver:
         ]
         partial_solutions = [zip_product(pos_matches.keys(), p) for p in products]
 
-        if (self.season.has_two_dms and has_two_dms(sol)) or (
-            not self.season.has_two_dms and mm_num == self.season.max_mm_size
+        if (self.season.two_dms and has_two_dms(sol)) or (
+            not self.season.two_dms and mm_num == self.season.max_mm_size
         ):
             # Multiple match is already in Solution
             sols = self.merge_mm_in_solution(sol, partial_solutions)

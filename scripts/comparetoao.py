@@ -1,8 +1,7 @@
 import json
 from collections import Counter
-import pandas as pd
 
-from ayto import Pair, Solution, Solver, get_solver, get_season
+from ayto import Pair, Solution, Solver, get_solver
 
 # pyright: standard
 

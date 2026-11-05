@@ -1,11 +1,11 @@
 from collections import Counter
 from typing import override
 
-from .ayto import Solver
-from .models import *
+from .season import *
+from .solver import Solver
 
 
-class Normalo2024Solver(Solver):
+class TripleMatchSolver(Solver):
     @override
     def no_match_reason(
         self, l: str, r: str, end: int, include_night: bool
@@ -24,7 +24,7 @@ class Normalo2024Solver(Solver):
             if len(mmls) < 3 and l in mmls and r not in hpm:
                 # we only know two out of three of the multiple matches in Normalo 2024 at episode 10
                 return None
-            return "tripple_match_already_exists"
+            return "triple_match_already_exists"
 
         return super().no_match_reason(l, r, end, include_night)
 
@@ -62,7 +62,7 @@ class Normalo2024Solver(Solver):
 
             if len(mrs) == 2:
                 mr1, mr2 = mrs
-                if self.season.mm in mrs:
+                if self.season.mm_person in mrs:
                     # no multiple seatings yet , Mela not seated
                     for l in self.season.lefts:
                         if l in addable_lefts[mr1] and l in addable_lefts[mr2]:
@@ -70,7 +70,7 @@ class Normalo2024Solver(Solver):
                 else:
                     # no mutiple seatings, Mela seated
                     dmleft = next(
-                        l for (l, r) in base_matches if r == self.season.mm
+                        l for (l, r) in base_matches if r == self.season.mm_person
                     )  # find partner of Mela
                     if dmleft in addable_lefts[mr1] and dmleft in addable_lefts[mr2]:
                         solutions.append(base_matches | {(dmleft, mr1), (dmleft, mr2)})

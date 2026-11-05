@@ -3,7 +3,7 @@ import os
 
 import pandas as pd
 
-from ayto import Solver, allseasons, df_for_probs, get_season, get_solver
+from ayto import ALL_SEASONS, Solver, df_for_probs, get_season, get_solver
 
 
 def get_stats(solver: Solver, end: int):
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     # for sn in allseasons:
     #     export_season_results(sn)
     solver = get_solver(sn)
-    for sn in allseasons:
+    for sn in ALL_SEASONS:
         export_excel(sn)
 
     # df, _ = get_stats(solver, 6)
