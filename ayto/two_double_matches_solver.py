@@ -20,10 +20,10 @@ class TwoDoubleMatchesSolver(Solver):
         mult_rights = [
             e for l in mult_lefts for e in sol_dict[l]
         ]  # rights part of multi match
-        mm = self.season.get_mm(end)
+        mm_person = self.season.get_mm(end)
 
         # if Jimi is seated and we have two double matches, he must be part of one of them
-        if mm in seated_rights and len(mult_lefts) == 2 and mm not in mult_rights:
+        if mm_person in seated_rights and len(mult_lefts) == 2 and mm_person not in mult_rights:
             return "Jimi_not_in_double_match"
 
         r_counter = Counter(seated_lefts)
@@ -56,6 +56,8 @@ class TwoDoubleMatchesSolver(Solver):
 
         solutions: list[Solution] = []
 
+        mm_person = self.season.get_mm(end)
+
         for partial_solution in partial_solutions:
             tenplusmatches = sol.union(partial_solution)
             base = tenplusmatches
@@ -65,7 +67,7 @@ class TwoDoubleMatchesSolver(Solver):
             if len(missingrights) == 2:
                 # add two matches
                 r1, r2 = missingrights
-                if r1 == self.season.mm_person or r2 == self.season.mm_person:
+                if r1 == mm_person or r2 == mm_person:
                     for l1 in addable_lefts[r1]:
                         for l2 in addable_lefts[r2]:
                             if l1 == l2:
@@ -75,7 +77,7 @@ class TwoDoubleMatchesSolver(Solver):
                             solutions.append(x)
                 else:
                     jimipartner = next(
-                        l for (l, r) in tenplusmatches if r == self.season.mm_person
+                        l for (l, r) in tenplusmatches if r == mm_person
                     )
                     # print(jimipartner)
                     if jimipartner in addable_lefts[r1]:
@@ -93,13 +95,13 @@ class TwoDoubleMatchesSolver(Solver):
             elif len(missingrights) == 1:
                 mr = missingrights[0]
                 mml = mm_left(tenplusmatches)
-                if mr == self.season.mm_person:
+                if mr == mm_person:
                     solutions.extend(
                         base | {(l, mr)} for l in addable_lefts[mr] if l != mml
                     )
                 else:
                     jimipartner = next(
-                        l for (l, r) in tenplusmatches if r == self.season.mm_person
+                        l for (l, r) in tenplusmatches if r == mm_person
                     )
                     d = dict_rep(tenplusmatches)
                     # dont add to Jimi if he's already part of double match

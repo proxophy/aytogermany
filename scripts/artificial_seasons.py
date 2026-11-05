@@ -44,7 +44,7 @@ def toy_example():
     toy_lefts = ("A", "B", "C", "D", "E")
     toy_rights = ("1", "2", "3", "4", "5", "6")
     toy_season = Season(
-        "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm_person="6", num_matches=6, max_lights=5
+        "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm_person="6"
     )
     solver = Solver(toy_season)
 
@@ -104,8 +104,6 @@ def simulate_season(n: int = 5, with_dm: bool = True) -> tuple[Season, list[Solu
         (),
         Matchboxes(),
         mm_person=dm if with_dm else None,
-        num_matches=n + 1,
-        max_lights=n,
         mm_known_from_week=0,
     )
     emptysolver = Solver(empty_season)
@@ -159,8 +157,6 @@ def simulate_season(n: int = 5, with_dm: bool = True) -> tuple[Season, list[Solu
         tuple(nights),
         matchboxes_from_list(mbs),
         mm_person=dm if with_dm else None,
-        num_matches=n + 1,
-        max_lights=n,
         matchbox_reveals_dm=True,
         solution=solution,
         mm_known_from_week=0,

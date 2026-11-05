@@ -9,7 +9,7 @@ To download all the necessary packages, call
 uv sync
 ```
 
-Run the programm via `main.py`. Available seasons are: `"normalo2020","normalo2021", "normalo2022", "normalo2023",  "normalo2024",   "normalo2025", "normalo2026", "vip2021", "vip2022",  "vip2023", "vip2024", "vip2025",  "vip2026"`. By default all seasons constraints are used, set the flag `--end` to compute the results until a chosen week, the weeks are indexed starting from 0.
+Run the programm_person via `main.py`. Available seasons are: `"normalo2020","normalo2021", "normalo2022", "normalo2023",  "normalo2024",   "normalo2025", "normalo2026", "vip2021", "vip2022",  "vip2023", "vip2024", "vip2025",  "vip2026"`. By default all seasons constraints are used, set the flag `--end` to compute the results until a chosen week, the weeks are indexed starting from 0.
 
 ```shell
 # All seasons constraints are used

@@ -1,7 +1,7 @@
 import json
 from collections import Counter
 
-from ayto import Pair, Solution, Solver, get_solver
+from ayto import Solution, Solver, get_solver
 
 # pyright: standard
 
@@ -10,12 +10,6 @@ def comparetoao(solver: Solver, sols: list[Solution], end: int, icl: bool):
     with open("solutions.txt", "r") as f:
         lines = map(eval, f.readlines())
 
-    def parse_sol(ld: dict[str, list[str]]):
-        pairs: set[Pair] = set()
-        for l, rs in ld.items():
-            for r in rs:
-                pairs.add((l, r))
-        return Solution(set(pairs))
 
     # solsao = list(map(parse_sol, lines))
     aosols = [Solution(s) for s in lines]

@@ -45,22 +45,22 @@ toy_matchboxes = Matchboxes((0,), (("B", "3"),), (False,), (True,))
 toy_lefts = ("A", "B", "C", "D", "E")
 toy_rights = ("1", "2", "3", "4", "5", "6")
 toy_season = Season(
-    "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm_person="6", num_matches=6
+    "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm_person="6"
 )
 toy_season_wo_dm = Season(
-    "toy_wo_dm", toy_lefts, toy_rights, toy_nights, toy_matchboxes, num_matches=6
+    "toy_wo_dm", toy_lefts, toy_rights, toy_nights, toy_matchboxes
 )
 
 toy_season_with_double_match_pair = Season(
-    "toy_wo_dm",
+    "toy_with_dm_pair",
     toy_lefts,
     toy_rights,
     toy_nights,
     Matchboxes((0,), (("B", "1"),), (False,), (True,)),
+    match_model = "double_match_pair",
     mm_person="6",
     double_match_pair=("1", "6"),
-    double_match_pair_known=0,
-    num_matches=6,
+    double_match_pair_known=0
 )
 
 
@@ -95,11 +95,9 @@ toy_season2 = Season(
         {("A", "1"), ("A", "6"), ("E", "5"), ("C", "3"), ("B", "2"), ("D", "4")}
     ),
     mm_person="6",
-    num_matches=6,
     double_match_pair=None,
     double_match_pair_known=7,
     mm_known_from_week=0,
-    max_mm_size=2,
     matchbox_reveals_dm=True,
 )
 
@@ -307,12 +305,11 @@ class TestSeasonSolution(unittest.TestCase):
             season.rights,
             (),
             Matchboxes(),
+            match_model=season.match_model,
             mm_person=season.mm_person,
-            num_matches=season.num_matches,
             double_match_pair=season.double_match_pair,
             double_match_pair_known=season.double_match_pair_known,
             mm_known_from_week=season.mm_known_from_week,
-            max_mm_size=season.max_mm_size,
             matchbox_reveals_dm=season.matchbox_reveals_dm,
         )
         empty_season = Solver(empty_season)

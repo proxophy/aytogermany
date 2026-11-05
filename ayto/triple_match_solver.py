@@ -8,7 +8,7 @@ from .solver import Solver
 class TripleMatchSolver(Solver):
     @override
     def no_match_reason(
-        self, l: str, r: str, end: int, include_night: bool
+        self, l: Person, r: Person, end: int, include_night: bool
     ) -> str | None:
         """Return whether a pair is known not to be a match up to `end`"""
 
@@ -53,6 +53,7 @@ class TripleMatchSolver(Solver):
         }
 
         solutions: list[Solution] = []
+        mm_person = self.season.get_mm(end)
 
         for partial_solution in partial_solutions:
             base_matches = sol.union(partial_solution)
@@ -62,7 +63,7 @@ class TripleMatchSolver(Solver):
 
             if len(mrs) == 2:
                 mr1, mr2 = mrs
-                if self.season.mm_person in mrs:
+                if mm_person in mrs:
                     # no multiple seatings yet , Mela not seated
                     for l in self.season.lefts:
                         if l in addable_lefts[mr1] and l in addable_lefts[mr2]:
@@ -70,7 +71,7 @@ class TripleMatchSolver(Solver):
                 else:
                     # no mutiple seatings, Mela seated
                     dmleft = next(
-                        l for (l, r) in base_matches if r == self.season.mm_person
+                        l for (l, r) in base_matches if r == mm_person
                     )  # find partner of Mela
                     if dmleft in addable_lefts[mr1] and dmleft in addable_lefts[mr2]:
                         solutions.append(base_matches | {(dmleft, mr1), (dmleft, mr2)})

@@ -21,11 +21,11 @@ ALL_SEASONS = [
 ]
 
 
-def product_without_reps(arr: list[list[str]]) -> Generator[list[str], str, None]:
-    used: set[str] = set()
-    current: list[str] = []
+def product_without_reps(arr: list[list[Person]]) -> Generator[list[Person], Person, None]:
+    used: set[Person] = set()
+    current: list[Person] = []
 
-    def rec(i: int) -> Generator[list[str], str, None]:
+    def rec(i: int) -> Generator[list[Person], Person, None]:
         if i == len(arr):
             yield current.copy()
             return
@@ -57,7 +57,7 @@ class Solver:
     def __init__(self, season: Season) -> None:
         self.season = season
         self.bo_nights: list[int] = self.season.get_black_out_nights()
-        self._no_match_cache: dict[tuple[str, str, int, bool], bool] = {}
+        self._no_match_cache: dict[tuple[Person, Person, int, bool], bool] = {}
         self._matchbox_cache: dict[tuple[int, bool], Matchboxes] = {}
         self._pms_cache: dict[tuple[int, bool], list[Pair]] = {}
         for i in range(self.season.num_weeks):
@@ -65,7 +65,7 @@ class Solver:
                 self._matchbox_cache[(i, b)] = self.season.get_matchboxes(i, b)
                 self._pms_cache[(i, b)] = self.season.get_pms(i, b)
 
-    def no_match(self, l: str, r: str, end: int, include_night: bool) -> bool:
+    def no_match(self, l: Person, r: Person, end: int, include_night: bool) -> bool:
         """Return whether `(l, r)` is known not to be a match up to a given episode"""
         key = (l, r, end, include_night)
         cached = self._no_match_cache.get(key)
@@ -75,7 +75,7 @@ class Solver:
         return cached
 
     def no_match_reason(
-        self, l: str, r: str, end: int, include_night: bool
+        self, l: Person, r: Person, end: int, include_night: bool
     ) -> str | None:
         """Return the reason why `(l, r)` is known not to be a match up to a given episode"""
         stop = max(0, min(end, self.season.num_weeks - 1))
@@ -104,9 +104,9 @@ class Solver:
             if self.season.matchbox_reveals_dm:
                 return "member_has_partner_already"
             else:
-                mm = self.season.get_mm(end)
+                mm_person = self.season.get_mm(end)
                 # l cannot be part of multiple match
-                if mm and r != mm and self.no_match(l, mm, end, include_night):
+                if mm_person and r != mm_person and self.no_match(l, mm_person, end, include_night):
                     return "l_cannot_have_double_match"
                 elif end < self.season.mm_known_from_week:
                     return "cannot_be_in_double_match"
@@ -185,7 +185,7 @@ class Solver:
         # lefts with multiple partners
         mult_lefts = [l for l, rs in sol_dict.items() if len(rs) > 1]
         # double/triple match person
-        mm = self.season.get_mm(end)
+        mm_person = self.season.get_mm(end)
 
         if len(mult_lefts) >= 2:
             return "too_many_double_matches"
@@ -196,15 +196,15 @@ class Solver:
             if len(mult_rights) > self.season.max_mm_size:
                 return "triple_match_not_allowed"
 
-            if mm:  # mm is not None
+            if mm_person:  # mm_person is not None
                 _, seated_rights = zip(*sol)
 
                 if (
                     len(mult_rights) == self.season.max_mm_size
-                    and mm not in sol_dict[mult_left]
+                    and mm_person not in sol_dict[mult_left]
                 ):
                     return "mm_not_in_complete_multiple_match"
-                elif mm in seated_rights and mm not in sol_dict[mult_left]:
+                elif mm_person in seated_rights and mm_person not in sol_dict[mult_left]:
                     # only used in normalo2024
                     return "multiple_match_not_possible_without_mm"
 
@@ -229,21 +229,21 @@ class Solver:
 
     def possible_matches_for_solution(
         self, sol: Solution, end: int, include_night: bool
-    ) -> dict[str, list[str]]:
+    ) -> dict[Person, list[Person]]:
         """Given a solution, return a dict for the possible matches for the lefts that are not in the solution, given `end`(inclusive) and `includenight`"""
 
         sitting_lefts, sitting_rights, _ = get_candidates(sol)
 
         sitting_nomatches = self.season.get_sitting_no_matches(sol, end, include_night)
 
-        mm = self.season.get_mm(end)
+        mm_person = self.season.get_mm(end)
         pos_matches = {
             l: [
                 r
                 for r in self.season.rights
                 if not self.no_match(l, r, end, include_night)
                 and not (l, r) in sitting_nomatches
-                and r != mm
+                and r != mm_person
                 and r not in sitting_rights
             ]
             for l in self.season.lefts
@@ -277,7 +277,7 @@ class Solver:
     ) -> list[Solution]:
         """Merge solution with partial solutions to complete solutions when the multiple match(es) are not present the solution, given `end`(inclusive) and `includenight`"""
 
-        mm = self.season.get_mm(end)
+        mm_person = self.season.get_mm(end)
 
         sitting_nomatches = self.season.get_sitting_no_matches(sol, end, include_night)
 
@@ -304,15 +304,15 @@ class Solver:
             # right that is missing in solution
             mr = next(r for r in self.season.rights if r not in sitting_rights)
 
-            if mm:
-                # mm is not None
-                if mr == mm:
+            if mm_person:
+                # mm_person is not None
+                if mr == mm_person:
                     solutions.extend(
                         Solution(base_matches | {(l, mr)}) for l in addable_lefts[mr]
                     )
                 else:
                     dmleft = next(
-                        l for (l, r) in base_matches if r == mm
+                        l for (l, r) in base_matches if r == mm_person
                     )  # left that matches with mm
                     if dmleft not in addable_lefts[mr]:
                         continue
@@ -346,7 +346,7 @@ class Solver:
         if len(sol) == self.season.num_matches:
             return [sol]
 
-        def zip_product(clefts: Iterable[str], ordering: Iterable[str]) -> Solution:
+        def zip_product(clefts: Iterable[Person], ordering: Iterable[Person]) -> Solution:
             return Solution(p for p in zip(clefts, ordering))
 
         _, _, mm_num = get_candidates(sol)

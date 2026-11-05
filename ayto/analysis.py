@@ -5,15 +5,15 @@ from functools import wraps
 
 import pandas as pd
 
-from .season import Pair, Solution, mm_left
+from .season import Pair, Person, Solution, mm_left
 from .solver import Solver
 
 
 class SolutionSpace:
     sols: list[Solution]
     numsols: int
-    lefts: list[str]
-    rights: list[str]
+    lefts: list[Person]
+    rights: list[Person]
 
     def __init__(self, sols: list[Solution]):
         self.sols = sols
@@ -39,26 +39,26 @@ class SolutionSpace:
         probs_dict = self.get_pair_probs_dict()
         return max(probs_dict, key=lambda x: probs_dict.get(x, 0))
 
-    def get_no_matches(self) -> list[tuple[str, str]]:
+    def get_no_matches(self) -> list[Pair]:
         return [p for p in self.pairs_counter if self.pairs_counter[p] == 0]
 
-    def get_perfect_matches(self) -> list[tuple[str, str]]:
+    def get_perfect_matches(self) -> list[Pair]:
         return [p for p in self.pairs_counter if self.pairs_counter[p] == self.numsols]
 
-    def get_no_matches_for_l(self, l: str) -> list[str]:
+    def get_no_matches_for_l(self, l: Person) -> list[Person]:
         if l not in self.lefts:
             raise ValueError(f"{l} is not a candidate in these solutions")
         return [r for r in self.rights if self.pairs_counter[(l, r)] == 0]
 
-    def get_no_matches_for_r(self, r: str) -> list[str]:
+    def get_no_matches_for_r(self, r: Person) -> list[Person]:
         if r not in self.rights:
             raise ValueError(f"{r} is not a candidate in these solutions")
         return [l for l in self.lefts if self.pairs_counter[(l, r)] == 0]
 
     def get_mm_probs(self):
-        mm = [mm_left(s) for s in self.sols]
+        mm_person = [mm_left(s) for s in self.sols]
         return [
-            (l, round(v / len(self.sols) * 100, 1)) for (l, v) in Counter(mm).items()
+            (l, round(v / len(self.sols) * 100, 1)) for (l, v) in Counter(mm_person).items()
         ]
 
 

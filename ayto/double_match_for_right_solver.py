@@ -14,7 +14,7 @@ class DoubleMatchForRightSolver(Solver):
         if supercheck is not None:
             return supercheck
 
-        pdict: dict[str, list[str]] = {r: [] for r in self.season.rights}
+        pdict: dict[Person, list[Person]] = {r: [] for r in self.season.rights}
         for l, r in sol:
             pdict[r].append(l)
 
@@ -43,14 +43,14 @@ class DoubleMatchForRightSolver(Solver):
         ):
             return [sol]
 
-        def zip_product(clefts: Iterable[str], ordering: Iterable[str]) -> Solution:
+        def zip_product(clefts: Iterable[Person], ordering: Iterable[Person]) -> Solution:
             return Solution(p for p in zip(clefts, ordering))
 
         assert self.season.extra_left
 
         glefts, _, mmnum = get_candidates(sol)
 
-        pos_matches: dict[str, list[str]] = self.possible_matches_for_solution(
+        pos_matches: dict[Person, list[Person]] = self.possible_matches_for_solution(
             sol, end, include_night
         )
         _ = pos_matches.pop(self.season.extra_left, None)

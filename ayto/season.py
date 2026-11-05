@@ -3,16 +3,20 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import override
 
-Pair = tuple[str, str]
+Person = str
+# class Person(str):
+#     pass
+Pair = tuple[Person, Person]
 Solution = frozenset[Pair]
 SolutionType = Solution | set[Pair]
 
 # class Solution(frozenset[Pair]):
 
 
+
 def has_dm_for_right(sol: SolutionType) -> bool:
     """Return whether solution has a double match for a right"""
-    rs: list[str] = []
+    rs: list[Person] = []
     for _, r in sol:
         if r in rs:
             return True
@@ -20,7 +24,7 @@ def has_dm_for_right(sol: SolutionType) -> bool:
     return False
 
 
-def get_candidates(sol: SolutionType) -> tuple[set[str], set[str], int]:
+def get_candidates(sol: SolutionType) -> tuple[set[Person], set[Person], int]:
     """Return sets of lefts and rights in solution and size of the maximum multuple match"""
     if len(sol) > 0:
         g_lefts, g_rights = zip(*sol)
@@ -31,9 +35,9 @@ def get_candidates(sol: SolutionType) -> tuple[set[str], set[str], int]:
     return set(g_lefts), set(g_rights), max(map(len, d.values()))
 
 
-def mm_left(sol: SolutionType) -> str | None:
+def mm_left(sol: SolutionType) -> Person | None:
     """Return first left with multiple match or `None` if there isn't any"""
-    ls: set[str] = set()
+    ls: set[Person] = set()
     for l, _ in sol:
         if l in ls:
             return l
@@ -49,9 +53,9 @@ def has_two_dms(sol: SolutionType) -> bool:
     return len(mult_lefts) == 2
 
 
-def dict_rep(sol: SolutionType) -> dict[str, list[str]]:
+def dict_rep(sol: SolutionType) -> dict[Person, list[Person]]:
     """Return dict representation of set of pairs"""
-    d: dict[str, list[str]] = {}
+    d: dict[Person, list[Person]] = {}
     for l, r in sol:
         if l in d:
             d[l].append(r)
@@ -161,15 +165,15 @@ class Season:
     matchboxes: Matchboxes
     solution: Solution = Solution()  # noqa: RUF009
     match_model: str = "base"
-    mm_person: str | None = None
+    mm_person: Person | None = None
 
-    mm_known_from_week: int = 0  # from which episode mm is known
+    mm_known_from_week: int = 0  # from which episode mm_person is known
     matchbox_reveals_dm: bool = (
         True  # if one part of double match is revealed, the other one is revealed immediately after
     )
-    double_match_pair: tuple[str, str] | None = None
+    double_match_pair: tuple[Person, Person] | None = None
     double_match_pair_known: int = 10  # from which episode double match pair is known
-    extra_left: str | None = None  # left that is part of double match for right
+    extra_left: Person | None = None  # left that is part of double match for right
 
     def __post_init__(self):
         # todo: write / put together validation for season data
@@ -223,7 +227,7 @@ class Season:
             1 if self.match_model == "double_match_for_right" else 0
         )
 
-    def get_mm(self, end: int = 9) -> str | None:
+    def get_mm(self, end: int = 9) -> Person | None:
         end = max(0, min(end, self.num_weeks - 1))
         return self.mm_person if end >= self.mm_known_from_week else None
 
@@ -252,15 +256,16 @@ class Season:
         return sitting_nomatches
 
     def get_black_out_nights(self, end: int = 9, include_night: bool = True):
-        end = max(0, end) + (1 if include_night else 0)
+        stop = max(0, end) + (1 if include_night else 0)
+        
 
         bonights: list[int] = []
         num_known_pms = 0
-        pmls: list[str] = []
+        pmls: list[Person] = []
         pms: set[Pair] = set()
         known_pms_per_ep = [0 for _ in range(end + 1)]
         for ep, (l, r), res, bf in self.matchboxes:
-            if ep >= end:
+            if ep > end:
                 break
             if ep == end and not include_night and not bf:
                 break  # skip matchbox after last night
@@ -271,19 +276,20 @@ class Season:
                 pms.add((l, r))
             known_pms_per_ep[ep] = num_known_pms
 
-        for ep in range(min(self.num_weeks, end + 1)):
+
+        for ep in range(min(self.num_weeks, stop)):
             known_pms_per_ep[ep] = max(
                 known_pms_per_ep[ep], known_pms_per_ep[ep - 1] if ep > 0 else 0
             )
-
-            if known_pms_per_ep[ep] == self.nights[ep].lights and pms.issubset(
-                self.nights[ep].pairs
-            ):
+            if known_pms_per_ep[ep] == self.nights[ep].lights:
                 bonights.append(ep)
         return bonights
 
+    def encode_left(self, l: str) -> Person:
+        return l  # pyright: ignore[reportReturnType]
 
-def random_night_for_sol(sol: Solution, lefts: list[str], rights: list[str]):
+
+def random_night_for_sol(sol: Solution, lefts: list[Person], rights: list[Person]):
     perm = random.sample(rights, len(lefts))
     pairs = {(l, r) for l, r in zip(lefts, perm)}
     lights = len(sol & pairs)

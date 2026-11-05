@@ -17,8 +17,8 @@ def check_nights(
 
     # make sure all pairs are valid pairs and there are no duplicates
     for i, night in enumerate(nights):  # pyright: ignore[reportUnusedVariable]
-        seated_lefts: list[str] = []
-        seated_rights: list[str] = []
+        seated_lefts: list[Person] = []
+        seated_rights: list[Person] = []
 
         for l, r in night.pairs:
             if l in lefts and r in rights:
@@ -44,7 +44,7 @@ def validate_season_args(
     rights: tuple[str, ...],
     nights: tuple[Night, ...],
     matchboxes: Matchboxes,
-    dm: str | None,
+    dm: Person | None,
 ):
 
     nummatches = max(len(lefts), len(rights))
@@ -69,11 +69,11 @@ def validate_season_args(
     if dm and dm in lefts:
         raise ValueError(f"{dm} is part of lefts (the smaller gender group)")
 
-
 def make_pair_list(lefts: Sequence[str], rights: Sequence[str]) -> tuple[Pair, ...]:
     if len(lefts) != len(rights):
         raise ValueError("Cannot make list of pairs out of lists of different length")
-    return tuple((l, r) for l, r in zip(lefts, rights))
+    # todo: change this to index
+    return tuple((Person(l), Person(r)) for l, r in zip(lefts, rights))
 
 
 def read_data_from_excel(
@@ -101,8 +101,10 @@ def read_data_from_excel(
     if sn != "vip2026":
         nights = tuple(
             Night(
-                frozenset(make_pair_list(list(dfnights.columns[:-1]), row[:-1])),
-                int(row[-1]),  # pyright: ignore[reportAny]
+                # todo: lefts.index,
+                frozenset(make_pair_list([Person(x) for x in dfnights.columns[:-1]], 
+                [Person(x) for x in row[:-1]])),  # pyright: ignore[reportAny]
+                int(row[-1]),  
             )
             for row in dfnights.values.tolist()
         )
@@ -132,7 +134,7 @@ def read_data_from_excel(
         before_night=tuple(dfmatchboxes["before_night"].to_list()),
     )
 
-    validate_season_args(lefts, rights, nights, matchboxes, dm)
+    # validate_season_args(lefts, rights, nights, matchboxes, dm) # todo: write new val function for table
     solution: Solution = Solution()
     dfsolution = dfs.get("Solution")
     if dfsolution is not None:

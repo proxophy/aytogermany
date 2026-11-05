@@ -6,7 +6,7 @@ from .solver import Solver
 
 class DoubleMatchPairSolver(Solver):
     @override
-    def no_match_reason(self, l: str, r: str, end: int, include_night : bool) -> str | None:
+    def no_match_reason(self, l: Person, r: Person, end: int, include_night : bool) -> str | None:
         assert self.season.double_match_pair
         if end >= self.season.double_match_pair_known:
             mb = self._matchbox_cache.get((end, include_night), Matchboxes())

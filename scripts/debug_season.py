@@ -2,7 +2,7 @@ import resource
 import sys
 from collections import Counter
 
-from ayto import ALL_SEASONS, Solution, Solver, get_season, get_solver
+from ayto import Solution, Solver, get_season, get_solver
 
 # pyright: standard
 
@@ -15,7 +15,7 @@ def iterate_through(solver, start=3):
     return amounts
 
 
-def check_solution_possible(sols, solver: Solver, end:int, icl: bool):
+def check_solution_possible(sols, solver: Solver, end: int, icl: bool):
     reasons = []
     for s in sols:
         p = solver.find_violation(s, end, icl)
@@ -38,51 +38,33 @@ if __name__ == "__main__":
     # uv run python -m scripts.debug_season
     sn = "vip2025"
     season = get_season(sn)
-    # print(season.get_matchboxes(7, False))
-    print(season.get_black_out_nights(10, True))
     solver: Solver = get_solver(sn)
 
 
-    end = 2
-    icl = True #  5_399_288 != np.int64(125_998)
+    end = 3
+    icl = False
+    psols = solver.generate_partial_solutions(end, icl)
+    print(len(psols))
     sols = solver.solve(end, icl)
     print(len(sols))
-    # print(check_solution_possible(sols, solver, end, icl))
+    from pympler import asizeof
 
-    import json
-   
+    print(f"Total: {asizeof.asizeof(sols) / 1024**3:.3f} GB")
+    print(f"Number of solutions: {len(sols):,}")
+    print(f"Average per solution: " f"{asizeof.asizeof(sols) / len(sols):.1f} bytes")
 
-    # print(timeit.timeit(lambda: solver.solve(end, icl), number=1))
+    import timeit
 
-    sys.exit()
-    for sn in ALL_SEASONS:
-        season = get_season(sn)
-        solver = get_solver(sn)
-        d = {
-            "match_model": season.match_model,
-            "mm_person": season.mm_person,
-            # "max_lights": season.max_lights,
-            "mm_known_from_week": season.mm_known_from_week,
-            "matchbox_reveals_dm": season.matchbox_reveals_dm,
-        }
-        if season.extra_left is not None:
-            d["extra_left"] = season.extra_left
-        if season.double_match_pair is not None:
-            d["double_match_pair"] = season.double_match_pair
-            d["double_match_pair_known"] = season.double_match_pair_known
+    lens = []
 
-        json_str = json.dumps(d, indent=4)
-        with open(f"data/season_configs/{sn}.json","w") as f:
-            f.write(json_str)
+    # sys.exit()
+
 
     def peak_mb() -> float:
         rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         return rss / (1024 * 1024 if sys.platform == "darwin" else 1024)
 
-    sols = get_solver("vip2025").solve(3, True)
-    print(len(sols), f"{peak_mb():.0f} MB Spitze")
-    print(sys.platform)
+    print(f"{timeit.timeit(lambda: print(len(solver.solve(end, icl))), number=1):.2f}")
 
-
-
-    
+    # sols = get_solver("vip2025").solve(3, True)
+    print(f"{peak_mb():.0f} MB Spitze")
