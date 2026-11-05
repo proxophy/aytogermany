@@ -13,15 +13,16 @@ class TripleMatchSolver(Solver):
         """Return whether a pair is known not to be a match up to `end`"""
 
         kpm = self.season.get_pms(end, include_night)
-        hpm = [e for p in kpm for e in p]
+        pm_lefts = [a for a, _ in kpm]
+        pm_rights = {b for _, b in kpm}
 
-        counts = Counter(hpm)
-        if (l, r) not in kpm and l in hpm:
+        counts = Counter(pm_lefts)
+        if (l, r) not in kpm and l in pm_lefts:
             # lefts with multiple matches from matchboxes, appear x times
             # for x perfect matches
-            mmls = [p for p in hpm if counts[p] > 1]
+            mmls = [p for p in pm_lefts if counts[p] > 1]
             # Normalo 24
-            if len(mmls) < 3 and l in mmls and r not in hpm:
+            if len(mmls) < 3 and l in mmls and r not in pm_rights:
                 # we only know two out of three of the multiple matches in Normalo 2024 at episode 10
                 return None
             return "triple_match_already_exists"
@@ -58,7 +59,7 @@ class TripleMatchSolver(Solver):
         for partial_solution in partial_solutions:
             base_matches = sol.union(partial_solution)
 
-            sitting_lefts, sitting_rights = zip(*base_matches)
+            sitting_lefts, sitting_rights= zip(*base_matches)
             mrs = [r for r in self.season.rights if r not in sitting_rights]
 
             if len(mrs) == 2:

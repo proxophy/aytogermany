@@ -3,7 +3,7 @@
     "mm_person": "Max",
     "mm_known_from_week": 0,
     "matchbox_reveals_dm": true,
-    "double_match_pair": [
+    "double_match_pair_names": [
         "Peter",
         "Max"
     ],

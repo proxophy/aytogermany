@@ -3,15 +3,12 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import override
 
-Person = str
-# class Person(str):
-#     pass
+Person = int
 Pair = tuple[Person, Person]
 Solution = frozenset[Pair]
 SolutionType = Solution | set[Pair]
 
 # class Solution(frozenset[Pair]):
-
 
 
 def has_dm_for_right(sol: SolutionType) -> bool:
@@ -159,21 +156,21 @@ def matchboxes_from_list(data: list[tuple[int, Pair, bool, bool]]):
 @dataclass(frozen=True)
 class Season:
     name: str
-    lefts: tuple[str, ...]
-    rights: tuple[str, ...]
+    lefts_names: tuple[str, ...]
+    rights_names: tuple[str, ...]
     nights: tuple[Night, ...]
     matchboxes: Matchboxes
-    solution: Solution = Solution()  # noqa: RUF009
+    solution: Solution = frozenset()
     match_model: str = "base"
-    mm_person: Person | None = None
+    mm_person: str | None = None
 
     mm_known_from_week: int = 0  # from which episode mm_person is known
     matchbox_reveals_dm: bool = (
         True  # if one part of double match is revealed, the other one is revealed immediately after
     )
-    double_match_pair: tuple[Person, Person] | None = None
+    double_match_pair_names: tuple[str, str] | None = None
     double_match_pair_known: int = 10  # from which episode double match pair is known
-    extra_left: Person | None = None  # left that is part of double match for right
+    extra_left_name: str | None = None  # left that is part of double match for right
 
     def __post_init__(self):
         # todo: write / put together validation for season data
@@ -181,15 +178,15 @@ class Season:
             raise ValueError(
                 f"Invalid number of nights or matchboxes {len(self.nights)} {len(self.matchboxes)}"
             )
-        if len(set(self.lefts)) != len(self.lefts) or len(set(self.rights)) != len(
-            self.rights
+        if len(set(self.lefts_names)) != len(self.lefts_names) or len(set(self.rights_names)) != len(
+            self.rights_names
         ):
             raise ValueError("Duplicate names in lefts or rights")
-        if self.double_match_pair and self.match_model != "double_match_pair":
+        if self.double_match_pair_names and self.match_model != "double_match_pair":
             raise ValueError(
                 f"double_match_pair is set but match_model is {self.match_model} (it should be 'double_match_pair')"
             )
-        if self.extra_left and self.match_model != "double_match_for_right":
+        if self.extra_left_name and self.match_model != "double_match_for_right":
             raise ValueError(
                 f"extra_left is set but match_model is {self.match_model} (it should be 'double_match_for_right')"
             )
@@ -223,13 +220,43 @@ class Season:
 
     @property
     def max_lights(self) -> int:
-        return min(len(self.lefts), len(self.rights)) - (
+        return min(len(self.lefts_names), len(self.rights_names)) - (
             1 if self.match_model == "double_match_for_right" else 0
         )
 
+    @property
+    def double_match_pair(self) -> tuple[Person, Person] | None:
+        if not self.double_match_pair_names:
+            return None
+        return (
+            self.encode_right(self.double_match_pair_names[0]),
+            self.encode_right(self.double_match_pair_names[1]),
+        )
+
+    @property
+    def lefts(self):
+        return list(range(len(self.lefts_names)))
+
+    @property
+    def rights(self):
+        return list(range(len(self.rights_names)))
+
+    @property
+    def extra_left(self) -> Person | None:
+        if self.extra_left_name:
+            return self.encode_left(self.extra_left_name)
+        return None
+
     def get_mm(self, end: int = 9) -> Person | None:
         end = max(0, min(end, self.num_weeks - 1))
-        return self.mm_person if end >= self.mm_known_from_week else None
+        if self.mm_person:
+            return (
+                self.encode_right(self.mm_person)
+                if end >= self.mm_known_from_week
+                else None
+            )
+        else:
+            return None
 
     def get_nights(self, end: int = 9, include_night: bool = True) -> Sequence[Night]:
         end = max(0, end) + (1 if include_night else 0)
@@ -257,7 +284,6 @@ class Season:
 
     def get_black_out_nights(self, end: int = 9, include_night: bool = True):
         stop = max(0, end) + (1 if include_night else 0)
-        
 
         bonights: list[int] = []
         num_known_pms = 0
@@ -276,7 +302,6 @@ class Season:
                 pms.add((l, r))
             known_pms_per_ep[ep] = num_known_pms
 
-
         for ep in range(min(self.num_weeks, stop)):
             known_pms_per_ep[ep] = max(
                 known_pms_per_ep[ep], known_pms_per_ep[ep - 1] if ep > 0 else 0
@@ -286,7 +311,29 @@ class Season:
         return bonights
 
     def encode_left(self, l: str) -> Person:
-        return l  # pyright: ignore[reportReturnType]
+        if l not in self.lefts_names:
+            raise ValueError(f"Cannot encode {l} since it's not in lefts")
+        return self.lefts_names.index(l)
+
+    def decode_left(self, l: Person) -> str:
+        return self.lefts_names[l]
+
+    def encode_right(self, r: str) -> Person:
+        if r not in self.rights_names:
+            raise ValueError(f"Cannot encode {r} since it's not in rights")
+        return self.rights_names.index(r)
+
+    def decode_right(self, r: Person) -> str:
+        return self.rights_names[r]
+
+    def encode_pair(self, l: str, r: str) -> Pair:
+        return (self.encode_left(l), self.encode_right(r))
+
+    def decode_pair(self, p: Pair) -> tuple[str, str]:
+        return (self.decode_left(p[0]), self.decode_right(p[1]))
+
+    def decode_solution(self, sol: SolutionType):
+        return {self.decode_pair(p) for p in sol}
 
 
 def random_night_for_sol(sol: Solution, lefts: list[Person], rights: list[Person]):

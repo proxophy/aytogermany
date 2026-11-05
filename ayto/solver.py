@@ -21,7 +21,9 @@ ALL_SEASONS = [
 ]
 
 
-def product_without_reps(arr: list[list[Person]]) -> Generator[list[Person], Person, None]:
+def product_without_reps(
+    arr: list[list[Person]],
+) -> Generator[list[Person], Person, None]:
     used: set[Person] = set()
     current: list[Person] = []
 
@@ -106,7 +108,11 @@ class Solver:
             else:
                 mm_person = self.season.get_mm(end)
                 # l cannot be part of multiple match
-                if mm_person and r != mm_person and self.no_match(l, mm_person, end, include_night):
+                if (
+                    mm_person
+                    and r != mm_person
+                    and self.no_match(l, mm_person, end, include_night)
+                ):
                     return "l_cannot_have_double_match"
                 elif end < self.season.mm_known_from_week:
                     return "cannot_be_in_double_match"
@@ -204,7 +210,7 @@ class Solver:
                     and mm_person not in sol_dict[mult_left]
                 ):
                     return "mm_not_in_complete_multiple_match"
-                elif mm_person in seated_rights and mm_person not in sol_dict[mult_left]:
+                elif  mm_person in seated_rights and mm_person not in sol_dict[mult_left]:
                     # only used in normalo2024
                     return "multiple_match_not_possible_without_mm"
 
@@ -289,7 +295,7 @@ class Solver:
                 if not (
                     self.no_match(l, r, end, include_night)
                     or (l, r) in sitting_nomatches
-                    or (self.season.extra_left and l == self.season.extra_left)
+                    or (self.season.extra_left_name and l == self.season.extra_left)
                 )
             ]
             for r in self.season.rights
@@ -300,7 +306,7 @@ class Solver:
         for partial_solution in partial_solutions:
             base_matches = sol.union(partial_solution)
 
-            _, sitting_rights = zip(*base_matches)
+            _, sitting_rights, _ = get_candidates(base_matches)
             # right that is missing in solution
             mr = next(r for r in self.season.rights if r not in sitting_rights)
 
@@ -346,19 +352,16 @@ class Solver:
         if len(sol) == self.season.num_matches:
             return [sol]
 
-        def zip_product(clefts: Iterable[Person], ordering: Iterable[Person]) -> Solution:
+        def zip_product(
+            clefts: Iterable[Person], ordering: Iterable[Person]
+        ) -> Solution:
             return Solution(p for p in zip(clefts, ordering))
 
         _, _, mm_num = get_candidates(sol)
         pos_matches = self.possible_matches_for_solution(sol, end, include_night)
 
         # build pairs for lefts that are not in the given solution
-        products = [
-            list(ps)
-            for ps in product_without_reps(
-                list(pos_matches.values())
-            )  
-        ]
+        products = [list(ps) for ps in product_without_reps(list(pos_matches.values()))]
         partial_solutions = [zip_product(pos_matches.keys(), p) for p in products]
 
         if (self.season.two_dms and has_two_dms(sol)) or (

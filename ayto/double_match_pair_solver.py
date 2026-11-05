@@ -73,7 +73,7 @@ class DoubleMatchPairSolver(Solver):
                 continue
             # find left that pairs with one person of double_match_pair
             dmleft = next(
-                l for (l, r) in ten_matches if r in self.season.double_match_pair
+                l for (l, r) in ten_matches if  r in self.season.double_match_pair
             )
             if (dmleft, mr) in sitting_nomatches:
                 continue

@@ -59,7 +59,7 @@ class DoubleMatchForRightSolver(Solver):
             smmatches = [r for l, r in sol if l == self.season.extra_left]
             # print(smmatches)
             # isol = set(sol)
-            sol = Solution(sol.difference({(self.season.extra_left, smmatches[0])}))
+            sol = Solution(sol.difference({(self.season.extra_left_name, smmatches[0])}))
         else:
             smmatches = [
                 r

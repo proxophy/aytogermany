@@ -66,8 +66,8 @@ toy_season_with_double_match_pair = Season(
 
 toy_season2 = Season(
     name="toy",
-    lefts=("A", "B", "C", "D", "E"),
-    rights=("1", "2", "3", "4", "5", "6"),
+    lefts_names=("A", "B", "C", "D", "E"),
+    rights_names=("1", "2", "3", "4", "5", "6"),
     nights=(
         Night(
             pairs={("E", "4"), ("A", "3"), ("B", "2"), ("D", "1"), ("C", "5")}, lights=1
@@ -301,8 +301,8 @@ class TestSeasonSolution(unittest.TestCase):
         season = solver.season
         empty_season = Season(
             "empty",
-            season.lefts,
-            season.rights,
+            season.lefts_names,
+            season.rights_names,
             (),
             Matchboxes(),
             match_model=season.match_model,

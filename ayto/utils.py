@@ -1,6 +1,8 @@
-from collections.abc import Sequence
+from collections.abc import Iterable
 
 import pandas as pd
+
+from ayto.season import Matchboxes, Pair
 
 from .double_match_for_right_solver import DoubleMatchForRightSolver
 from .double_match_pair_solver import DoubleMatchPairSolver
@@ -10,52 +12,41 @@ from .triple_match_solver import TripleMatchSolver
 from .two_double_matches_solver import TwoDoubleMatchesSolver
 
 
-def check_nights(
-    nights: tuple[Night, ...], lefts: tuple[str, ...], rights: tuple[str, ...]
+def validate_nights(
+    nights: list[tuple[list[str], list[str], int]],
+    lefts: tuple[str, ...],
+    rights: tuple[str, ...],
 ) -> None:
     """Check if nights are fine"""
 
     # make sure all pairs are valid pairs and there are no duplicates
-    for i, night in enumerate(nights):  # pyright: ignore[reportUnusedVariable]
-        seated_lefts: list[Person] = []
-        seated_rights: list[Person] = []
+    for i, (plefts, prights, lights) in enumerate(nights):
+        seated_lefts: list[str] = []
+        seated_rights: list[str] = []
 
-        for l, r in night.pairs:
+        for l, r in zip(plefts, prights):
             if l in lefts and r in rights:
                 # check that we don't have double seatings
                 if l in seated_lefts or r in seated_rights:
                     raise ValueError(
-                        f"Either {l} or {r} has already been seated  in night {night}"
+                        f"Either {l} or {r} has already been seated  in night {i}"
                     )
                 seated_lefts.append(l)
                 seated_rights.append(r)
             elif l in rights and r in lefts:
-                raise ValueError(
-                    f"Pair {(l, r)} is in the wrong order in night {night}"
-                )
+                raise ValueError(f"Pair {(l, r)} is in the wrong order in night {i}")
             else:
                 raise ValueError(f"{l} or {r} is neither in the list of women or men")
-        if not 0 <= night.lights <= 10:
-            raise ValueError(f"Number of lights not possible in night {night}")
+        if not 0 <= lights <= 10:
+            raise ValueError(f"Number of lights not possible in night {i}")
 
 
-def validate_season_args(
+def validate_matchboxes(
+    matchboxes: list[tuple[int, tuple[str, str], bool, bool]],
     lefts: tuple[str, ...],
     rights: tuple[str, ...],
-    nights: tuple[Night, ...],
-    matchboxes: Matchboxes,
-    dm: Person | None,
 ):
-
-    nummatches = max(len(lefts), len(rights))
-    if len(lefts) != len(rights) and (len(lefts) != 10 or len(rights) != nummatches):
-        raise ValueError("Not enough or too much women or men")
-
-    # check nights
-    check_nights(nights, lefts, rights)
-
-    # matchboxes with results
-    pairs: set[Pair] = set()
+    pairs: set[tuple[str, str]] = set()
     for _, (l, r), _, _ in matchboxes:
         if (l, r) in pairs or (r, l) in pairs:
             raise ValueError(f"{(l, r)} occurs more than once in matchboxes")
@@ -66,14 +57,11 @@ def validate_season_args(
         else:
             raise ValueError(f"{l} or {r} is not a valid name")
 
-    if dm and dm in lefts:
-        raise ValueError(f"{dm} is part of lefts (the smaller gender group)")
 
-def make_pair_list(lefts: Sequence[str], rights: Sequence[str]) -> tuple[Pair, ...]:
-    if len(lefts) != len(rights):
-        raise ValueError("Cannot make list of pairs out of lists of different length")
-    # todo: change this to index
-    return tuple((Person(l), Person(r)) for l, r in zip(lefts, rights))
+def make_pair_list(
+    lefts: Iterable[Person], rights: Iterable[Person]
+) -> tuple[Pair, ...]:
+    return tuple((l, r) for l, r in zip(lefts, rights))
 
 
 def read_data_from_excel(
@@ -94,55 +82,80 @@ def read_data_from_excel(
     dmlist = dfcand["mm"].dropna().tolist() if "mm" in dfcand.columns else []
     if len(dmlist) > 1:
         raise ValueError(f"More than one DM in Candidates sheet for {sn}")
+
     dm: str | None = dmlist[0] if len(dmlist) == 1 else None
+    if dm and dm in lefts:
+        raise ValueError(f"{dm} is part of lefts (the smaller gender group)")
 
     dfnights = dfs["Nights"]
     nights: tuple[Night, ...] = ()
+    night_args: list[tuple[list[str], list[str], int]] = []
     if sn != "vip2026":
-        nights = tuple(
-            Night(
-                # todo: lefts.index,
-                frozenset(make_pair_list([Person(x) for x in dfnights.columns[:-1]], 
-                [Person(x) for x in row[:-1]])),  # pyright: ignore[reportAny]
-                int(row[-1]),  
+        night_args = [
+            (
+                [str(x) for x in dfnights.columns[:-1]],
+                [str(x) for x in row[:-1]],  # pyright: ignore[reportAny]
+                int(row[-1]),  # pyright: ignore[reportAny]
             )
             for row in dfnights.values.tolist()
-        )
+        ]
     else:
         pairspnight = [
-            make_pair_list(list(dfnights.columns[:-1]), row[:-1])
+            zip(list(dfnights.columns[:-1]), row[:-1])
             for row in dfnights.values.tolist()
         ]
         pairspnight = [
-            tuple(filter(lambda x: not pd.isna(x[1]), pairs)) for pairs in pairspnight
+            tuple(
+                filter(lambda x: not pd.isna(x[1]), pairs) # pyright: ignore[reportAny]
+            )  
+            for pairs in pairspnight
         ]
-        nights = tuple(
-            Night(
-                frozenset(pairspnight[i]),
+        night_args = [
+            (
+                [p[0] for p in pairs],
+                [p[1] for p in pairs],
                 int(dfnights["lights"].iloc[i]),  # pyright: ignore[reportAny]
             )
-            for i in range(dfnights.shape[0])
-        )
+            for i, pairs in enumerate(pairspnight)
+        ]
+
+    validate_nights(night_args, lefts, rights)
 
     dfmatchboxes = dfs["Matchboxes"]
-    matchboxes: Matchboxes = Matchboxes(
-        tuple(dfmatchboxes["episode"].to_list()),
-        make_pair_list(
-            dfmatchboxes.iloc[:, 1].to_list(), dfmatchboxes.iloc[:, 2].to_list()
-        ),
-        tuple(dfmatchboxes["result"].to_list()),
-        before_night=tuple(dfmatchboxes["before_night"].to_list()),
+
+    matchbox_args: list[tuple[int, tuple[str, str], bool, bool]] = [
+        (row[0], (row[1], row[2]), row[3], row[4])
+        for row in dfmatchboxes.values.tolist()
+    ]
+
+    validate_matchboxes(matchbox_args, lefts, rights)
+
+    matchboxes = matchboxes_from_list(
+        [
+            (ep, (lefts.index(l), rights.index(r)), res, bf)
+            for ep, (l, r), res, bf in matchbox_args
+        ]
     )
 
-    # validate_season_args(lefts, rights, nights, matchboxes, dm) # todo: write new val function for table
     solution: Solution = Solution()
     dfsolution = dfs.get("Solution")
     if dfsolution is not None:
         solution = Solution(
-            make_pair_list(dfsolution["left"].to_list(), dfsolution["right"].to_list())
+            make_pair_list(
+                map(lefts.index, dfsolution["left"]),
+                map(rights.index, dfsolution["right"]),
+            )
         )
     else:
         solution = Solution()
+
+    nights = tuple(
+        Night(
+            frozenset(make_pair_list(map(lefts.index, ls), map(rights.index, rs))),
+            light,
+        )
+        for ls, rs, light in night_args
+    )
 
     return lefts, rights, nights, matchboxes, dm, solution
 
@@ -155,12 +168,13 @@ def sols_as_df(sols: list[Solution]) -> pd.DataFrame:
 
 def get_season(sn: str) -> Season:
     import json
+
     lefts, rights, nights, matchboxes, _, solution = read_data_from_excel(sn)
     args = (sn, lefts, rights, nights, matchboxes, solution)
     with open(f"data/season_configs/{sn}.json") as f:
         logic_args: dict[str, object] = json.load(f)  # pyright: ignore[reportAny]
     season = Season(*args, **logic_args)  # pyright: ignore[reportArgumentType]
-    
+
     return season
 
 
@@ -178,6 +192,8 @@ def get_solver(sn: str) -> Solver:
         case "triple_match":
             solver = TripleMatchSolver(season)
         case _:
-            raise ValueError(f"Unknown match model {season.match_model} for season {sn}")
+            raise ValueError(
+                f"Unknown match model {season.match_model} for season {sn}"
+            )
 
     return solver
