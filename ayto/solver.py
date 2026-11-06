@@ -58,44 +58,42 @@ class Solver:
 
     def __init__(self, season: Season) -> None:
         self.season = season
-        self.bo_nights: list[int] = self.season.get_black_out_nights()
         self._no_match_cache: dict[tuple[Person, Person, int, bool], bool] = {}
-        self._matchbox_cache: dict[tuple[int, bool], Matchboxes] = {}
-        self._pms_cache: dict[tuple[int, bool], list[Pair]] = {}
-        for i in range(self.season.num_weeks):
+        
+        self.knowledge_cache: dict[tuple[int, bool], Knowledge] = {}
+        for i in range(self.season.max_lights + 1):
             for b in [True, False]:
-                self._matchbox_cache[(i, b)] = self.season.get_matchboxes(i, b)
-                self._pms_cache[(i, b)] = self.season.get_pms(i, b)
+                self.knowledge_cache[(i, b)] = Knowledge(season, i, b)
+        self.mm_person_cache: list[Person|None] = [season.get_mm(ep) for ep in range(self.season.max_lights + 1)]
 
-    def no_match(self, l: Person, r: Person, end: int, include_night: bool) -> bool:
+
+    def no_match(self, l: Person, r: Person, episode: int, include_night: bool) -> bool:
         """Return whether `(l, r)` is known not to be a match up to a given episode"""
-        key = (l, r, end, include_night)
+        key = (l, r, episode, include_night)
         cached = self._no_match_cache.get(key)
         if cached is None:
-            cached = self.no_match_reason(l, r, end, include_night) is not None
+            cached = self.no_match_reason(l, r, episode, include_night) is not None
             self._no_match_cache[key] = cached
         return cached
 
     def no_match_reason(
-        self, l: Person, r: Person, end: int, include_night: bool
+        self, l: Person, r: Person, episode: int, include_night: bool
     ) -> str | None:
         """Return the reason why `(l, r)` is known not to be a match up to a given episode"""
-        stop = max(0, min(end, self.season.num_weeks - 1))
-        mb = self._matchbox_cache.get((stop, include_night), Matchboxes())
-        kpm = self._pms_cache.get((stop, include_night), [])
+        knowledge = self.knowledge_cache[(episode, include_night)]
+        mb_no_matches = knowledge.mb_no_matches
+        kpm = knowledge.perfect_matches
         pm_lefts = {a for a, _ in kpm}
         pm_rights = {b for _, b in kpm}
+        mm_person = self.mm_person_cache[episode]
 
         # matchbox result was false
-        if (l, r) in mb and not mb[(l, r)]:
+        if (l, r) in mb_no_matches:
             return "matchbox_false"
 
         # check for black out nights
-        for bo in self.bo_nights:
-            if bo > end or (bo == end and not include_night):
-                break
-            if (l, r) in self.season.nights[bo].pairs and (l, r) not in kpm:
-                return "sitting_in_blackout_night"
+        if (l,r) in knowledge.bp_no_matches:
+            return "sitting_in_blackout_night"
 
         # one is part of known perfect match
         # consider multiple seated lefts
@@ -106,21 +104,21 @@ class Solver:
             if self.season.matchbox_reveals_dm:
                 return "member_has_partner_already"
             else:
-                mm_person = self.season.get_mm(end)
+                
                 # l cannot be part of multiple match
                 if (
                     mm_person
                     and r != mm_person
-                    and self.no_match(l, mm_person, end, include_night)
+                    and self.no_match(l, mm_person, episode, include_night)
                 ):
                     return "l_cannot_have_double_match"
-                elif end < self.season.mm_known_from_week:
+                elif episode < self.season.mm_known_from_week:
                     return "cannot_be_in_double_match"
 
         return None
 
     def find_format_violation(self, sol: Solution | set[Pair]) -> str | None:
-        """Return the first fomrat violation found in the solution, if any" """
+        """Return the first format violation found in the solution, if any" """
 
         if len(sol) > self.season.num_matches:
             return "too_many_matches"
@@ -135,44 +133,45 @@ class Solver:
                 return "wrongly_written_names_as_right"
         return None
 
-    def solution_possible(self, sol: Solution, end: int, include_night: bool) -> bool:
+    def solution_possible(self, sol: Solution, episode: int, include_night: bool) -> bool:
         """Check whether the solution is feasible up to a given episode
 
         Args:
             sol: Solution containing the pairs to cneck
-            end: Last episode to consider
+            episode: Last episode to consider
             include_night: Whether the matching night of the last episode should be considered
 
         Returns:
             `True` if no violation was found, ``False`` otherwise.
         """
-        return self.find_violation(sol, end, include_night) is None
+        return self.find_violation(sol, episode, include_night) is None
 
     def find_violation(
-        self, sol: SolutionType, end: int, include_night: bool
+        self, sol: SolutionType, episode: int, include_night: bool
     ) -> str | None:
         """Return the first logic violation found in the solution, if any"""
+        knowledge = self.knowledge_cache[(episode, include_night)]
 
         if (format_check := self.find_format_violation(sol)) is not None:
             return format_check
 
-        end = max(0, min(end, 10))
+        episode = max(0, min(episode, 10))
 
         # no known no matches
         for pair in sol:
-            if self.no_match(*pair, end, include_night):
+            if self.no_match(*pair, episode, include_night):
                 return "known_no_match"
 
         complete: bool = len(sol) == self.season.num_matches
 
         # check conditions for double matches
-        double_match_check = self.find_multiple_match_violation(sol, end)
+        double_match_check = self.find_multiple_match_violation(sol, episode)
         if double_match_check is not None:
             return double_match_check
 
         # number of lights with pairs matching lights in nights
         # if we don't have self.nummatches pairs, we allow lesser lights
-        nights = self.season.get_nights(end, include_night)
+        nights = knowledge.nights
 
         for _, night in enumerate(nights):
             sol_lights: int = len(sol & night.pairs)
@@ -184,14 +183,13 @@ class Solver:
 
         return None
 
-    def find_multiple_match_violation(self, sol: SolutionType, end: int) -> str | None:
+    def find_multiple_match_violation(self, sol: SolutionType, episode: int) -> str | None:
         """Return the first multiple-match violation found in the solution, if any"""
-
         sol_dict = dict_rep(sol)
         # lefts with multiple partners
         mult_lefts = [l for l, rs in sol_dict.items() if len(rs) > 1]
         # double/triple match person
-        mm_person = self.season.get_mm(end)
+        mm_person = self.mm_person_cache[episode]
 
         if len(mult_lefts) >= 2:
             return "too_many_double_matches"
@@ -220,34 +218,34 @@ class Solver:
         self,
         solutions1: list[Solution],
         solutions2: list[Solution],
-        end: int,
+        episode: int,
         include_night: bool,
     ) -> list[Solution]:
-        """Combines solutions from two lists and keeps feasible combinations, given `end`(inclusive) and `include_night`"""
+        """Combines solutions from two lists and keeps feasible combinations, given `episode`(inclusive) and `include_night`"""
 
         m_asm: set[Solution] = set()
         for s1, s2 in itertools.product(solutions1, solutions2):
             s3 = Solution(s1 | s2)
-            if self.solution_possible(s3, end, include_night):
+            if self.solution_possible(s3, episode, include_night):
                 m_asm.add(s3)
 
         return list(m_asm)
 
     def possible_matches_for_solution(
-        self, sol: Solution, end: int, include_night: bool
+        self, sol: Solution, episode: int, include_night: bool
     ) -> dict[Person, list[Person]]:
-        """Given a solution, return a dict for the possible matches for the lefts that are not in the solution, given `end`(inclusive) and `includenight`"""
+        """Given a solution, return a dict for the possible matches for the lefts that are not in the solution, given `episode`(inclusive) and `includenight`"""
 
         sitting_lefts, sitting_rights, _ = get_candidates(sol)
 
-        sitting_nomatches = self.season.get_sitting_no_matches(sol, end, include_night)
+        sitting_nomatches = self.season.get_sitting_no_matches(sol, episode, include_night)
 
-        mm_person = self.season.get_mm(end)
+        mm_person = self.mm_person_cache[episode]
         pos_matches = {
             l: [
                 r
                 for r in self.season.rights
-                if not self.no_match(l, r, end, include_night)
+                if not self.no_match(l, r, episode, include_night)
                 and not (l, r) in sitting_nomatches
                 and r != mm_person
                 and r not in sitting_rights
@@ -260,7 +258,7 @@ class Solver:
     def merge_mm_in_solution(
         self, sol: Solution, partial_solutions: list[Solution]
     ) -> list[Solution]:
-        """Merge solution with partial solutions to complete solution when the multiple match(es) are present the solution, given `end`(inclusive)"""
+        """Merge solution with partial solutions to complete solution when the multiple match(es) are present the solution, given `episode`(inclusive)"""
 
         _, _, mm_num = get_candidates(sol)
         if mm_num == 0:
@@ -278,14 +276,13 @@ class Solver:
         self,
         sol: Solution,
         partial_solutions: list[Solution],
-        end: int,
+        episode: int,
         include_night: bool,
     ) -> list[Solution]:
-        """Merge solution with partial solutions to complete solutions when the multiple match(es) are not present the solution, given `end`(inclusive) and `includenight`"""
+        """Merge solution with partial solutions to complete solutions when the multiple match(es) are not present the solution, given `episode`(inclusive) and `includenight`"""
 
-        mm_person = self.season.get_mm(end)
-
-        sitting_nomatches = self.season.get_sitting_no_matches(sol, end, include_night)
+        mm_person = self.mm_person_cache[episode]
+        sitting_nomatches = self.season.get_sitting_no_matches(sol, episode, include_night)
 
         # compute possible partners left for missing rights
         addable_lefts = {
@@ -293,7 +290,7 @@ class Solver:
                 l
                 for l in self.season.lefts
                 if not (
-                    self.no_match(l, r, end, include_night)
+                    self.no_match(l, r, episode, include_night)
                     or (l, r) in sitting_nomatches
                     or (self.season.extra_left_name and l == self.season.extra_left)
                 )
@@ -332,13 +329,13 @@ class Solver:
         return solutions
 
     def generate_complete_solutions(
-        self, sol: Solution, end: int, include_night: bool
+        self, sol: Solution, episode: int, include_night: bool
     ) -> list[Solution]:
         """Generate complete solutions by extending a partial solution.
 
         Args:
             sol (Solution): Partial solution to extend.
-            end (int): Last episode to consider, inclusive.
+            episode (int): Last episode to consider, inclusive.
             include_night (bool): Whether to consider the matching night of
                 the last episode.
 
@@ -347,7 +344,7 @@ class Solver:
                 solution and the known constraints.
         """
 
-        if not self.solution_possible(sol, end, include_night):
+        if not self.solution_possible(sol, episode, include_night):
             return []
         if len(sol) == self.season.num_matches:
             return [sol]
@@ -358,7 +355,7 @@ class Solver:
             return Solution(p for p in zip(clefts, ordering))
 
         _, _, mm_num = get_candidates(sol)
-        pos_matches = self.possible_matches_for_solution(sol, end, include_night)
+        pos_matches = self.possible_matches_for_solution(sol, episode, include_night)
 
         # build pairs for lefts that are not in the given solution
         products = [list(ps) for ps in product_without_reps(list(pos_matches.values()))]
@@ -372,19 +369,19 @@ class Solver:
             return sols
 
         solutions = self.merge_mm_not_in_solution(
-            sol, partial_solutions, end, include_night
+            sol, partial_solutions, episode, include_night
         )
 
         return solutions
 
     def generate_partial_solutions(
-        self, end: int, include_night: bool
+        self, episode: int, include_night: bool
     ) -> list[Solution]:
         """Generate partial solutions from the matching night.
 
         For each matching night, the required number of matching pairs is selected and the resulting partial solutions are combined.
         Args:
-            end (int): Last episode to consider, inclusive.
+            episode (int): Last episode to consider, inclusive.
             include_night (bool): Whether to consider the matching night of
                 the last episode.
 
@@ -393,8 +390,9 @@ class Solver:
                 results and known constraints.
         """
 
-        nights = self.season.get_nights(end, include_night)
-        kpm = self.season.get_pms(end, include_night)
+        knowledge = self.knowledge_cache[(episode, include_night)]
+        nights = knowledge.nights
+        kpm = knowledge.perfect_matches
 
         if len(nights) == 0:
             return [Solution(kpm)]
@@ -403,7 +401,7 @@ class Solver:
         for i, night in enumerate(nights):
             invalid_pairs = list(
                 filter(
-                    lambda p: self.no_match(*p, end, include_night) or p in kpm,
+                    lambda p: self.no_match(*p, episode, include_night) or p in kpm,
                     night.pairs,
                 )
             )
@@ -424,19 +422,19 @@ class Solver:
             pairs_per_night.append(combinations)
 
         merged_solutions: list[Solution] = functools.reduce(
-            lambda s1, s2: self.combine_possible_solutions(s1, s2, end, include_night),
+            lambda s1, s2: self.combine_possible_solutions(s1, s2, episode, include_night),
             pairs_per_night,
         )
 
         return merged_solutions
 
     def solve(
-        self, end: int, include_night: bool = True, validate: bool = False
+        self, episode: int, include_night: bool = True, validate: bool = False
     ) -> list[Solution]:
         """Solve season and return all possible solutions
 
         Args:
-            end (int): Last episode to consider
+            episode (int): Last episode to consider
             include_night (bool): Wheter the matching night of the last episode should be considered.Defaults to True.
             validate (bool, optional): Whether solutions should be vaidated by solution_possible after generating them. Defaults to False.
 
@@ -445,11 +443,11 @@ class Solver:
         """
 
         # reduction of the search space by generating partial solutions from nights
-        partial_solutions = self.generate_partial_solutions(end, include_night)
+        partial_solutions = self.generate_partial_solutions(episode, include_night)
 
         solutions_unfiltered: set[Solution] = set()
         for g in partial_solutions:
-            sols_g = self.generate_complete_solutions(g, end, include_night)
+            sols_g = self.generate_complete_solutions(g, episode, include_night)
             solutions_unfiltered.update(sols_g)
 
         # the tests should guarantee that all generated solutions are possible
@@ -457,7 +455,7 @@ class Solver:
             solutions = [
                 s
                 for s in solutions_unfiltered
-                if self.solution_possible(s, end, include_night)
+                if self.solution_possible(s, episode, include_night)
             ]
         else:
             solutions = list(solutions_unfiltered)

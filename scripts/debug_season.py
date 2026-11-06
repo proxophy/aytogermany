@@ -62,29 +62,36 @@ def memory_test():
 
 if __name__ == "__main__":
     # uv run python -m scripts.debug_season
-    sn = "vip2025"
+    sn = "vip2021"
     season = get_season(sn)
     solver: Solver = get_solver(sn)
     import timeit
+
     import pandas as pd
 
-    end = 2
+    end = 10
     icl = True
 
+    sol = season.solution
+    # print(solver.find_violation(sol, end, icl))
+    for l, r in sol:
+        if x := solver.no_match_reason(l, r, end, icl):
+            print(l, r, x)
+            break
 
-
-    # sol = season.solution
     # sols = solver.solve(end, icl)
     # print(len(sols))
     # print(timeit.timeit(lambda solver=solver, end=end: len(solver.solve(end, icl)), number=3))
 
-    # sys.exit()
+    sys.exit()
     data = []
     for sn in ALL_SEASONS:
         solver = get_solver(sn)
         td = {}
         for end in range(1, 3):
-            x = timeit.timeit(lambda solver=solver, end=end: len(solver.solve(end, icl)), number=3)
+            x = timeit.timeit(
+                lambda solver=solver, end=end: len(solver.solve(end, icl)), number=3
+            )
             td[end] = x
         data.append(td)
     df = pd.DataFrame(data, index=ALL_SEASONS)

@@ -119,26 +119,37 @@ class Matchboxes:
             s += f"{w}: {p} -> {r}, bf={bf}\n"
         return s
 
-    def get_perfect_matches(self, end: int = 9, include_night: bool = False):
+    def get_perfect_matches(self, episode: int = 9, include_night: bool = False) -> list[Pair]:
         pm_pairs: list[Pair] = []
         for w, p, r, bf in self:
-            if w > end:
+            if w > episode:
                 break
-            if not include_night and w == end and not bf:
+            if not include_night and w == episode and not bf:
                 break
             if r:
                 pm_pairs.append(p)
         return pm_pairs
 
-    def get_matchboxes_until_week(self, end: int, include_night: bool):
+    def get_no_matches(self, episode: int = 9, include_night: bool = False)-> list[Pair]:
+        no_match_pairs: list[Pair] = []
+        for w, p, r, bf in self:
+            if w > episode:
+                break
+            if not include_night and w == episode and not bf:
+                break
+            if not r:
+                no_match_pairs.append(p)
+        return no_match_pairs
+
+    def get_matchboxes_until_week(self, episode: int, include_night: bool):
         weeks: list[int] = []
         pairs: list[Pair] = []
         results: list[bool] = []
         bfs: list[bool] = []
         for w, p, r, bf in self:
-            if w > end:
+            if w > episode:
                 break
-            if not include_night and w == end and not bf:
+            if not include_night and w == episode and not bf:
                 break
             weeks.append(w)
             pairs.append(p)
@@ -247,31 +258,31 @@ class Season:
             return self.encode_left(self.extra_left_name)
         return None
 
-    def get_mm(self, end: int = 9) -> Person | None:
-        end = max(0, min(end, self.num_weeks - 1))
+    def get_mm(self, episode: int = 9) -> Person | None:
+        episode = max(0, min(episode, self.num_weeks - 1))
         if self.mm_person:
             return (
                 self.encode_right(self.mm_person)
-                if end >= self.mm_known_from_week
+                if episode >= self.mm_known_from_week
                 else None
             )
         else:
             return None
 
-    def get_nights(self, end: int = 9, include_night: bool = True) -> Sequence[Night]:
-        end = max(0, end) + (1 if include_night else 0)
-        return self.nights[:end]
+    def get_nights(self, episode: int = 9, include_night: bool = True) -> Sequence[Night]:
+        episode = max(0, episode) + (1 if include_night else 0)
+        return self.nights[:episode]
 
-    def get_matchboxes(self, end: int = 9, include_night: bool = True) -> Matchboxes:
-        return self.matchboxes.get_matchboxes_until_week(end, include_night)
+    def get_matchboxes(self, episode: int = 9, include_night: bool = True) -> Matchboxes:
+        return self.matchboxes.get_matchboxes_until_week(episode, include_night)
 
-    def get_pms(self, end: int = 9, include_night: bool = True) -> list[Pair]:
-        return self.matchboxes.get_perfect_matches(end, include_night)
+    def get_pms(self, episode: int = 9, include_night: bool = True) -> list[Pair]:
+        return self.matchboxes.get_perfect_matches(episode, include_night)
 
     def get_sitting_no_matches(
-        self, sol: Solution, end: int = 9, include_night: bool = True
+        self, sol: Solution, episode: int = 9, include_night: bool = True
     ) -> set[Pair]:
-        nights = self.get_nights(end, include_night)
+        nights = self.get_nights(episode, include_night)
         sitting_nomatches: set[Pair] = set()
 
         for night in nights:
@@ -282,18 +293,18 @@ class Season:
                 sitting_nomatches.add(p)
         return sitting_nomatches
 
-    def get_black_out_nights(self, end: int = 9, include_night: bool = True):
-        stop = max(0, end) + (1 if include_night else 0)
+    def get_black_out_nights(self, episode: int = 9, include_night: bool = True):
+        stop = max(0, episode) + (1 if include_night else 0)
 
         bonights: list[int] = []
         num_known_pms = 0
         pmls: list[Person] = []
         pms: set[Pair] = set()
-        known_pms_per_ep = [0 for _ in range(end + 1)]
+        known_pms_per_ep = [0 for _ in range(episode + 1)]
         for ep, (l, r), res, bf in self.matchboxes:
-            if ep > end:
+            if ep > episode:
                 break
-            if ep == end and not include_night and not bf:
+            if ep == episode and not include_night and not bf:
                 break  # skip matchbox after last night
             if res and l not in pmls:
                 # add one perfect match per person, ignoring double matches
@@ -341,3 +352,27 @@ def random_night_for_sol(sol: Solution, lefts: list[Person], rights: list[Person
     pairs = {(l, r) for l, r in zip(lefts, perm)}
     lights = len(sol & pairs)
     return Night((pairs), lights)
+
+class Knowledge:
+
+    def __init__(self, season: Season, episode: int, include_night: bool):
+        self.episode: int = episode
+        self.include_night: bool = include_night
+
+        self.nights: Sequence[Night] = season.get_nights(episode, include_night)
+        self.matchboxes: Matchboxes = season.get_matchboxes(episode, include_night)
+        self.perfect_matches: list[Pair] = self.matchboxes.get_perfect_matches()
+        self.mb_no_matches: list[Pair] = self.matchboxes.get_no_matches()
+        self.black_out_nights: list[int] = season.get_black_out_nights(episode, include_night)
+        self.bp_no_matches: list[Pair] = []
+        for bo in self.black_out_nights:
+            for p in self.nights[bo].pairs:
+                if p in self.perfect_matches:
+                    continue
+                self.bp_no_matches.append(p)
+
+        self.mm: Person | None = season.get_mm(episode)
+
+class BitMaskKnowledge(Knowledge):
+    def __init__(self,season: Season, episode: int, include_night: bool):
+        super().__init__(season, episode, include_night)

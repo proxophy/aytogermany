@@ -7,7 +7,7 @@ from .solver import Solver
 
 class TwoDoubleMatchesSolver(Solver):
     @override
-    def find_multiple_match_violation(self, sol: SolutionType, end: int) -> str | None:
+    def find_multiple_match_violation(self, sol: SolutionType, episode: int) -> str | None:
         # VIP2025 allows two double matches, one of those must include Jimi
 
         seated_lefts = [l for l, _ in sol]
@@ -20,7 +20,7 @@ class TwoDoubleMatchesSolver(Solver):
         mult_rights = [
             e for l in mult_lefts for e in sol_dict[l]
         ]  # rights part of multi match
-        mm_person = self.season.get_mm(end)
+        mm_person = self.mm_person_cache[episode]
 
         # if Jimi is seated and we have two double matches, he must be part of one of them
         if mm_person in seated_rights and len(mult_lefts) == 2 and mm_person not in mult_rights:
@@ -37,17 +37,17 @@ class TwoDoubleMatchesSolver(Solver):
         self,
         sol: Solution,
         partial_solutions: list[Solution],
-        end: int,
+        episode: int,
         include_night: bool,
     ) -> list[Solution]:
-        sitting_nomatches = self.season.get_sitting_no_matches(sol, end, include_night)
+        sitting_nomatches = self.season.get_sitting_no_matches(sol, episode, include_night)
 
         addable_lefts = {
             r: [
                 l
                 for l in self.season.lefts
                 if not (
-                    self.no_match(l, r, end, include_night)
+                    self.no_match(l, r, episode, include_night)
                     or (l, r) in sitting_nomatches
                 )
             ]
@@ -56,7 +56,7 @@ class TwoDoubleMatchesSolver(Solver):
 
         solutions: list[Solution] = []
 
-        mm_person = self.season.get_mm(end)
+        mm_person = self.mm_person_cache[episode]
 
         for partial_solution in partial_solutions:
             tenplusmatches = sol.union(partial_solution)

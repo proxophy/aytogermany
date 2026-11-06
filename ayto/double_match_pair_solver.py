@@ -1,29 +1,32 @@
 from typing import override
 
+from ayto.season import Pair
+
 from .season import *
 from .solver import Solver
 
 
 class DoubleMatchPairSolver(Solver):
     @override
-    def no_match_reason(self, l: Person, r: Person, end: int, include_night : bool) -> str | None:
+    def no_match_reason(self, l: Person, r: Person, episode: int, include_night : bool) -> str | None:
         assert self.season.double_match_pair
-        if end >= self.season.double_match_pair_known:
-            mb = self._matchbox_cache.get((end, include_night), Matchboxes())
+        knowledge = self.knowledge_cache[(episode, include_night)]
+        if episode >= self.season.double_match_pair_known:
+            no_matches: list[Pair] = knowledge.mb_no_matches
 
             if r in self.season.double_match_pair:
                 for dmr in self.season.double_match_pair:
-                    if (l, dmr) in mb and not mb[(l, dmr)]:
+                    if (l, dmr) in no_matches:
                         return "matchbox_false_for_double_match_pair"
-        return super().no_match_reason(l, r, end, include_night)
+        return super().no_match_reason(l, r, episode, include_night)
 
     @override
     def find_multiple_match_violation(
-        self, sol: SolutionType, end: int
+        self, sol: SolutionType, episode: int
     ) -> str | None:
         assert self.season.double_match_pair
 
-        if end >= self.season.double_match_pair_known:
+        if episode >= self.season.double_match_pair_known:
             # lefts that partner with double_match_pair
             dml = [l for (l, r) in sol if r in self.season.double_match_pair]
             if len(dml) > 1 and dml[0] != dml[1]:
@@ -41,25 +44,25 @@ class DoubleMatchPairSolver(Solver):
                 ):
                     return "double_match_lefts_not_double_match_pair"
 
-        return super().find_multiple_match_violation(sol, end)
+        return super().find_multiple_match_violation(sol, episode)
 
     @override
     def merge_mm_not_in_solution(
         self,
         sol: Solution,
         partial_solutions: list[Solution],
-        end: int,
+        episode: int,
         include_night: bool,
     ) -> list[Solution]:
         assert self.season.double_match_pair
 
-        if end < self.season.double_match_pair_known:
+        if episode < self.season.double_match_pair_known:
             return super().merge_mm_not_in_solution(
-                sol, partial_solutions, end, include_night
+                sol, partial_solutions, episode, include_night
             )
 
         solutions: list[Solution] = []
-        sitting_nomatches = self.season.get_sitting_no_matches(sol, end, include_night)
+        sitting_nomatches = self.season.get_sitting_no_matches(sol, episode, include_night)
 
 
         for partial_solution in partial_solutions:

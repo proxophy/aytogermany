@@ -8,11 +8,11 @@ from .solver import Solver
 class TripleMatchSolver(Solver):
     @override
     def no_match_reason(
-        self, l: Person, r: Person, end: int, include_night: bool
+        self, l: Person, r: Person, episode: int, include_night: bool
     ) -> str | None:
         """Return whether a pair is known not to be a match up to `end`"""
-
-        kpm = self.season.get_pms(end, include_night)
+        knowledge = self.knowledge_cache[(episode, include_night)]
+        kpm = knowledge.perfect_matches
         pm_lefts = [a for a, _ in kpm]
         pm_rights = {b for _, b in kpm}
 
@@ -27,26 +27,26 @@ class TripleMatchSolver(Solver):
                 return None
             return "triple_match_already_exists"
 
-        return super().no_match_reason(l, r, end, include_night)
+        return super().no_match_reason(l, r, episode, include_night)
 
     @override
     def merge_mm_not_in_solution(
         self,
         sol: Solution,
         partial_solutions: list[Solution],
-        end: int,
+        episode: int,
         include_night: bool,
     ) -> list[Solution]:
         # for documentation refer to Solver.merge_mm_not_in_solution
 
-        sitting_nomatches = self.season.get_sitting_no_matches(sol, end, include_night)
+        sitting_nomatches = self.season.get_sitting_no_matches(sol, episode, include_night)
 
         addable_lefts = {
             r: [
                 l
                 for l in self.season.lefts
                 if not (
-                    self.no_match(l, r, end, include_night)
+                    self.no_match(l, r, episode, include_night)
                     or (l, r) in sitting_nomatches
                 )
             ]
@@ -54,7 +54,7 @@ class TripleMatchSolver(Solver):
         }
 
         solutions: list[Solution] = []
-        mm_person = self.season.get_mm(end)
+        mm_person = self.mm_person_cache[episode]
 
         for partial_solution in partial_solutions:
             base_matches = sol.union(partial_solution)
@@ -84,7 +84,7 @@ class TripleMatchSolver(Solver):
                 # missing right
                 mr = next(r for r in self.season.rights if r not in sitting_rights)
                 if (
-                    self.no_match(smleft, mr, end, include_night)
+                    self.no_match(smleft, mr, episode, include_night)
                     or (smleft, mr) in sitting_nomatches
                 ):
                     continue
