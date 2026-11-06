@@ -48,6 +48,7 @@ class DoubleMatchForRightSolver(Solver):
 
         assert self.season.extra_left
 
+        knowledge = self.knowledge_cache[(episode, include_night)]
         glefts, _, mmnum = get_candidates(sol)
 
         pos_matches: dict[Person, list[Person]] = self.possible_matches_for_solution(
@@ -78,7 +79,7 @@ class DoubleMatchForRightSolver(Solver):
             )
 
         # add self.sm as double_match
-        sitting_no_matches = self.season.get_sitting_no_matches(sol, episode, include_night)
+        sitting_no_matches = knowledge.get_sitting_no_matches(sol)
         solutions = [
             Solution(s | {(self.season.extra_left, r)})
             for r in smmatches

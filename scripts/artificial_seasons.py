@@ -6,56 +6,56 @@ from ayto.season import matchboxes_from_list, mm_left
 
 # pyright: standard
 
+
 def toy_example():
 
     toy_nights = (
         Night(
             {
-                ("A", "1"),
-                ("B", "3"),
-                ("C", "4"),
-                ("D", "5"),
-                ("E", "2"),
+                (0, 0),
+                (1, 2),
+                (2, 3),
+                (3, 4),
+                (4, 1),
             },
             1,
         ),
         Night(
             {
-                ("A", "5"),
-                ("B", "2"),
-                ("C", "3"),
-                ("D", "4"),
-                ("E", "1"),
+                (0, 4),
+                (1, 1),
+                (2, 2),
+                (3, 3),
+                (4, 0),
             },
             3,
         ),
         Night(
             {
-                ("A", "5"),
-                ("B", "2"),
-                ("C", "3"),
-                ("D", "4"),
-                ("E", "6"),
+                (0, 4),
+                (1, 1),
+                (2, 2),
+                (3, 3),
+                (4, 5),
             },
             4,
         ),
     )
-    toy_matchboxes = Matchboxes((0,), ((("B", "3")),), (False,))
+    toy_matchboxes = Matchboxes((0,), (((1, 2)),), (False,), (True,))
     toy_lefts = ("A", "B", "C", "D", "E")
-    toy_rights = ("1", "2", "3", "4", "5", "6")
+    toy_rights = ("0", "1", "2", "3", "4", "5")
     toy_season = Season(
-        "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm_person="6"
+        "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm_person="5"
     )
     solver = Solver(toy_season)
 
     sols = solver.solve(5)
-    print(len(sols))
-
+    return toy_season
 
 def simulate_season(n: int = 5, with_dm: bool = True) -> tuple[Season, list[Solution]]:
 
     def matchbox(sols, i):
-        mp = (random.choice(lefts), random.choice(rights))
+        mp = (random.choice(range(n)), random.choice(range(n+1)))
         if mp in solution:
             sols = [s for s in sols if mp in s]
             known_pms.append(mp)
@@ -65,16 +65,16 @@ def simulate_season(n: int = 5, with_dm: bool = True) -> tuple[Season, list[Solu
         res = mp in solution
         mbs.append((i, mp, res, True))
         # reveal double match
-        if res and mp[0] == "A":
-            mr = next(iter({"1", dm} - {mp[1]}))
-            np = ("A", mr)
+        if res and mp[0] == 0:
+            mr = next(iter({0, n} - {mp[1]}))
+            np = (0, mr)
             mbs.append((i, np, True, True))
             sols = [s for s in sols if np in s]
             known_pms.append(np)
             # print("double match", mp, mr)
         elif res:
             # double not possible with this l
-            sols = [s for s in sols if (mp[0], dm) not in s]
+            sols = [s for s in sols if (mp[0], n) not in s]
             for l in lefts:
                 if l == mp[0]:
                     continue
@@ -95,7 +95,7 @@ def simulate_season(n: int = 5, with_dm: bool = True) -> tuple[Season, list[Solu
     lefts = tuple(string.ascii_uppercase)[:n]
     rights = tuple(str(i) for i in range(1, n + 2))
     dm = str(n + 1)
-    solution = frozenset({(l, r) for l, r in zip(lefts, rights[:-1])} | {("A", dm)})
+    solution = frozenset({(l, r) for l, r in zip(range(n), range(n))} | {(0, n)})
 
     empty_season = Season(
         "toy",
@@ -181,15 +181,15 @@ def check_generated_season(n: int = 5, with_dm: bool = True):
     for s in sols:
         if not solver.solution_possible(s, n - 1, True):
             print(season)
-            assert False, (
-                f"solution in sols not possible {solver.solution_possible(s, n - 1, True)}"
-            )
+            assert (
+                False
+            ), f"solution in sols not possible {solver.solution_possible(s, n - 1, True)}"
 
     if len(sols) != len(solver.solve(n - 1)):
         print(season)
-        assert False, (
-            f"len(sols) = {len(sols)} != {len(solver.solve(n - 1))} = len(solver.solve(n - 1))"
-        )
+        assert (
+            False
+        ), f"len(sols) = {len(sols)} != {len(solver.solve(n - 1))} = len(solver.solve(n - 1))"
 
     if not solver.solution_possible(sols[0], n - 1, True):
         print(season)
@@ -213,6 +213,7 @@ def check_generated_season(n: int = 5, with_dm: bool = True):
         if len(fsols) != len(solver.solve(i)):
             print(season)
             assert False, "len(fsols) != len(solver.solve(i))"
+
 
 if __name__ == "__main__":
     # uv run python -m scripts.artificial_seasons

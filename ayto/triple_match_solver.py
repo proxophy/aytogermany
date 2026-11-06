@@ -38,8 +38,8 @@ class TripleMatchSolver(Solver):
         include_night: bool,
     ) -> list[Solution]:
         # for documentation refer to Solver.merge_mm_not_in_solution
-
-        sitting_nomatches = self.season.get_sitting_no_matches(sol, episode, include_night)
+        knowledge = self.knowledge_cache[(episode, include_night)]
+        sitting_nomatches = knowledge.get_sitting_no_matches(sol)
 
         addable_lefts = {
             r: [

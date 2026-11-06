@@ -2,6 +2,8 @@ import functools
 import itertools
 from collections.abc import Generator, Iterable
 
+from ayto.season import Person
+
 from .season import *
 
 ALL_SEASONS = [
@@ -60,7 +62,7 @@ class Solver:
         self.season = season
         self._no_match_cache: dict[tuple[Person, Person, int, bool], bool] = {}
         
-        self.knowledge_cache: dict[tuple[int, bool], Knowledge] = {}
+        self.knowledge_cache: dict[tuple[int, bool], Knowledge] = {} # todo: fix edge case
         for i in range(self.season.max_lights + 1):
             for b in [True, False]:
                 self.knowledge_cache[(i, b)] = Knowledge(season, i, b)
@@ -155,8 +157,6 @@ class Solver:
         if (format_check := self.find_format_violation(sol)) is not None:
             return format_check
 
-        episode = max(0, min(episode, 10))
-
         # no known no matches
         for pair in sol:
             if self.no_match(*pair, episode, include_night):
@@ -200,17 +200,15 @@ class Solver:
             if len(mult_rights) > self.season.max_mm_size:
                 return "triple_match_not_allowed"
 
-            if mm_person:  # mm_person is not None
+            if mm_person is not None:  # mm_person is not None
                 _, seated_rights = zip(*sol)
 
-                if (
-                    len(mult_rights) == self.season.max_mm_size
-                    and mm_person not in sol_dict[mult_left]
-                ):
-                    return "mm_not_in_complete_multiple_match"
-                elif  mm_person in seated_rights and mm_person not in sol_dict[mult_left]:
+                if mm_person not in sol_dict[mult_left]:
+                    if len(mult_rights) == self.season.max_mm_size:
+                        return "mm_not_in_complete_multiple_match"
+                    elif  mm_person in seated_rights:
                     # only used in normalo2024
-                    return "multiple_match_not_possible_without_mm"
+                        return "multiple_match_not_possible_without_mm"
 
         return None
 
@@ -238,7 +236,8 @@ class Solver:
 
         sitting_lefts, sitting_rights, _ = get_candidates(sol)
 
-        sitting_nomatches = self.season.get_sitting_no_matches(sol, episode, include_night)
+        knowledge = self.knowledge_cache[(episode, include_night)]
+        sitting_nomatches = knowledge.get_sitting_no_matches(sol)
 
         mm_person = self.mm_person_cache[episode]
         pos_matches = {
@@ -267,7 +266,7 @@ class Solver:
             )
 
         sols = [
-            Solution(sol.union(partial_solution))
+            sol | partial_solution
             for partial_solution in partial_solutions
         ]
         return sols
@@ -282,7 +281,8 @@ class Solver:
         """Merge solution with partial solutions to complete solutions when the multiple match(es) are not present the solution, given `episode`(inclusive) and `includenight`"""
 
         mm_person = self.mm_person_cache[episode]
-        sitting_nomatches = self.season.get_sitting_no_matches(sol, episode, include_night)
+        knowledge = self.knowledge_cache[(episode, include_night)]
+        sitting_nomatches = knowledge.get_sitting_no_matches(sol)
 
         # compute possible partners left for missing rights
         addable_lefts = {
@@ -297,17 +297,17 @@ class Solver:
             ]
             for r in self.season.rights
         }
+        # print(sum(len(x) for x in addable_lefts.values()))
 
         solutions: list[Solution] = []
 
         for partial_solution in partial_solutions:
-            base_matches = sol.union(partial_solution)
+            base_matches = sol | partial_solution
 
             _, sitting_rights, _ = get_candidates(base_matches)
             # right that is missing in solution
             mr = next(r for r in self.season.rights if r not in sitting_rights)
-
-            if mm_person:
+            if mm_person is not None:
                 # mm_person is not None
                 if mr == mm_person:
                     solutions.extend(
@@ -355,7 +355,7 @@ class Solver:
             return Solution(p for p in zip(clefts, ordering))
 
         _, _, mm_num = get_candidates(sol)
-        pos_matches = self.possible_matches_for_solution(sol, episode, include_night)
+        pos_matches: dict[Person, list[Person]] = self.possible_matches_for_solution(sol, episode, include_night)
 
         # build pairs for lefts that are not in the given solution
         products = [list(ps) for ps in product_without_reps(list(pos_matches.values()))]

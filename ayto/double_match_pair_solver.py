@@ -62,7 +62,8 @@ class DoubleMatchPairSolver(Solver):
             )
 
         solutions: list[Solution] = []
-        sitting_nomatches = self.season.get_sitting_no_matches(sol, episode, include_night)
+        knowledge = self.knowledge_cache[(episode, include_night)]
+        sitting_nomatches = knowledge.get_sitting_no_matches(sol)
 
 
         for partial_solution in partial_solutions:

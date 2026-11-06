@@ -3,6 +3,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import override
 
+from ayto.codec import Codec, Mask, RightBits
+
 Person = int
 Pair = tuple[Person, Person]
 Solution = frozenset[Pair]
@@ -119,7 +121,9 @@ class Matchboxes:
             s += f"{w}: {p} -> {r}, bf={bf}\n"
         return s
 
-    def get_perfect_matches(self, episode: int = 9, include_night: bool = False) -> list[Pair]:
+    def get_perfect_matches(
+        self, episode: int = 9, include_night: bool = False
+    ) -> list[Pair]:
         pm_pairs: list[Pair] = []
         for w, p, r, bf in self:
             if w > episode:
@@ -130,7 +134,9 @@ class Matchboxes:
                 pm_pairs.append(p)
         return pm_pairs
 
-    def get_no_matches(self, episode: int = 9, include_night: bool = False)-> list[Pair]:
+    def get_no_matches(
+        self, episode: int = 9, include_night: bool = False
+    ) -> list[Pair]:
         no_match_pairs: list[Pair] = []
         for w, p, r, bf in self:
             if w > episode:
@@ -189,9 +195,9 @@ class Season:
             raise ValueError(
                 f"Invalid number of nights or matchboxes {len(self.nights)} {len(self.matchboxes)}"
             )
-        if len(set(self.lefts_names)) != len(self.lefts_names) or len(set(self.rights_names)) != len(
-            self.rights_names
-        ):
+        if len(set(self.lefts_names)) != len(self.lefts_names) or len(
+            set(self.rights_names)
+        ) != len(self.rights_names):
             raise ValueError("Duplicate names in lefts or rights")
         if self.double_match_pair_names and self.match_model != "double_match_pair":
             raise ValueError(
@@ -269,29 +275,19 @@ class Season:
         else:
             return None
 
-    def get_nights(self, episode: int = 9, include_night: bool = True) -> Sequence[Night]:
+    def get_nights(
+        self, episode: int = 9, include_night: bool = True
+    ) -> Sequence[Night]:
         episode = max(0, episode) + (1 if include_night else 0)
         return self.nights[:episode]
 
-    def get_matchboxes(self, episode: int = 9, include_night: bool = True) -> Matchboxes:
+    def get_matchboxes(
+        self, episode: int = 9, include_night: bool = True
+    ) -> Matchboxes:
         return self.matchboxes.get_matchboxes_until_week(episode, include_night)
 
     def get_pms(self, episode: int = 9, include_night: bool = True) -> list[Pair]:
         return self.matchboxes.get_perfect_matches(episode, include_night)
-
-    def get_sitting_no_matches(
-        self, sol: Solution, episode: int = 9, include_night: bool = True
-    ) -> set[Pair]:
-        nights = self.get_nights(episode, include_night)
-        sitting_nomatches: set[Pair] = set()
-
-        for night in nights:
-            pl: int = len(sol & night.pairs)
-            if pl < night.lights:
-                continue
-            for p in night.pairs - sol:
-                sitting_nomatches.add(p)
-        return sitting_nomatches
 
     def get_black_out_nights(self, episode: int = 9, include_night: bool = True):
         stop = max(0, episode) + (1 if include_night else 0)
@@ -353,6 +349,7 @@ def random_night_for_sol(sol: Solution, lefts: list[Person], rights: list[Person
     lights = len(sol & pairs)
     return Night((pairs), lights)
 
+
 class Knowledge:
 
     def __init__(self, season: Season, episode: int, include_night: bool):
@@ -363,7 +360,9 @@ class Knowledge:
         self.matchboxes: Matchboxes = season.get_matchboxes(episode, include_night)
         self.perfect_matches: list[Pair] = self.matchboxes.get_perfect_matches()
         self.mb_no_matches: list[Pair] = self.matchboxes.get_no_matches()
-        self.black_out_nights: list[int] = season.get_black_out_nights(episode, include_night)
+        self.black_out_nights: list[int] = season.get_black_out_nights(
+            episode, include_night
+        )
         self.bp_no_matches: list[Pair] = []
         for bo in self.black_out_nights:
             for p in self.nights[bo].pairs:
@@ -373,6 +372,36 @@ class Knowledge:
 
         self.mm: Person | None = season.get_mm(episode)
 
+    def get_sitting_no_matches(self, sol: Solution) -> set[Pair]:
+        nights = self.nights
+        sitting_nomatches: set[Pair] = set()
+
+        for night in nights:
+            pl: int = len(sol & night.pairs)
+            if pl < night.lights:
+                continue
+            for p in night.pairs - sol:
+                sitting_nomatches.add(p)
+        return sitting_nomatches
+
+
 class BitMaskKnowledge(Knowledge):
-    def __init__(self,season: Season, episode: int, include_night: bool):
+    def __init__(self, season: Season, episode: int, include_night: bool):
         super().__init__(season, episode, include_night)
+        self.codec: Codec = Codec(len(season.lefts), len(season.rights))
+        self.mb_no_matches_mask: Mask = self.codec.encode(self.mb_no_matches)
+        self.bp_no_matches_mask: Mask = self.codec.encode(self.bp_no_matches)
+        self.perfect_matches_mask: Mask = self.codec.encode(self.perfect_matches)
+        self.mm_mask: RightBits = 0 if not self.mm else 1 << self.mm
+        self.night_masks: list[tuple[Mask, int]] = [
+            (self.codec.encode(night.pairs), night.lights) for night in self.nights
+        ]
+
+    def get_sitting_no_matches_mask(self, sol: int) -> int:
+        mask = 0
+        for pairs, lights in self.night_masks:
+            pl: int = (sol & pairs).bit_count()
+            if pl < lights:
+                continue
+            mask |= pairs & ~sol
+        return mask
