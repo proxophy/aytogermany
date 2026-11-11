@@ -11,7 +11,7 @@ from ayto.codec import Codec, iter_bits
 SIZES = [(10, 11), (10, 12), (11, 11)]  # (lefts, rights) of the real seasons
 
 
-def random_pairs(rng : Random, L: int, R: int):
+def random_pairs(rng: Random, L: int, R: int):
     """Random set of pairs, including lefts with several partners and the empty set."""
     k = rng.choice([0, 1, 2, 5, 8, 11, 12, 14])
     return frozenset((rng.randrange(L), rng.randrange(R)) for _ in range(k))
@@ -20,9 +20,9 @@ def random_pairs(rng : Random, L: int, R: int):
 class TestCodec(unittest.TestCase):
     @override
     def setUp(self):
-        self.rng: Random = random.Random( # pyright: ignore[reportUninitializedInstanceVariable]
+        self.rng: Random = random.Random(  # pyright: ignore[reportUninitializedInstanceVariable]
             1234
-        )  
+        )
 
     def cases(self, n=400):
         for L, R in SIZES:

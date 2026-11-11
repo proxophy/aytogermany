@@ -1,15 +1,32 @@
 from collections.abc import Iterable
+from typing import Literal, overload
 
 import pandas as pd
 
-from ayto.season import Matchboxes, Pair
-
-from .double_match_for_right_solver import DoubleMatchForRightSolver
-from .double_match_pair_solver import DoubleMatchPairSolver
-from .season import *
-from .solver import Solver
-from .triple_match_solver import TripleMatchSolver
-from .two_double_matches_solver import TwoDoubleMatchesSolver
+from ayto.bitmask_solver import BitMaskSolver
+from ayto.double_match_for_right_solver import (
+    DoubleMatchForRightBitMaskSolver,
+    DoubleMatchForRightSolver,
+)
+from ayto.double_match_pair_solver import (
+    DoubleMatchPairBitMaskSolver,
+    DoubleMatchPairSolver,
+)
+from ayto.season import (
+    Matchboxes,
+    Night,
+    Pair,
+    Person,
+    Season,
+    Solution,
+    matchboxes_from_list,
+)
+from ayto.solver import TupleSolver
+from ayto.triple_match_solver import TripleMatchBitMaskSolver, TripleMatchSolver
+from ayto.two_double_matches_solver import (
+    TwoDoubleMatchesBitMaskSolver,
+    TwoDoubleMatchesSolver,
+)
 
 
 def validate_nights(
@@ -106,8 +123,8 @@ def read_data_from_excel(
         ]
         pairspnight = [
             tuple(
-                filter(lambda x: not pd.isna(x[1]), pairs) # pyright: ignore[reportAny]
-            )  
+                filter(lambda x: not pd.isna(x[1]), pairs)  # pyright: ignore[reportAny]
+            )
             for pairs in pairspnight
         ]
         night_args = [
@@ -178,22 +195,47 @@ def get_season(sn: str) -> Season:
     return season
 
 
-def get_solver(sn: str) -> Solver:
+@overload
+def get_solver(sn: str, bitmask: Literal[True]) -> BitMaskSolver: ...
+
+
+@overload
+def get_solver(sn: str, bitmask: Literal[False] = False) -> TupleSolver: ...
+
+
+def get_solver(sn: str, bitmask: bool = False) -> TupleSolver | BitMaskSolver:
     season = get_season(sn)
-    match season.match_model:
-        case "base":
-            solver = Solver(season)
-        case "double_match_pair":
-            solver = DoubleMatchPairSolver(season)
-        case "two_double_matches":
-            solver = TwoDoubleMatchesSolver(season)
-        case "double_match_for_right":
-            solver = DoubleMatchForRightSolver(season)
-        case "triple_match":
-            solver = TripleMatchSolver(season)
-        case _:
-            raise ValueError(
-                f"Unknown match model {season.match_model} for season {sn}"
-            )
+    if bitmask:
+        match season.match_model:
+            case "base":
+                solver = BitMaskSolver(season)
+            case "double_match_pair":
+                solver = DoubleMatchPairBitMaskSolver(season)
+            case "two_double_matches":
+                solver = TwoDoubleMatchesBitMaskSolver(season)
+            case "double_match_for_right":
+                solver = DoubleMatchForRightBitMaskSolver(season)
+            case "triple_match":
+                solver = TripleMatchBitMaskSolver(season)
+            case _:
+                raise ValueError(
+                    f"Unknown match model {season.match_model} for season {sn}"
+                )
+    else:
+        match season.match_model:
+            case "base":
+                solver = TupleSolver(season)
+            case "double_match_pair":
+                solver = DoubleMatchPairSolver(season)
+            case "two_double_matches":
+                solver = TwoDoubleMatchesSolver(season)
+            case "double_match_for_right":
+                solver = DoubleMatchForRightSolver(season)
+            case "triple_match":
+                solver = TripleMatchSolver(season)
+            case _:
+                raise ValueError(
+                    f"Unknown match model {season.match_model} for season {sn}"
+                )
 
     return solver

@@ -1,7 +1,7 @@
 import random
 import string
 
-from ayto import Matchboxes, Night, Season, Solution, Solver
+from ayto import Matchboxes, Night, Season, Solution, TupleSolver
 from ayto.season import matchboxes_from_list, mm_left
 
 # pyright: standard
@@ -47,15 +47,16 @@ def toy_example():
     toy_season = Season(
         "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm_person="5"
     )
-    solver = Solver(toy_season)
+    solver = TupleSolver(toy_season)
 
     sols = solver.solve(5)
     return toy_season
 
+
 def simulate_season(n: int = 5, with_dm: bool = True) -> tuple[Season, list[Solution]]:
 
     def matchbox(sols, i):
-        mp = (random.choice(range(n)), random.choice(range(n+1)))
+        mp = (random.choice(range(n)), random.choice(range(n + 1)))
         if mp in solution:
             sols = [s for s in sols if mp in s]
             known_pms.append(mp)
@@ -106,7 +107,7 @@ def simulate_season(n: int = 5, with_dm: bool = True) -> tuple[Season, list[Solu
         mm_person=dm if with_dm else None,
         mm_known_from_week=0,
     )
-    emptysolver = Solver(empty_season)
+    emptysolver = TupleSolver(empty_season)
 
     sols = emptysolver.generate_complete_solutions(Solution(), n, True)
     sols = list(set(sols))
@@ -167,7 +168,7 @@ def simulate_season(n: int = 5, with_dm: bool = True) -> tuple[Season, list[Solu
 
 def check_generated_season(n: int = 5, with_dm: bool = True):
     season, sols = simulate_season(n, with_dm)
-    solver = Solver(season)
+    solver = TupleSolver(season)
 
     solution = season.solution
     assert solution
@@ -181,15 +182,15 @@ def check_generated_season(n: int = 5, with_dm: bool = True):
     for s in sols:
         if not solver.solution_possible(s, n - 1, True):
             print(season)
-            assert (
-                False
-            ), f"solution in sols not possible {solver.solution_possible(s, n - 1, True)}"
+            assert False, (
+                f"solution in sols not possible {solver.solution_possible(s, n - 1, True)}"
+            )
 
     if len(sols) != len(solver.solve(n - 1)):
         print(season)
-        assert (
-            False
-        ), f"len(sols) = {len(sols)} != {len(solver.solve(n - 1))} = len(solver.solve(n - 1))"
+        assert False, (
+            f"len(sols) = {len(sols)} != {len(solver.solve(n - 1))} = len(solver.solve(n - 1))"
+        )
 
     if not solver.solution_possible(sols[0], n - 1, True):
         print(season)
@@ -219,7 +220,7 @@ if __name__ == "__main__":
     # uv run python -m scripts.artificial_seasons
     season, _ = simulate_season(5)
     # print(season.get_matchboxes(7, False))
-    solver = Solver(season)
+    solver = TupleSolver(season)
     sols = solver.solve(0, False)
     print(len(sols))
     print(solver.season.get_matchboxes(0, False))

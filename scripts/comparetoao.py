@@ -1,15 +1,14 @@
 import json
 from collections import Counter
 
-from ayto import Solution, Solver, get_solver
+from ayto import Solution, TupleSolver, get_solver
 
 # pyright: standard
 
 
-def comparetoao(solver: Solver, sols: list[Solution], end: int, icl: bool):
+def comparetoao(solver: TupleSolver, sols: list[Solution], end: int, icl: bool):
     with open("solutions.txt", "r") as f:
         lines = map(eval, f.readlines())
-
 
     # solsao = list(map(parse_sol, lines))
     aosols = [Solution(s) for s in lines]
@@ -100,15 +99,14 @@ def iterate_ao_data(sn):
         # print("week number", week["number"])
         mn = True
         for event in week["events"]:
-
             if event["type"] == "box":
                 a, b = event["pair"]
-                # print(event["type"], a, b, mn)
-                # print(f"matchbox before: {mn}")
-                # if not mn:
-                #     print(f"matchbox end of episode {a,b} { week["number"]}")
+                print(event["type"], a, b, mn)
+                print(f"matchbox before: {mn}")
+                if not mn:
+                    print(f"matchbox end of episode {a, b} {week['number']}")
             elif event["type"] == "matching_night":
-                # print(event["type"])
+                print(event["type"])
                 mn = False
             else:
                 print(event)

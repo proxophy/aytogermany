@@ -1,35 +1,9 @@
 import itertools
+import sys  # pyright: ignore[reportUnusedImport]  # noqa: F401
 import timeit
 
 from ayto import *
-from ayto.bitmask_solver import BitMaskSolver, bitmask_product_without_reps
 from ayto.codec import Codec, Mask
-from ayto.solver import product_without_reps
-
-
-def time_comparison_product_without_reps():
-    import timeit
-
-    masks = [
-        0b0000111111,
-        0b0111111000,
-        0b1111110000,
-        0b1111000011,
-    ]
-
-    print(
-        timeit.timeit(
-            lambda: sum(1 for _ in bitmask_product_without_reps(masks)), number=1000
-        )
-    )
-
-    lists = [[i for i in range(mask.bit_length()) if mask & (1 << i)] for mask in masks]
-    print(
-        timeit.timeit(
-            lambda: sum(1 for _ in product_without_reps(lists)),
-            number=1000,
-        )
-    )
 
 
 def compare_no_matches():
@@ -66,67 +40,43 @@ def compare_no_matches():
 
 if __name__ == "__main__":
     # uv run python -m scripts.bitmask
-    sn = "normalo2023"
-    season = get_season(sn)
-    # solver = get_solver(sn)
-    # season, _ = simulate_season(4)
-    # season = toy_example()
+    # uv run kernprof --l -v -m scripts.bitmask
 
-    solver = Solver(season)
+    sn = "vip2026"
+    season = get_season(sn)
+
+    solver = get_solver(sn)
     solution = season.solution
-    # print(len(solver.solve(5,True)))
 
     codec = Codec(len(season.lefts), len(season.rights))
-    bmsolver = BitMaskSolver(season)
-
-    t1 = frozenset({(3, 3), (2, 2), (0, 0), (1, 1), (0, 4)})
-    # t1 = season.nights[4].pairs
-    # t1m = codec.encode(t1)
+    bmsolver = get_solver(sn, True)
+    sol_enc = codec.encode(solution)
 
     episode = 1
+    icl = True
 
-    print("default solver")
-    # print(len(bmsolver.combine_possible_solutions(pairs[0], pairs[1], 1, True)))
+    print("default solver", type(solver))
     print(
-        "len(psols1):", len(psols1 := solver.generate_partial_solutions(episode, True))
+        "len(psols1):", len(psols1 := solver.generate_partial_solutions(episode, icl))
     )
-    t1 = psols1[0]
+    # t1 = psols1[0]
+    # sols1: list[Solution] = solver.solve(episode, icl)
+    # print("len(sols1)", len(sols1))
+    # print(f"{timeit.timeit(lambda:  solver.solve(episode, include_night=icl), number=3):0.5f}")
+    # sols1_enc = [codec.encode(s) for s in sols1]
 
-    sols1 = solver.solve(episode, True)
-
-    print(t1)
-
-    print(f"{timeit.timeit(lambda:  solver.solve(episode, True), number=3):0.5f}")
-
-    print("bm solver")
+    print("bm solver", type(bmsolver))
+    # assert season.extra_left
+    print(bmsolver.find_violation(sol_enc, episode, icl))
+    # print(check_solution_possible(sols1_enc, bmsolver, episode, icl))
+    # print(bin(codec.multi_rights(sol_enc)))
+    # print(season.rights_names)
 
     print(
-        "len(psols1)", len(psols2 := bmsolver.generate_partial_solutions(episode, True))
+        "len(psols1)", len(psols2 := bmsolver.generate_partial_solutions(episode, icl))
     )
-    t1m = codec.encode(t1)
-    knowledgeb = bmsolver.knowledge_cache[(episode, True)]
-
-    sols2: list[Mask] = bmsolver.solve(episode, True)
-
-    print("len(sols1)", len(sols1))
+    # print("solution possible", bmsolver.find_violation(sol_enc, episode, icl))
+    sols2: list[Mask] = bmsolver.solve(episode, icl)
     print("len(sols2)", len(sols2))
 
-    print(f"{timeit.timeit(lambda: bmsolver.solve(episode, True), number=3):0.5f}")
-
-    # for sol in sols1:
-    #     x = codec.encode(sol)
-    #     if x not in sols2:
-    #         print("not in:", x)
-    # x = sols2[0]
-    # t1 = codec.decode(x)
-    # d = dict_rep(solution)
-    # print(sols2)
-    # for k,v in dict_rep(t1).items():
-    #     print(k,v, "/", d[k])
-
-    # print(psols2[0].bit_count())
-
-    # sols = bmsolver.generate_complete_solutions(164794897195567826914958328729616, episode, True)
-    # print("sols", sols)
-
-    # print("eq", {codec.encode(s) for s in psols1} == set(psols2))
+    # print(f"{timeit.timeit(lambda: bmsolver.solve(episode, icl), number=3):0.5f}")

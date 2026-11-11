@@ -5,7 +5,7 @@ import argparse
 from ayto import (
     Season,
     Solution,
-    Solver,
+    TupleSolver,
     analyze_solutions,
     get_season,
     get_solver,
@@ -13,6 +13,7 @@ from ayto import (
 )
 
 if __name__ == "__main__":
+    # todo: arg for bitmask
     parser = argparse.ArgumentParser()
     parser.add_argument("season", type=str, default="vip2026")
     parser.add_argument("--end", type=int, default=10)
@@ -26,7 +27,7 @@ if __name__ == "__main__":
 
     season: Season = get_season(sn)
     sol: Solution = season.solution
-    solver: Solver = get_solver(sn)
+    solver: TupleSolver = get_solver(sn)
 
     s = time.time()
     sols = solver.solve(end)
@@ -38,8 +39,8 @@ if __name__ == "__main__":
         analyze_solutions(sols)
     else:
         print(f"sn = {sn}, end = {end}: #solutions = {len(sols)}")
-    
+
     if args.plot:
         plot_probs(sols)
-    
+
     # plot_probs(sols)

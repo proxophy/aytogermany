@@ -8,12 +8,12 @@ from ayto.codec import Codec, Mask, RightBits
 Person = int
 Pair = tuple[Person, Person]
 Solution = frozenset[Pair]
-SolutionType = Solution | set[Pair]
+PairSet = Solution | set[Pair]
 
 # class Solution(frozenset[Pair]):
 
 
-def has_dm_for_right(sol: SolutionType) -> bool:
+def has_dm_for_right(sol: PairSet) -> bool:
     """Return whether solution has a double match for a right"""
     rs: list[Person] = []
     for _, r in sol:
@@ -23,8 +23,8 @@ def has_dm_for_right(sol: SolutionType) -> bool:
     return False
 
 
-def get_candidates(sol: SolutionType) -> tuple[set[Person], set[Person], int]:
-    """Return sets of lefts and rights in solution and size of the maximum multuple match"""
+def get_candidates(sol: PairSet) -> tuple[set[Person], set[Person], int]:
+    """Return sets of lefts and rights in solution and size of the maximum multiple match"""
     if len(sol) > 0:
         g_lefts, g_rights = zip(*sol)
         g_lefts, g_rights = list(g_lefts), list(g_rights)
@@ -34,7 +34,7 @@ def get_candidates(sol: SolutionType) -> tuple[set[Person], set[Person], int]:
     return set(g_lefts), set(g_rights), max(map(len, d.values()))
 
 
-def mm_left(sol: SolutionType) -> Person | None:
+def mm_left(sol: PairSet) -> Person | None:
     """Return first left with multiple match or `None` if there isn't any"""
     ls: set[Person] = set()
     for l, _ in sol:
@@ -44,15 +44,15 @@ def mm_left(sol: SolutionType) -> Person | None:
     return None
 
 
-def has_two_dms(sol: SolutionType) -> bool:
-    """Return wheter there are two double matches in a solution"""
+def has_two_dms(sol: PairSet) -> bool:
+    """Return whether there are two double matches in a solution"""
     sol_dict = dict_rep(sol)
     # lefts with multiple partners
     mult_lefts = [l for l, rs in sol_dict.items() if len(rs) > 1]
     return len(mult_lefts) == 2
 
 
-def dict_rep(sol: SolutionType) -> dict[Person, list[Person]]:
+def dict_rep(sol: PairSet) -> dict[Person, list[Person]]:
     """Return dict representation of set of pairs"""
     d: dict[Person, list[Person]] = {}
     for l, r in sol:
@@ -177,14 +177,12 @@ class Season:
     rights_names: tuple[str, ...]
     nights: tuple[Night, ...]
     matchboxes: Matchboxes
-    solution: Solution = frozenset()
+    solution: frozenset[Pair] = Solution()
     match_model: str = "base"
     mm_person: str | None = None
 
     mm_known_from_week: int = 0  # from which episode mm_person is known
-    matchbox_reveals_dm: bool = (
-        True  # if one part of double match is revealed, the other one is revealed immediately after
-    )
+    matchbox_reveals_dm: bool = True  # if one part of double match is revealed, the other one is revealed immediately after
     double_match_pair_names: tuple[str, str] | None = None
     double_match_pair_known: int = 10  # from which episode double match pair is known
     extra_left_name: str | None = None  # left that is part of double match for right
@@ -292,7 +290,7 @@ class Season:
     def get_black_out_nights(self, episode: int = 9, include_night: bool = True):
         stop = max(0, episode) + (1 if include_night else 0)
 
-        bonights: list[int] = []
+        bo_nights: list[int] = []
         num_known_pms = 0
         pmls: list[Person] = []
         pms: set[Pair] = set()
@@ -314,8 +312,8 @@ class Season:
                 known_pms_per_ep[ep], known_pms_per_ep[ep - 1] if ep > 0 else 0
             )
             if known_pms_per_ep[ep] == self.nights[ep].lights:
-                bonights.append(ep)
-        return bonights
+                bo_nights.append(ep)
+        return bo_nights
 
     def encode_left(self, l: str) -> Person:
         if l not in self.lefts_names:
@@ -339,7 +337,7 @@ class Season:
     def decode_pair(self, p: Pair) -> tuple[str, str]:
         return (self.decode_left(p[0]), self.decode_right(p[1]))
 
-    def decode_solution(self, sol: SolutionType):
+    def decode_solution(self, sol: PairSet):
         return {self.decode_pair(p) for p in sol}
 
 
@@ -351,7 +349,6 @@ def random_night_for_sol(sol: Solution, lefts: list[Person], rights: list[Person
 
 
 class Knowledge:
-
     def __init__(self, season: Season, episode: int, include_night: bool):
         self.episode: int = episode
         self.include_night: bool = include_night
@@ -374,15 +371,15 @@ class Knowledge:
 
     def get_sitting_no_matches(self, sol: Solution) -> set[Pair]:
         nights = self.nights
-        sitting_nomatches: set[Pair] = set()
+        sitting_no_matches: set[Pair] = set()
 
         for night in nights:
             pl: int = len(sol & night.pairs)
             if pl < night.lights:
                 continue
             for p in night.pairs - sol:
-                sitting_nomatches.add(p)
-        return sitting_nomatches
+                sitting_no_matches.add(p)
+        return sitting_no_matches
 
 
 class BitMaskKnowledge(Knowledge):

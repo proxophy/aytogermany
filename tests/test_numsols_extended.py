@@ -2,12 +2,14 @@ import unittest
 
 import pandas as pd
 
+from ayto import TupleSolver
 from ayto.utils import get_solver
 
 df = pd.read_csv("analytics/num_solutions_extended.csv", index_col=0)
 # df.columns = df.columns.astype(int)
 df.index = df.index.str.strip()
 df.columns = df.columns.astype(str).str.strip()
+
 
 class TestSeasonNumSols(unittest.TestCase):
     def test_normalo2020_extended(self):
@@ -50,9 +52,9 @@ class TestSeasonNumSols(unittest.TestCase):
         self.check_season_extended("vip2026")
 
     def check_season_extended(self, sn: str, start: int = 2):
+        solver: TupleSolver = get_solver(sn)
         for i in range(start, 10):
             with self.subTest(episode=i, include_night=False):
-                solver = get_solver(sn)
                 sols = solver.solve(i, include_night=False)
 
                 self.assertEqual(
@@ -68,7 +70,6 @@ class TestSeasonNumSols(unittest.TestCase):
                     f"{sn} i={i}: number of solutions != number of filtered solutions",
                 )
             with self.subTest(episode=i, include_night=True):
-                solver = get_solver(sn)
                 sols = solver.solve(i, True)
                 self.assertEqual(
                     len(sols),

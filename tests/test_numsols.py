@@ -8,6 +8,7 @@ df = pd.read_csv("analytics/num_solutions_extended.csv", index_col=0)
 df.index = df.index.str.strip()
 df.columns = df.columns.astype(str).str.strip()
 
+
 class TestSeasonNumSols(unittest.TestCase):
     def test_normalo2020(self):
         self.check_season("normalo2020")
@@ -49,10 +50,9 @@ class TestSeasonNumSols(unittest.TestCase):
         self.check_season("vip2026")
 
     def check_season(self, sn: str, start: int = 2):
-
+        solver = get_solver(sn)
         for i in range(start, 10):
             with self.subTest(episode=i):
-                solver = get_solver(sn)
                 sols = solver.solve(i, True)
 
                 self.assertEqual(

@@ -2,7 +2,9 @@ import resource
 import sys
 from collections import Counter
 
-from ayto import ALL_SEASONS, Solution, Solver, get_season, get_solver
+from ayto import ALL_SEASONS, Solution, TupleSolver, get_season, get_solver
+from ayto.bitmask_solver import BitMaskSolver
+from ayto.two_double_matches_solver import TwoDoubleMatchesBitMaskSolver
 
 # pyright: standard
 
@@ -15,7 +17,9 @@ def iterate_through(solver, start=3):
     return amounts
 
 
-def check_solution_possible(sols, solver: Solver, end: int, icl: bool):
+def check_solution_possible(
+    sols, solver: TupleSolver | BitMaskSolver, end: int, icl: bool
+):
     reasons = []
     for s in sols:
         p = solver.find_violation(s, end, icl)
@@ -25,7 +29,7 @@ def check_solution_possible(sols, solver: Solver, end: int, icl: bool):
     return Counter(reasons)
 
 
-def findpsol(sol, solver: Solver, end):
+def findpsol(sol, solver: TupleSolver, end):
     psols = solver.generate_partial_solutions(end, True)
     psol = Solution()
     for p in psols:
@@ -40,57 +44,59 @@ def peak_mb() -> float:
 
 
 def memory_test():
-    import timeit
-
-    from pympler import asizeof
 
     sn = "vip2025"
-    solver: Solver = get_solver(sn)
-    end = 3
-    icl = False
+    season = get_season(sn)
+    solver = TwoDoubleMatchesBitMaskSolver(season)
+    end = 2
+    icl = True
+
+    start = peak_mb()
 
     sols = solver.solve(end, icl)
-    print(len(sols))
-    print(f"{timeit.timeit(lambda: print(len(solver.solve(end, icl))), number=1):.2f}")
-    print(f"Total: {asizeof.asizeof(sols) / 1024**3:.3f} GB")
-    print(f"Number of solutions: {len(sols):,}")
-    print(f"Average per solution: " f"{asizeof.asizeof(sols) / len(sols):.1f} bytes")
+    print(f"{peak_mb()} nach solve")
+    # print(f"{timeit.timeit(lambda: print(len(solver.solve(end, icl))), number=1):.2f} s")
+    # print(f"Total: {asizeof.asizeof(sols) / 1024**3:.3f} GB")
+    # print(f"Number of solutions: {len(sols):,}")
+    # print(f"Average per solution: " f"{asizeof.asizeof(sols) / len(sols):.1f} bytes")
 
-    # sols = get_solver("vip2025").solve(3, True)
-    print(f"{peak_mb():.0f} MB Spitze")
+    print(
+        f"Start {start:.0f} MB, danach {peak_mb():.0f} MB, "
+        f"+{peak_mb() - start:.0f} MB für {len(sols):,} Lösungen"
+    )
 
 
 if __name__ == "__main__":
     # uv run python -m scripts.debug_season
-    sn = "vip2021"
+    sn = "vip2023"
     season = get_season(sn)
-    solver: Solver = get_solver(sn)
+    solver2 = get_solver(sn, True)
+    solver1 = get_solver(sn)
+    solution = season.solution
+    sol_enc = solver2.codec.encode(solution)
+
+    # print(type(solver2))
     import timeit
 
     import pandas as pd
 
-    end = 10
+    end = 9
     icl = True
 
-    sol = season.solution
-    # print(solver.find_violation(sol, end, icl))
-    for l, r in sol:
-        if x := solver.no_match_reason(l, r, end, icl):
-            print(l, r, x)
-            break
+    sols1 = solver1.solve(end, icl)
+    sols2 = solver2.solve(end, icl)
+    print(len(sols2), len(set(sols2)))
 
-    # sols = solver.solve(end, icl)
-    # print(len(sols))
-    # print(timeit.timeit(lambda solver=solver, end=end: len(solver.solve(end, icl)), number=3))
-
+    # memory_test()
     sys.exit()
+
     data = []
     for sn in ALL_SEASONS:
         solver = get_solver(sn)
         td = {}
-        for end in range(1, 3):
+        for end in range(2, 10):
             x = timeit.timeit(
-                lambda solver=solver, end=end: len(solver.solve(end, icl)), number=3
+                lambda solver=solver, end=end: len(solver.solve(end, True)), number=3
             )
             td[end] = x
         data.append(td)
@@ -98,11 +104,5 @@ if __name__ == "__main__":
     # df.to_csv("analytics/time")
     print(df)
 
-    # memory_test()
     # from pympler import asizeof
     # solution = next(iter(sols))
-
-    # print("Solution:", asizeof.asizeof(solution))
-    # print("Pair:", asizeof.asizeof(next(iter(solution))))
-    # print("tuple[str,str]", asizeof.asizesof(("Laurenz", "Joena")))
-    # print("Pair type:", type(next(iter(solution))))

@@ -2,5 +2,5 @@
     "match_model": "triple_match",
     "mm_person": "Mela",
     "mm_known_from_week": 0,
-    "matchbox_reveals_dm": true
+    "matchbox_reveals_dm": false
 }

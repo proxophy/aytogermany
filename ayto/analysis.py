@@ -6,7 +6,7 @@ from functools import wraps
 import pandas as pd
 
 from .season import Pair, Person, Solution, mm_left
-from .solver import Solver
+from .solver import TupleSolver
 
 
 class SolutionSpace:
@@ -58,7 +58,8 @@ class SolutionSpace:
     def get_mm_probs(self):
         mm_person = [mm_left(s) for s in self.sols]
         return [
-            (l, round(v / len(self.sols) * 100, 1)) for (l, v) in Counter(mm_person).items()
+            (l, round(v / len(self.sols) * 100, 1))
+            for (l, v) in Counter(mm_person).items()
         ]
 
 
@@ -81,7 +82,7 @@ def analyze_solutions(sols: list[Solution]):
     return solspace.get_pair_probs_dict()
 
 
-def matching_night_probs(solver: Solver, episode: int):
+def matching_night_probs(solver: TupleSolver, episode: int):
     beforenight = solver.solve(episode, False)
     night = solver.season.get_nights(episode)[-1].pairs
     if len(beforenight) == 0:

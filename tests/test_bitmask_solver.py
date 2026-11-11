@@ -25,8 +25,8 @@ class TestSeasonNumSols(unittest.TestCase):
     def test_normalo2023_extended(self):
         self.check_season_extended("normalo2023")
 
-    # def test_normalo2024_extended(self):
-    #     self.check_season_extended("normalo2024")
+    def test_normalo2024_extended(self):
+        self.check_season_extended("normalo2024")
 
     def test_normalo2025_extended(self):
         self.check_season_extended("normalo2025")
@@ -40,25 +40,26 @@ class TestSeasonNumSols(unittest.TestCase):
     def test_vip2022_extended(self):
         self.check_season_extended("vip2022")
 
-    # def test_vip2023_extended(self):
-    #     self.check_season_extended("vip2023")
+    def test_vip2023_extended(self):
+        self.check_season_extended("vip2023")
 
     def test_vip2024_extended(self):
         self.check_season_extended("vip2024")
 
-    # def test_vip2025_extended(self):
-    #     self.check_season_extended("vip2025", start=3)
+    def test_vip2025_extended(self):
+        self.check_season_extended("vip2025", start=3)
 
-    # def test_vip2026_extended(self):
-    #     self.check_season_extended("vip2026")
+    def test_vip2026_extended(self):
+        self.check_season_extended("vip2026")
 
     def check_season_extended(self, sn: str, start: int = 2):
+        season = get_season(sn)
+        solver: BitMaskSolver = get_solver(sn, True)
+        print("type", season.name)
+        self.assertIsInstance(solver, BitMaskSolver)
         for i in range(start, 10):
             with self.subTest(episode=i, include_night=False):
-                season = get_season(sn)
-                solver = BitMaskSolver(season)
                 sols = solver.solve(i, include_night=False)
-
                 self.assertEqual(
                     len(sols),
                     df.loc[sn, f"b{i}"],
@@ -72,7 +73,6 @@ class TestSeasonNumSols(unittest.TestCase):
                     f"{sn} i={i}: number of solutions != number of filtered solutions",
                 )
             with self.subTest(episode=i, include_night=True):
-                solver = get_solver(sn)
                 sols = solver.solve(i, True)
                 self.assertEqual(
                     len(sols),

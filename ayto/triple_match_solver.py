@@ -1,11 +1,14 @@
 from collections import Counter
 from typing import override
 
+from ayto.bitmask_solver import BitMaskSolver
+from ayto.codec import RightBits
+
 from .season import *
-from .solver import Solver
+from .solver import TupleSolver
 
 
-class TripleMatchSolver(Solver):
+class TripleMatchSolver(TupleSolver):
     @override
     def no_match_reason(
         self, l: Person, r: Person, episode: int, include_night: bool
@@ -33,13 +36,13 @@ class TripleMatchSolver(Solver):
     def merge_mm_not_in_solution(
         self,
         sol: Solution,
-        partial_solutions: list[Solution],
+        partial_solutions: list[tuple[Solution, set[Person]]],
         episode: int,
         include_night: bool,
     ) -> list[Solution]:
         # for documentation refer to Solver.merge_mm_not_in_solution
         knowledge = self.knowledge_cache[(episode, include_night)]
-        sitting_nomatches = knowledge.get_sitting_no_matches(sol)
+        sitting_no_matches = knowledge.get_sitting_no_matches(sol)
 
         addable_lefts = {
             r: [
@@ -47,7 +50,7 @@ class TripleMatchSolver(Solver):
                 for l in self.season.lefts
                 if not (
                     self.no_match(l, r, episode, include_night)
-                    or (l, r) in sitting_nomatches
+                    or (l, r) in sitting_no_matches
                 )
             ]
             for r in self.season.rights
@@ -56,10 +59,9 @@ class TripleMatchSolver(Solver):
         solutions: list[Solution] = []
         mm_person = self.mm_person_cache[episode]
 
-        for partial_solution in partial_solutions:
-            base_matches = sol.union(partial_solution)
-
-            sitting_lefts, sitting_rights= zip(*base_matches)
+        for partial, _ in partial_solutions:
+            base_matches = sol.union(partial)
+            sitting_lefts, sitting_rights = zip(*base_matches)
             mrs = [r for r in self.season.rights if r not in sitting_rights]
 
             if len(mrs) == 2:
@@ -85,9 +87,106 @@ class TripleMatchSolver(Solver):
                 mr = next(r for r in self.season.rights if r not in sitting_rights)
                 if (
                     self.no_match(smleft, mr, episode, include_night)
-                    or (smleft, mr) in sitting_nomatches
+                    or (smleft, mr) in sitting_no_matches
                 ):
                     continue
                 solutions.append(base_matches | {(smleft, mr)})
+
+        return solutions
+
+
+class TripleMatchBitMaskSolver(BitMaskSolver):
+    @override
+    def no_match_reason(
+        self, l: Person, r: Person, episode: int, include_night: bool
+    ) -> str | None:
+        """Return whether a pair is known not to be a match up to `end`"""
+        knowledge = self.knowledge_cache[(episode, include_night)]
+        codec = self.codec
+
+        kpm = knowledge.perfect_matches_mask
+        pm_lefts = codec.lefts_in(kpm)
+        pm_rights = codec.rights_in(kpm)
+
+        if not (codec.bit(l, r) & kpm) and (1 << l & pm_lefts):
+            # lefts with multiple matches from matchboxes, appear x times
+            # for x perfect matches
+            mmls = codec.multi_lefts(kpm)
+            # Normalo 24
+            if (
+                mmls.bit_count() < 3
+                and ((1 << l) & mmls)
+                and not ((1 << r) & pm_rights)
+            ):
+                # we only know two out of three of the multiple matches in Normalo 2024 at end of episode 4
+                return None
+            return "triple_match_already_exists"
+
+        return super().no_match_reason(l, r, episode, include_night)
+
+    @override
+    def merge_mm_not_in_solution(
+        self,
+        sol: Mask,
+        partial_solutions: list[tuple[Mask, RightBits]],
+        episode: int,
+        include_night: bool,
+    ) -> list[Mask]:
+        knowledge = self.knowledge_cache[(episode, include_night)]
+        codec = self.codec
+
+        sitting_no_matches = knowledge.get_sitting_no_matches_mask(sol)
+
+        # compute possible matches left for missing rights
+        addable = (
+            codec.full_mask
+            & ~self.no_match_masks[(episode, include_night)]
+            & ~sitting_no_matches
+        )
+
+        solutions: list[Mask] = []
+        mm_bit: RightBits = knowledge.mm_mask
+        mm_idx = mm_bit.bit_length() - 1
+        sitting_rights = codec.rights_in(sol)
+        full = codec.full_row
+        first_col = codec.first_col
+
+        for partial, used in partial_solutions:
+            base = sol | partial
+            free: RightBits = full & ~(sitting_rights | used)
+            n = free.bit_count()
+
+            if n == 2:
+                low = free & -free  # returns lowest set bit as mask
+                r1 = low.bit_length() - 1  # index of lowest bit
+                r2 = (
+                    free ^ low
+                ).bit_length() - 1  # index of highest (other) bit in free
+
+                # bit l*R is set iff (l, r1) and (l, r2) are both addable
+                # addable >> r1 puts pairs at (l1, r1) to (l1, 0)
+                rows = (addable >> r1) & (addable >> r2) & first_col
+
+                if not (free & mm_bit):
+                    # mm already seated
+                    partner = codec.left_of_pair_bit(
+                        codec.partners_of_right(base, mm_idx)
+                    )
+                    rows &= 1 << (partner * codec.R)
+
+                while rows:
+                    b: Mask = rows & -rows  # lowest bit
+                    rows ^= b
+                    solutions.append(base | (b << r1) | (b << r2))
+
+            elif n == 1:
+                mr = free.bit_length() - 1  # free right
+                mml = (
+                    codec.multi_lefts(base).bit_length() - 1
+                )  # left that has double match
+
+                p1 = codec.bit(mml, mr)
+                if p1 & addable:
+                    solutions.append(base | p1)
 
         return solutions

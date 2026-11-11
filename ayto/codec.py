@@ -18,7 +18,6 @@ def iter_bits(x: int):
 
 
 class Codec:
-
     def __init__(self, n_lefts: int, n_rights: int):
         self.L: int = n_lefts
         self.R: int = n_rights
@@ -33,12 +32,14 @@ class Codec:
         self.pairs: list[Pair] = [
             (l, r) for l in range(n_lefts) for r in range(n_rights)
         ]
+        self.first_col: Mask = sum(1 << (l * self.R) for l in range(self.L))
+        self.full_mask: Mask = (1 << self.R * self.L) - 1
 
     # ---- conversion -------------------------------------------------------------------
     def bit(self, l: int, r: int) -> Mask:
         if l >= self.L or r >= self.R:
             raise ValueError(
-                f"Cannot encode {(l,r)} for a codec with L = {self.L}, R = {self.R}"
+                f"Cannot encode {(l, r)} for a codec with L = {self.L}, R = {self.R}"
             )
         return 1 << (l * self.R + r)
 
@@ -70,10 +71,10 @@ class Codec:
                 out |= 1 << i
         return out
 
-    def l_in_left_bits(self, lg: LeftBits, l: int) -> Mask:
+    def l_in_left_bits(self, lg: LeftBits, l: int) -> LeftBits:
         return (1 << l) & lg
 
-    def r_in_right_bits(self, rg: RightBits, r: int) -> Mask:
+    def r_in_right_bits(self, rg: RightBits, r: int) -> RightBits:
         return (1 << r) & rg
 
     def free_rights(self, m: Mask) -> RightBits:
@@ -89,12 +90,21 @@ class Codec:
                 out |= 1 << i
         return out
 
-    def multi_for_right(self, m: Mask) -> bool:
-        for r in range(self.R):
-            partners = self.partners_of_right(m, r)
-            if partners.bit_count() > 1:
-                return True
+    def multi_rights(self, m: Mask) -> RightBits:
+        once = twice = 0
+        full = self.full_row
+        for _ in range(self.L):
+            row = m & full
+            twice |= once & row  # already seen in an earlier row, and again here
+            once |= row
+            m >>= self.R
+        return twice
 
+    def multi_for_right(self, m: Mask) -> bool:
+        for mask in self.col:
+            partners = m & mask
+            if partners & (partners - 1):
+                return True
         return False
 
     def max_mm_size(self, m: Mask) -> int:
@@ -118,7 +128,7 @@ class Codec:
     def right_of_pair_bit(self, b: Mask) -> Person:
         return (b.bit_length() - 1) % self.R
 
-    # ---- names <-> bitsets (only needed at the edges) ----------------------------------
+    # ---- names <-> bit sets (only needed at the edges) ----------------------------------
     @staticmethod
     def members(bits: LeftBits | RightBits) -> list[Person]:
         """Indices in a set of lefts or in a set of rights."""
