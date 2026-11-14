@@ -5,14 +5,23 @@ from ayto.bitmask_solver import BitMaskSolver, Partial
 from ayto.codec import iter_bits
 
 from .season import *
-from .solver import TupleSolver
+from .tuple_solver import TupleSolver
 
 
 class TwoDoubleMatchesSolver(TupleSolver):
+
+    def __init__(self, season: Season):
+        super().__init__(season)
+        if season.match_model != "two_double_matches":
+            raise ValueError(
+                "TwoDoubleMatchesSolver must be instantiated with season with match_model=two_double_matches"
+            )
+
     @override
     def find_multiple_match_violation(self, sol: PairSet, episode: int) -> str | None:
         # VIP2025 allows two double matches, one of those must include mm_person
-
+        knowledge = self.knowledge_cache[(episode, True)]
+        mm_person = knowledge.mm
         seated_lefts = [l for l, _ in sol]
         seated_rights = [r for _, r in sol]
         sol_dict = dict_rep(sol)
@@ -23,7 +32,6 @@ class TwoDoubleMatchesSolver(TupleSolver):
         mult_rights = [
             e for l in mult_lefts for e in sol_dict[l]
         ]  # rights part of multi match
-        mm_person = self.mm_person_cache[episode]
 
         # if mm_person is seated and we have two double matches, he must be part of one of them
         if (
@@ -36,7 +44,7 @@ class TwoDoubleMatchesSolver(TupleSolver):
         r_counter = Counter(seated_lefts)
         # no triple matches
         if any(v > 2 for v in r_counter.values()):
-            return "triple_match_not_allowed"
+            return "multiple_match_too_big"
         return None
 
     @override
@@ -48,6 +56,8 @@ class TwoDoubleMatchesSolver(TupleSolver):
         include_night: bool,
     ) -> list[Solution]:
         knowledge = self.knowledge_cache[(episode, include_night)]
+        mm_person = knowledge.mm
+
         sitting_no_matches = knowledge.get_sitting_no_matches(sol)
         # print("TwoDoubleMatchesSolver.merge_mm_not_in_solution", len(partial_solutions))
         addable_lefts = {
@@ -64,7 +74,6 @@ class TwoDoubleMatchesSolver(TupleSolver):
 
         solutions: list[Solution] = []
 
-        mm_person = self.mm_person_cache[episode]
         _, sitting_rights, _ = get_candidates(sol)
         full = set(self.season.rights)
 
@@ -122,6 +131,13 @@ class TwoDoubleMatchesSolver(TupleSolver):
 
 
 class TwoDoubleMatchesBitMaskSolver(BitMaskSolver):
+    def __init__(self, season: Season):
+        super().__init__(season)
+        if season.match_model != "two_double_matches":
+            raise ValueError(
+                "TwoDoubleMatchesBitMaskSolver must be instantiated with season with match_model=two_double_matches"
+            )
+
     @override
     def find_multiple_match_violation(self, sol: Mask, episode: int) -> str | None:
         codec = self.codec
@@ -143,7 +159,7 @@ class TwoDoubleMatchesBitMaskSolver(BitMaskSolver):
         if mm_person & seated_rights and n_multi == 2 and not (mm_person & mult_rights):
             return "mm_person_not_in_double_match"
         if has_triple:
-            return "triple_match_not_allowed"
+            return "multiple_match_too_big"
         return None
 
     @override

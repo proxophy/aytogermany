@@ -5,10 +5,17 @@ from ayto.bitmask_solver import BitMaskSolver
 from ayto.codec import RightBits
 
 from .season import *
-from .solver import TupleSolver
+from .tuple_solver import TupleSolver
 
 
 class TripleMatchSolver(TupleSolver):
+    def __init__(self, season: Season):
+        super().__init__(season)
+        if season.match_model != "triple_match":
+            raise ValueError(
+                "TripleMatchSolver must be instantiated with season with match_model=triple_match"
+            )
+
     @override
     def no_match_reason(
         self, l: Person, r: Person, episode: int, include_night: bool
@@ -57,7 +64,7 @@ class TripleMatchSolver(TupleSolver):
         }
 
         solutions: list[Solution] = []
-        mm_person = self.mm_person_cache[episode]
+        mm_person = knowledge.mm
 
         for partial, _ in partial_solutions:
             base_matches = sol.union(partial)
@@ -96,6 +103,14 @@ class TripleMatchSolver(TupleSolver):
 
 
 class TripleMatchBitMaskSolver(BitMaskSolver):
+
+    def __init__(self, season: Season):
+        super().__init__(season)
+        if season.match_model != "triple_match":
+            raise ValueError(
+                "TripleMatchBitMaskSolver must be instantiated with season with match_model=triple_match"
+            )
+
     @override
     def no_match_reason(
         self, l: Person, r: Person, episode: int, include_night: bool
@@ -114,7 +129,7 @@ class TripleMatchBitMaskSolver(BitMaskSolver):
             mmls = codec.multi_lefts(kpm)
             # Normalo 24
             if (
-                mmls.bit_count() < 3
+                codec.max_mm_size(kpm) < 3
                 and ((1 << l) & mmls)
                 and not ((1 << r) & pm_rights)
             ):

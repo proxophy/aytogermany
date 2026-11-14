@@ -21,8 +21,8 @@ from ayto.season import (
     Solution,
     matchboxes_from_list,
 )
-from ayto.solver import TupleSolver
 from ayto.triple_match_solver import TripleMatchBitMaskSolver, TripleMatchSolver
+from ayto.tuple_solver import TupleSolver
 from ayto.two_double_matches_solver import (
     TwoDoubleMatchesBitMaskSolver,
     TwoDoubleMatchesSolver,
@@ -66,7 +66,7 @@ def validate_matchboxes(
     pairs: set[tuple[str, str]] = set()
     for _, (l, r), _, _ in matchboxes:
         if (l, r) in pairs or (r, l) in pairs:
-            raise ValueError(f"{(l, r)} occurs more than once in matchboxes")
+            raise ValueError(f"{(l, r)} appears more than once in matchboxes")
         if l in lefts and r in rights:
             pairs.add((l, r))
         elif l in rights and r in lefts:
@@ -205,37 +205,47 @@ def get_solver(sn: str, bitmask: Literal[False] = False) -> TupleSolver: ...
 
 def get_solver(sn: str, bitmask: bool = False) -> TupleSolver | BitMaskSolver:
     season = get_season(sn)
+    return get_solver_type(season, bitmask)(season)
+
+
+@overload
+def get_solver_type(season: Season, bitmask: Literal[True]) -> type[BitMaskSolver]: ...
+
+
+@overload
+def get_solver_type(
+    season: Season, bitmask: Literal[False] = False
+) -> type[TupleSolver]: ...
+
+
+def get_solver_type(
+    season: Season, bitmask: bool = False
+) -> type[TupleSolver] | type[BitMaskSolver]:
     if bitmask:
         match season.match_model:
-            case "base":
-                solver = BitMaskSolver(season)
+            case "double_match":
+                return BitMaskSolver
             case "double_match_pair":
-                solver = DoubleMatchPairBitMaskSolver(season)
+                return DoubleMatchPairBitMaskSolver
             case "two_double_matches":
-                solver = TwoDoubleMatchesBitMaskSolver(season)
+                return TwoDoubleMatchesBitMaskSolver
             case "double_match_for_right":
-                solver = DoubleMatchForRightBitMaskSolver(season)
+                return DoubleMatchForRightBitMaskSolver
             case "triple_match":
-                solver = TripleMatchBitMaskSolver(season)
+                return TripleMatchBitMaskSolver
             case _:
-                raise ValueError(
-                    f"Unknown match model {season.match_model} for season {sn}"
-                )
+                raise ValueError(f"Unknown match model {season.match_model} for season")
     else:
         match season.match_model:
-            case "base":
-                solver = TupleSolver(season)
+            case "double_match":
+                return TupleSolver
             case "double_match_pair":
-                solver = DoubleMatchPairSolver(season)
+                return DoubleMatchPairSolver
             case "two_double_matches":
-                solver = TwoDoubleMatchesSolver(season)
+                return TwoDoubleMatchesSolver
             case "double_match_for_right":
-                solver = DoubleMatchForRightSolver(season)
+                return DoubleMatchForRightSolver
             case "triple_match":
-                solver = TripleMatchSolver(season)
+                return TripleMatchSolver
             case _:
-                raise ValueError(
-                    f"Unknown match model {season.match_model} for season {sn}"
-                )
-
-    return solver
+                raise ValueError(f"Unknown match model {season.match_model} for season")

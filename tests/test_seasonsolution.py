@@ -6,42 +6,55 @@ from ayto.utils import get_solver
 class TestSeasonSolution(unittest.TestCase):
     def test_normalo2020(self):
         self.check_season("normalo2020")
+        self.check_season_with_bitmask("normalo2020")
 
     def test_normalo2021(self):
         self.check_season("normalo2021")
+        self.check_season_with_bitmask("normalo2021")
 
     def test_normalo2022(self):
         self.check_season("normalo2022")
+        self.check_season_with_bitmask("normalo2022")
 
     def test_normalo2023(self):
         self.check_season("normalo2023")
+        self.check_season_with_bitmask("normalo2023")
 
     def test_normalo2024(self):
         self.check_season("normalo2024")
+        self.check_season_with_bitmask("normalo2024")
 
     def test_normalo2025(self):
         self.check_season("normalo2025")
+        self.check_season_with_bitmask("normalo2025")
 
     def test_normalo2026(self):
         self.check_season("normalo2026")
+        self.check_season_with_bitmask("normalo2026")
 
     def test_vip2021(self):
         self.check_season("vip2021")
+        self.check_season_with_bitmask("vip2021")
 
     def test_vip2022(self):
         self.check_season("vip2022")
+        self.check_season_with_bitmask("vip2022")
 
     def test_vip2023(self):
         self.check_season("vip2023")
+        self.check_season_with_bitmask("vip2023")
 
     def test_vip2024(self):
         self.check_season("vip2024")
+        self.check_season_with_bitmask("vip2024")
 
     def test_vip2025(self):
         self.check_season("vip2025")
+        self.check_season_with_bitmask("vip2025")
 
     def test_vip2026(self):
         self.check_season("vip2026")
+        self.check_season_with_bitmask("vip2026")
 
     def check_season(self, sn: str):
         solver = get_solver(sn)
@@ -49,5 +62,14 @@ class TestSeasonSolution(unittest.TestCase):
         self.assertIsNotNone(solution, f"No solution found for season {sn}")
         if solution:
             self.assertEqual(len(solution), solver.season.num_matches)
+            solpos = solver.find_violation(solution, 10, True)
+            self.assertIsNone(solpos, solpos)
+
+    def check_season_with_bitmask(self, sn: str):
+        solver = get_solver(sn, True)
+        solution = solver.codec.encode(solver.season.solution)
+        self.assertIsNotNone(solution, f"No solution found for season {sn}")
+        if solution:
+            self.assertEqual(solution.bit_count(), solver.season.num_matches)
             solpos = solver.find_violation(solution, 10, True)
             self.assertIsNone(solpos, solpos)

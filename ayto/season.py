@@ -11,6 +11,13 @@ Solution = frozenset[Pair]
 PairSet = Solution | set[Pair]
 
 # class Solution(frozenset[Pair]):
+MATCH_MODELS = [
+    "double_match",
+    "double_match_pair",
+    "two_double_matches",
+    "double_match_for_right",
+    "triple_match",
+]
 
 
 def has_dm_for_right(sol: PairSet) -> bool:
@@ -43,6 +50,14 @@ def mm_left(sol: PairSet) -> Person | None:
         ls.add(l)
     return None
 
+def mm_left_partners(sol: PairSet)-> list[Person]:
+    """Return partners of first left with multiple match or empty list if there isn't such a left"""
+    mml = mm_left(sol)
+    if mml is not None:
+        return dict_rep(sol)[mml]
+    else:
+        return []
+
 
 def has_two_dms(sol: PairSet) -> bool:
     """Return whether there are two double matches in a solution"""
@@ -70,8 +85,26 @@ class Night:
 
     def __post_init__(self):
         object.__setattr__(self, "pairs", frozenset(self.pairs))
-        if not 0 <= self.lights <= len(self.pairs):
-            raise ValueError("Invalid number of lights")
+        lp = len(self.pairs)
+        if not 0 <= self.lights <= lp:
+            raise ValueError(
+                f"Invalid number of lights: lights = {self.lights} for {lp}"
+            )
+        seated_lefts: list[int] = []
+        seated_rights: list[int] = []
+        for l, r in self.pairs:
+            if l in seated_lefts or r in seated_rights:
+                raise ValueError(
+                    f"Either {l} or {r} has already been seated in this night with pairs {self.pairs}"
+                )
+            if l > lp + 1:
+                raise ValueError(
+                    f"Left index {l} too big for {lp} lights, must be in [0, lp+1]"
+                )
+            if r > lp + 1:
+                raise ValueError(
+                    f"Right index {r} too big for {lp} lights, must be in [0, lp+1]"
+                )
 
 
 # Matchboxes = dict[Pair, bool]
@@ -98,6 +131,10 @@ class Matchboxes:
         l = self.weeks
         if not all(l[i] <= l[i + 1] for i in range(len(l) - 1)):
             raise ValueError("weeks in matchbox list must be increasing")
+        if len(set(self.pairs)) != len(self.pairs):
+            raise ValueError(
+                "One of the pairs appears more than once in the match boxes"
+            )
 
     def __getitem__(self, key: Pair) -> bool:
         if key not in self.pairs:
@@ -178,17 +215,18 @@ class Season:
     nights: tuple[Night, ...]
     matchboxes: Matchboxes
     solution: frozenset[Pair] = Solution()
-    match_model: str = "base"
+    match_model: str = "double_match"
     mm_person: str | None = None
 
     mm_known_from_week: int = 0  # from which episode mm_person is known
-    matchbox_reveals_dm: bool = True  # if one part of double match is revealed, the other one is revealed immediately after
+    matchbox_reveals_dm: bool = (
+        True  # if one part of double match is revealed, the other one is revealed immediately after
+    )
     double_match_pair_names: tuple[str, str] | None = None
     double_match_pair_known: int = 10  # from which episode double match pair is known
     extra_left_name: str | None = None  # left that is part of double match for right
 
     def __post_init__(self):
-        # todo: write / put together validation for season data
         if not (0 <= len(self.nights) <= 10 and 0 <= len(self.matchboxes)):
             raise ValueError(
                 f"Invalid number of nights or matchboxes {len(self.nights)} {len(self.matchboxes)}"
@@ -197,6 +235,12 @@ class Season:
             set(self.rights_names)
         ) != len(self.rights_names):
             raise ValueError("Duplicate names in lefts or rights")
+
+        if self.match_model not in MATCH_MODELS:
+            raise ValueError(
+                f"Invalid match_model = {self.match_model}, it must be one of {MATCH_MODELS}"
+            )
+
         if self.double_match_pair_names and self.match_model != "double_match_pair":
             raise ValueError(
                 f"double_match_pair is set but match_model is {self.match_model} (it should be 'double_match_pair')"
@@ -205,6 +249,26 @@ class Season:
             raise ValueError(
                 f"extra_left is set but match_model is {self.match_model} (it should be 'double_match_for_right')"
             )
+        if self.mm_person is None and self.match_model not in [
+            "double_match",
+            "double_match_for_right",
+        ]:
+            raise ValueError(
+                f"Multiple match person must be known because match_model = {self.match_model} is not one of ['double_match', 'double_match_for_right',]"
+            )
+
+        if self.match_model == "double_match_for_right":
+            if len(self.lefts_names) != len(self.rights_names):
+                raise ValueError(
+                    "Season with match_model=double_match_for_right has to have the same number of lefts and rights"
+                )
+            if self.extra_left_name is None:
+                raise ValueError("Season with match_model=double_match_for_right must have a extra_left_name that is not none")
+        else:
+            if len(self.rights_names) != self.num_matches:
+                raise ValueError(
+                    f"Season with match_model={self.match_model} for {len(self.lefts_names)} lefts has to have {self.num_matches} rights"
+                )
 
     @property
     def num_weeks(self) -> int:
@@ -240,9 +304,9 @@ class Season:
         )
 
     @property
-    def double_match_pair(self) -> tuple[Person, Person] | None:
+    def double_match_pair(self) -> tuple[Person, Person] :
         if not self.double_match_pair_names:
-            return None
+            return (-1, -1)
         return (
             self.encode_right(self.double_match_pair_names[0]),
             self.encode_right(self.double_match_pair_names[1]),
@@ -257,10 +321,10 @@ class Season:
         return list(range(len(self.rights_names)))
 
     @property
-    def extra_left(self) -> Person | None:
+    def extra_left(self) -> Person:
         if self.extra_left_name:
             return self.encode_left(self.extra_left_name)
-        return None
+        return -1
 
     def get_mm(self, episode: int = 9) -> Person | None:
         episode = max(0, min(episode, self.num_weeks - 1))
@@ -339,6 +403,23 @@ class Season:
 
     def decode_solution(self, sol: PairSet):
         return {self.decode_pair(p) for p in sol}
+    
+
+    def as_empty(self):
+        return Season(
+            self.name + "_empty",
+            self.lefts_names,
+            self.rights_names,
+            (),
+            Matchboxes(),
+            match_model=self.match_model,
+            mm_person=self.mm_person,
+            double_match_pair_names=self.double_match_pair_names,
+            double_match_pair_known=self.double_match_pair_known,
+            mm_known_from_week=self.mm_known_from_week,
+            matchbox_reveals_dm=self.matchbox_reveals_dm,
+            extra_left_name= self.extra_left_name
+        )
 
 
 def random_night_for_sol(sol: Solution, lefts: list[Person], rights: list[Person]):

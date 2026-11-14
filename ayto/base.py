@@ -5,7 +5,23 @@ from collections.abc import Hashable, Iterable
 from typing import Any, Protocol, Self
 
 # from line_profiler import profile
-from ayto.season import Knowledge, Pair, Person, Season
+from .season import Knowledge, Pair, Person, Season
+
+ALL_SEASONS = [
+    "normalo2020",
+    "normalo2021",
+    "normalo2022",
+    "normalo2023",
+    "normalo2024",
+    "normalo2025",
+    "normalo2026",
+    "vip2021",
+    "vip2022",
+    "vip2023",
+    "vip2024",
+    "vip2025",
+    "vip2026",
+]
 
 
 class SolutionType(Hashable, Protocol):
@@ -20,9 +36,6 @@ class Solver[SolType: SolutionType](ABC):
         super().__init__()
         self.season: Season = season
         self._no_match_cache: dict[tuple[Person, Person, int, bool], bool] = {}
-        self.mm_person_cache: list[Person | None] = [
-            season.get_mm(ep) for ep in range(self.season.max_lights + 1)
-        ]
         self.knowledge_cache: dict[tuple[int, bool], Knowledge] = {}
 
     @abstractmethod
@@ -180,7 +193,9 @@ class Solver[SolType: SolutionType](ABC):
     def merge_mm_in_solution(
         self,
         sol: SolType,
-        partial_solutions: list[tuple[SolType, Any]],  # pyright: ignore[reportExplicitAny]
+        partial_solutions: list[
+            tuple[SolType, Any]
+        ],  # pyright: ignore[reportExplicitAny]
     ) -> list[SolType]:
         """Merge solution with partial solutions to complete solution when the multiple match(es) are present the solution, given `episode`(inclusive)"""
 
@@ -188,7 +203,9 @@ class Solver[SolType: SolutionType](ABC):
     def merge_mm_not_in_solution(
         self,
         sol: SolType,
-        partial_solutions: list[tuple[SolType, Any]],  # pyright: ignore[reportExplicitAny]
+        partial_solutions: list[
+            tuple[SolType, Any]
+        ],  # pyright: ignore[reportExplicitAny]
         episode: int,
         include_night: bool,
     ) -> list[SolType]:

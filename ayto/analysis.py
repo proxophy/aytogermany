@@ -6,7 +6,7 @@ from functools import wraps
 import pandas as pd
 
 from .season import Pair, Person, Solution, mm_left
-from .solver import TupleSolver
+from .tuple_solver import TupleSolver
 
 
 class SolutionSpace:

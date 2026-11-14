@@ -1,5 +1,5 @@
 {
-    "match_model": "base",
+    "match_model": "double_match",
     "mm_person": null,
     "mm_known_from_week": 0,
     "matchbox_reveals_dm": true

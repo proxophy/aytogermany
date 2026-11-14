@@ -1,6 +1,6 @@
 import unittest
 
-from ayto import DoubleMatchPairSolver, TupleSolver
+from ayto import DoubleMatchPairSolver, TripleMatchSolver, TupleSolver, TwoDoubleMatchesSolver
 from ayto.season import Matchboxes, Night, Season
 from ayto.utils import get_solver
 
@@ -9,36 +9,9 @@ normalo2024 = get_solver("normalo2024")
 normalo2026 = get_solver("normalo2026")
 vip2023 = get_solver("vip2023")
 toy_nights = (
-    Night(
-        {
-            (0, 0),
-            (1, 2),
-            (2, 3),
-            (3, 4),
-            (4, 1),
-        },
-        1,
-    ),
-    Night(
-        {
-            (0, 4),
-            (1, 1),
-            (2, 2),
-            (3, 3),
-            (4, 0),
-        },
-        3,
-    ),
-    Night(
-        {
-            (0, 4),
-            (1, 1),
-            (2, 2),
-            (3, 3),
-            (4, 5),
-        },
-        4,
-    ),
+    Night({(0, 0), (1, 2), (2, 3), (3, 4), (4, 1)}, 1),
+    Night({(0, 4), (1, 1), (2, 2), (3, 3), (4, 0)}, 3),
+    Night({(0, 4), (1, 1), (2, 2), (3, 3), (4, 5)}, 4),
 )
 toy_matchboxes = Matchboxes((0,), ((1, 2),), (False,), (True,))
 toy_lefts = ("A", "B", "C", "D", "E")
@@ -46,6 +19,37 @@ toy_rights = ("1", "2", "3", "4", "5", "6")
 toy_season = Season(
     "toy", toy_lefts, toy_rights, toy_nights, toy_matchboxes, mm_person="6"
 )
+
+
+toy_season2 = Season(
+    name="toy",
+    lefts_names=("A", "B", "C", "D", "E"),
+    rights_names=("1", "2", "3", "4", "5", "6"),
+    nights=(
+        Night(pairs={(4, 3), (0, 2), (1, 1), (3, 0), (2, 4)}, lights=1),
+        Night(pairs={(0, 5), (1, 2), (4, 1), (3, 0), (2, 4)}, lights=1),
+        Night(pairs={(2, 1), (1, 2), (4, 3), (3, 0), (0, 4)}, lights=0),
+        Night(pairs={(3, 1), (1, 0), (4, 3), (2, 2), (0, 4)}, lights=1),
+        Night(pairs={(4, 2), (2, 0), (1, 1), (3, 3), (0, 4)}, lights=2),
+    ),
+    matchboxes=Matchboxes(
+        weeks=(0, 1, 3, 4),
+        pairs=((0, 1), (3, 1), (3, 0), (2, 4)),
+        results=(False, False, False, False),
+        before_night=(
+            True,
+            True,
+            True,
+            True,
+        ),
+    ),
+    solution=frozenset({(0, 0), (0, 5), (4, 4), (2, 2), (1, 1), (3, 3)}),
+    mm_person="6",
+    double_match_pair_known=7,
+    mm_known_from_week=0,
+    matchbox_reveals_dm=True,
+)
+
 toy_season_wo_dm = Season(
     "toy_wo_dm", toy_lefts, toy_rights, toy_nights, toy_matchboxes
 )
@@ -62,41 +66,45 @@ toy_season_with_double_match_pair = Season(
     double_match_pair_known=0,
 )
 
-
-toy_season2 = Season(
-    name="toy",
-    lefts_names=("A", "B", "C", "D", "E"),
-    rights_names=("1", "2", "3", "4", "5", "6"),
-    nights=(
-        Night(pairs={(4, 3), (0, 2), (1, 1), (3, 0), (2, 4)}, lights=1),
-        Night(pairs={(0, 5), (1, 2), (4, 1), (3, 0), (2, 4)}, lights=1),
-        Night(pairs={(2, 1), (1, 2), (4, 3), (3, 0), (0, 4)}, lights=0),
-        Night(pairs={(3, 1), (1, 0), (4, 3), (2, 2), (0, 4)}, lights=1),
-        Night(pairs={(4, 2), (2, 0), (1, 1), (3, 3), (0, 4)}, lights=2),
-    ),
-    matchboxes=Matchboxes(
-        weeks=(0, 1, 2, 3, 4),
-        pairs=((0, 1), (3, 1), (3, 1), (3, 0), (2, 4)),
-        results=(False, False, False, False, False),
-        before_night=(
-            True,
-            True,
-            True,
-            True,
-            True,
-        ),
-    ),
-    solution=frozenset({(0, 0), (0, 5), (4, 4), (2, 2), (1, 1), (3, 3)}),
+toy_season_with_triple_match = Season(
+    "toy",
+    toy_lefts,
+    ("1", "2", "3", "4", "5", "6", "7"),
+    toy_nights,
+    toy_matchboxes,
+    match_model="triple_match",
     mm_person="6",
-    double_match_pair_known=7,
-    mm_known_from_week=0,
-    matchbox_reveals_dm=True,
 )
 
-# todo: type this
+toy_season_with_two_double_matches = Season(
+    "toy",
+    toy_lefts,
+    ("1", "2", "3", "4", "5", "6", "7"),
+    toy_nights,
+    toy_matchboxes,
+    match_model="two_double_matches",
+    mm_person="6",
+)
 
+toy_season_with_dm_for_right = Season(
+    "toy",
+    ("A", "B", "C", "D", "E", "F"),
+    ("1", "2", "3", "4", "5", "6"),
+    toy_nights,
+    toy_matchboxes,
+    match_model="double_match_for_right",
+    extra_left_name="F",
+)
 
-class TestSeasonSolution(unittest.TestCase):
+model_to_toy = {
+    "double_match": toy_season,
+    "double_match_pair": toy_season_with_double_match_pair,
+    "two_double_matches": toy_season_with_two_double_matches,
+    "double_match_for_right": toy_season_with_dm_for_right,
+    "triple_match":toy_season_with_triple_match,
+}
+
+class TestSolverLogic(unittest.TestCase):
     def test_no_match_matchbox(self):
         self.assertEqual(
             normalo2020.str_no_match_reason("Ivana", "Mo", 2, True), "matchbox_false"
@@ -138,11 +146,16 @@ class TestSeasonSolution(unittest.TestCase):
     def test_no_match_double_match_pair(self):
         self.assertEqual(
             vip2023.str_no_match_reason("Sabrina", "Max", 7, True),
-            "matchbox_false_for_double_match_pair",
+            "matchbox_false",
         )
         self.assertEqual(
             vip2023.str_no_match_reason("Sabrina", "Peter", 7, True),
             "matchbox_false_for_double_match_pair",
+        )
+
+        self.assertEqual(
+            vip2023.str_no_match_reason("Paulina", "Emanuell", 8, True),
+            "member_has_partner_already",
         )
 
     def test_no_match_triple_match(self):
@@ -176,9 +189,10 @@ class TestSeasonSolution(unittest.TestCase):
         # todo: specify return str
         self.assertIsNone(solver.find_format_violation(sol1))
         sol1.add((1, 2))
-        self.assertTrue(solver.find_format_violation(sol1))
-        self.assertTrue(solver.find_format_violation({(0, 0), (1, 0)}))
-        # self.assertTrue(solver.find_format_violation({(0, 0), (0,0)}))
+        self.assertEqual(solver.find_format_violation(sol1), "too_many_matches")
+        self.assertEqual(
+            solver.find_format_violation({(0, 0), (1, 0)}), "double_match_for_right"
+        )
 
     def test_solution_possible_reason_no_match(self):
         solver = TupleSolver(toy_season)
@@ -232,7 +246,7 @@ class TestSeasonSolution(unittest.TestCase):
         sol4 = {(0, 0), (0, 1), (0, 2)}
         self.assertEqual(
             solver.find_multiple_match_violation(sol4, 1),
-            "triple_match_not_allowed",
+            "multiple_match_too_big",
         )
 
     def test_solve_with_dm(self):
@@ -247,7 +261,7 @@ class TestSeasonSolution(unittest.TestCase):
         # season without dm specified
         solver = TupleSolver(toy_season_wo_dm)
         sol1 = {(0, 0), (1, 1), (2, 2), (3, 3), (3, 4), (4, 5)}
-        self.assertFalse(solver.find_multiple_match_violation(sol1, 2))
+        self.assertIsNone(solver.find_multiple_match_violation(sol1, 2))
         sol2 = {
             (0, 0),
             (0, 1),
@@ -261,7 +275,7 @@ class TestSeasonSolution(unittest.TestCase):
         sol3 = {(0, 0), (0, 1), (0, 2)}
         self.assertEqual(
             solver.find_multiple_match_violation(sol3, 1),
-            "triple_match_not_allowed",
+            "multiple_match_too_big",
         )
 
     def test_solve_without_dm(self):
@@ -270,8 +284,12 @@ class TestSeasonSolution(unittest.TestCase):
 
     def test_check_multiple_match_logic_with_double_match_pair(self):
         solver = DoubleMatchPairSolver(toy_season_with_double_match_pair)
-        sol1 = {(0, 0), (1, 1), (2, 2), (3, 3), (3, 4), (0, 5)}
-        self.assertTrue(solver.find_multiple_match_violation(sol1, 3))
+        # double match pair indices: 0,5
+        sol1 = {(0, 0), (1, 1), (2, 2), (3, 3), (3, 4)}
+        self.assertEqual(
+            solver.find_multiple_match_violation(sol1, 3),
+            "double_match_lefts_not_double_match_pair",
+        )
         sol2 = {
             (0, 0),
             (1, 5),
@@ -288,25 +306,49 @@ class TestSeasonSolution(unittest.TestCase):
         sol4 = {(0, 0), (0, 1), (0, 2)}
         self.assertEqual(
             solver.find_multiple_match_violation(sol4, 1),
-            "triple_match_not_allowed",
+            "multiple_match_too_big",
         )
 
-    def compare_solve_approaches(self, solver: TupleSolver, end: int = 5):
-        season = solver.season
-        empty_season = Season(
-            "empty",
-            season.lefts_names,
-            season.rights_names,
-            (),
-            Matchboxes(),
-            match_model=season.match_model,
-            mm_person=season.mm_person,
-            double_match_pair_names=season.double_match_pair_names,
-            double_match_pair_known=season.double_match_pair_known,
-            mm_known_from_week=season.mm_known_from_week,
-            matchbox_reveals_dm=season.matchbox_reveals_dm,
+    def test_solve_with_double_match_pair(self):
+        solver = DoubleMatchPairSolver(toy_season_with_double_match_pair)
+        self.compare_solve_approaches(solver)
+
+    def test_check_multiple_match_logic_with_triple_match(self):
+        solver = TripleMatchSolver(toy_season_with_triple_match)
+        sol1 = {(0, 0), (0, 1), (0, 5)}
+        self.assertIsNone(solver.find_multiple_match_violation(sol1, 1))
+        sol2 = {(0, 0), (0, 1), (0, 2)}
+        self.assertEqual(
+            solver.find_multiple_match_violation(sol2, 1),
+            "mm_not_in_complete_multiple_match",
         )
-        empty_season = TupleSolver(empty_season)
-        sols = set(empty_season.generate_complete_solutions(frozenset(), end, True))
+        sol3 = {(0, 0), (0, 1), (1, 5)}
+        self.assertEqual(
+            solver.find_multiple_match_violation(sol3, 1),
+            "multiple_match_not_possible_without_mm",
+        )
+        sol4 = {(0, 0), (0, 1), (0, 5), (0, 4)}
+        self.assertEqual(
+            solver.find_multiple_match_violation(sol4, 1),
+            "multiple_match_too_big",
+        )
+
+    def test_solve_with_triple_match_pair(self):
+        solver = TripleMatchSolver(toy_season_with_triple_match)
+        self.compare_solve_approaches(solver, solver_type=TripleMatchSolver)
+
+    def test_check_multiple_match_logic_with_two_double_matches(self):
+        solver = TwoDoubleMatchesSolver(toy_season_with_triple_match)
+
+    def compare_solve_approaches(
+        self,
+        solver: TupleSolver,
+        end: int = 5,
+        solver_type: type[TupleSolver] = TupleSolver,
+    ):
+        season = solver.season
+        empty = season.as_empty()
+        solver_for_empty = solver_type(empty)
+        sols = set(solver_for_empty.generate_complete_solutions(frozenset(), end, True))
         sols = [s for s in sols if solver.solution_possible(s, end, True)]
         self.assertEqual(len(sols), len(solver.solve(end)))

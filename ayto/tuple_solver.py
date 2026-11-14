@@ -1,51 +1,9 @@
-from collections.abc import Generator, Iterable
+from collections.abc import Iterable
 from typing import override
 
 from ayto.base import Solver
 
 from .season import *
-
-ALL_SEASONS = [
-    "normalo2020",
-    "normalo2021",
-    "normalo2022",
-    "normalo2023",
-    "normalo2024",
-    "normalo2025",
-    "normalo2026",
-    "vip2021",
-    "vip2022",
-    "vip2023",
-    "vip2024",
-    "vip2025",
-    "vip2026",
-]
-
-
-def product_without_reps(
-    arr: list[list[Person]],
-) -> Generator[list[Person], Person, None]:
-    used: set[Person] = set()
-    current: list[Person] = []
-
-    def rec(i: int) -> Generator[list[Person], Person, None]:
-        if i == len(arr):
-            yield current.copy()
-            return
-
-        for x in arr[i]:
-            if x in used:
-                continue
-
-            used.add(x)
-            current.append(x)
-
-            yield from rec(i + 1)
-
-            _ = current.pop()
-            used.remove(x)
-
-    yield from rec(0)
 
 
 def partial_sols(
@@ -101,7 +59,7 @@ class TupleSolver(
         kpm = knowledge.perfect_matches
         pm_lefts = {a for a, _ in kpm}
         pm_rights = {b for _, b in kpm}
-        mm_person = self.mm_person_cache[episode]
+        mm_person = knowledge.mm
 
         # matchbox result was false
         if (l, r) in mb_no_matches:
@@ -183,7 +141,8 @@ class TupleSolver(
         # lefts with multiple partners
         mult_lefts = [l for l, rs in sol_dict.items() if len(rs) > 1]
         # double/triple match person
-        mm_person = self.mm_person_cache[episode]
+        knowledge = self.knowledge_cache[(episode, True)]
+        mm_person = knowledge.mm
 
         if len(mult_lefts) >= 2:
             return "too_many_double_matches"
@@ -192,7 +151,7 @@ class TupleSolver(
             mult_left = mult_lefts[0]
             mult_rights = sol_dict[mult_left]
             if len(mult_rights) > self.season.max_mm_size:
-                return "triple_match_not_allowed"
+                return "multiple_match_too_big"
 
             if mm_person is not None:  # mm_person is not None
                 _, seated_rights = zip(*sol)
@@ -216,7 +175,7 @@ class TupleSolver(
         knowledge = self.knowledge_cache[(episode, include_night)]
         sitting_no_matches = knowledge.get_sitting_no_matches(sol)
 
-        mm_person = self.mm_person_cache[episode]
+        mm_person = knowledge.mm
         pos_matches = {
             l: [
                 r
@@ -253,8 +212,8 @@ class TupleSolver(
         include_night: bool,
     ) -> list[Solution]:
 
-        mm_person = self.mm_person_cache[episode]
         knowledge = self.knowledge_cache[(episode, include_night)]
+        mm_person = knowledge.mm
         sitting_no_matches = knowledge.get_sitting_no_matches(sol)
 
         # compute possible partners left for missing rights
@@ -273,7 +232,6 @@ class TupleSolver(
             ]
             for r in self.season.rights
         }
-        # print(sum(len(x) for x in addable_lefts.values()))
 
         solutions: list[Solution] = []
         full = set(self.season.rights)

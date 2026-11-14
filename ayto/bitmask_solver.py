@@ -2,9 +2,9 @@ import itertools
 from collections.abc import Iterable
 from typing import override
 
-from ayto.base import Solver
-from ayto.codec import Codec, Mask, RightBits, iter_bits
-from ayto.season import BitMaskKnowledge, Pair, Season
+from .base import Solver
+from .codec import Codec, Mask, RightBits, iter_bits
+from .season import BitMaskKnowledge, Pair, Season
 
 Partial = tuple[Mask, RightBits]
 
@@ -60,7 +60,7 @@ class BitMaskSolver(Solver[Mask]):
         kpm = knowledge.perfect_matches_mask
         pm_lefts = codec.lefts_in(kpm)
         pm_rights = codec.rights_in(kpm)
-        mm_person = self.mm_person_cache[episode]
+        mm_person = knowledge.mm
 
         # matchbox result was false
         if bit & knowledge.mb_no_matches_mask:
@@ -84,7 +84,7 @@ class BitMaskSolver(Solver[Mask]):
                 # l cannot be part of multiple match
                 if (
                     mm_person is not None
-                    and not ((1 << r) & knowledge.mm_mask)  # ==
+                    and not codec.r_in_right_bits(knowledge.mm_mask, r)
                     and self.no_match(l, mm_person, episode, include_night)
                 ):
                     return "l_cannot_have_double_match"
@@ -109,10 +109,11 @@ class BitMaskSolver(Solver[Mask]):
     def find_multiple_match_violation(self, sol: Mask, episode: int) -> str | None:
         """Return the first multiple-match violation found in the solution, if any"""
         codec = self.codec
+        knowledge = self.knowledge_cache[(episode, True)]
         # lefts with multiple partners
         mult_lefts = codec.multi_lefts(sol)
         # double/triple match person
-        mm_person = self.mm_person_cache[episode]
+        mm_person = knowledge.mm
 
         if mult_lefts.bit_count() >= 2:
             return "too_many_double_matches"
@@ -122,13 +123,13 @@ class BitMaskSolver(Solver[Mask]):
             mult_rights = codec.partners_of_left(sol, mult_left)
 
             if mult_rights.bit_count() > self.season.max_mm_size:
-                return "triple_match_not_allowed"
+                return "multiple_match_too_big"
 
-            if mm_person is not None:  # mm_person is not None
+            if mm_person is not None:
                 seated_rights = codec.rights_in(sol)
-                if not codec.r_in_right_bits(
+                if not (codec.r_in_right_bits(
                     codec.partners_of_left(sol, mult_left), mm_person
-                ):
+                )):
                     if mult_rights.bit_count() == self.season.max_mm_size:
                         return "mm_not_in_complete_multiple_match"
                     elif codec.r_in_right_bits(seated_rights, mm_person):
@@ -222,9 +223,10 @@ class BitMaskSolver(Solver[Mask]):
         include_night: bool,
     ) -> list[Mask]:
         """Merge solution with partial solutions to complete solutions when the multiple match(es) are not present the solution, given `episode`(inclusive) and `include_night`"""
+        
         codec = self.codec
-        mm_person = self.mm_person_cache[episode]
         knowledge = self.knowledge_cache[(episode, include_night)]
+        mm_person = knowledge.mm
         sitting_no_matches = knowledge.get_sitting_no_matches_mask(sol)
 
         # compute possible matches left for missing rights
@@ -232,8 +234,9 @@ class BitMaskSolver(Solver[Mask]):
             codec.full_mask
             & ~self.no_match_masks[(episode, include_night)]
             & ~sitting_no_matches
-            & ~(codec.row[self.season.extra_left] if self.season.extra_left else 0)
         )
+        if self.season.extra_left != -1:
+            addable &= ~codec.row[self.season.extra_left] 
         addable_pairs = [
             list(iter_bits(codec.partners_of_right(addable, r)))
             for r in self.season.rights
@@ -247,9 +250,10 @@ class BitMaskSolver(Solver[Mask]):
         for partial, used in partial_solutions:
             base_matches = sol | partial
             free = full & ~(sitting_rights | used)
-
+           
             # index of right that is missing in solution
             mr = free.bit_length() - 1
+            
             if mm_person is not None:
                 # mm_person is not None
                 if mr == mm_person:

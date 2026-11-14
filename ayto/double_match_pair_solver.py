@@ -4,16 +4,25 @@ from ayto.bitmask_solver import BitMaskSolver
 from ayto.season import Pair
 
 from .season import *
-from .solver import TupleSolver
+from .tuple_solver import TupleSolver
 
 
 class DoubleMatchPairSolver(TupleSolver):
+    def __init__(self, season: Season):
+        super().__init__(season)
+        if season.match_model != "double_match_pair":
+            raise ValueError(
+                "DoubleMatchPairSolver must be instantiated with season with match_model=double_match_pair"
+            )
+
     @override
     def no_match_reason(
         self, l: Person, r: Person, episode: int, include_night: bool
     ) -> str | None:
-        assert self.season.double_match_pair
+
         knowledge = self.knowledge_cache[(episode, include_night)]
+        if (l, r) in knowledge.mb_no_matches:
+            return "matchbox_false"
         if episode >= self.season.double_match_pair_known:
             no_matches: list[Pair] = knowledge.mb_no_matches
 
@@ -25,7 +34,6 @@ class DoubleMatchPairSolver(TupleSolver):
 
     @override
     def find_multiple_match_violation(self, sol: PairSet, episode: int) -> str | None:
-        assert self.season.double_match_pair
 
         if episode >= self.season.double_match_pair_known:
             # lefts that partner with double_match_pair
@@ -55,7 +63,6 @@ class DoubleMatchPairSolver(TupleSolver):
         episode: int,
         include_night: bool,
     ) -> list[Solution]:
-        assert self.season.double_match_pair
 
         if episode < self.season.double_match_pair_known:
             return super().merge_mm_not_in_solution(
@@ -89,11 +96,18 @@ class DoubleMatchPairSolver(TupleSolver):
 
 
 class DoubleMatchPairBitMaskSolver(BitMaskSolver):
+    def __init__(self, season: Season):
+        super().__init__(season)
+        if season.match_model != "double_match_pair":
+            raise ValueError(
+                "DoubleMatchPairBitMaskSolver must be instantiated with season with match_model=double_match_pair"
+            )
+
     @override
     def no_match_reason(
         self, l: Person, r: Person, episode: int, include_night: bool
     ) -> str | None:
-        assert self.season.double_match_pair
+
         codec = self.codec
         knowledge = self.knowledge_cache[(episode, include_night)]
         if episode >= self.season.double_match_pair_known:
@@ -111,7 +125,7 @@ class DoubleMatchPairBitMaskSolver(BitMaskSolver):
 
     @override
     def find_multiple_match_violation(self, sol: Mask, episode: int) -> str | None:
-        assert self.season.double_match_pair
+
         codec = self.codec
 
         if episode >= self.season.double_match_pair_known:
@@ -148,7 +162,7 @@ class DoubleMatchPairBitMaskSolver(BitMaskSolver):
         episode: int,
         include_night: bool,
     ) -> list[Mask]:
-        assert self.season.double_match_pair
+
         codec = self.codec
 
         if episode < self.season.double_match_pair_known:
