@@ -2,7 +2,7 @@ import itertools
 from collections.abc import Iterable
 from typing import override
 
-from .base import Solver
+from .base import NoMatchReason, Solver, Violation
 from .codec import Codec, Mask, RightBits, iter_bits
 from .season import BitMaskKnowledge, Pair, Season
 
@@ -24,7 +24,7 @@ def partial_masks(pos_matches: dict[int, RightBits], R: int) -> list[Partial]:
     return states
 
 
-class BitMaskSolver(Solver[Mask]):
+class BitMaskSolver(Solver[Mask, RightBits]):
     def __init__(self, season: Season) -> None:
         super().__init__(season)
         # self.season: Season = season
@@ -32,7 +32,7 @@ class BitMaskSolver(Solver[Mask]):
 
         self.knowledge_cache: dict[tuple[int, bool], BitMaskKnowledge] = (  # pyright: ignore[reportIncompatibleVariableOverride]
             {}
-        )
+        )  
 
         self.no_match_masks: dict[tuple[int, bool], Mask] = {}
 
@@ -52,7 +52,7 @@ class BitMaskSolver(Solver[Mask]):
     @override
     def no_match_reason(
         self, l: int, r: int, episode: int, include_night: bool
-    ) -> str | None:
+    ) -> NoMatchReason | None:
         knowledge = self.knowledge_cache[(episode, include_night)]
         codec = self.codec
 
@@ -64,11 +64,11 @@ class BitMaskSolver(Solver[Mask]):
 
         # matchbox result was false
         if bit & knowledge.mb_no_matches_mask:
-            return "matchbox_false"
+            return NoMatchReason.MATCHBOX_FALSE
 
         # check for black out nights
         if bit & knowledge.bp_no_matches_mask:
-            return "sitting_in_blackout_night"
+            return NoMatchReason.SITTING_IN_BLACKOUT_NIGHT
 
         # one is part of known perfect match
         # consider multiple seated lefts
@@ -79,34 +79,34 @@ class BitMaskSolver(Solver[Mask]):
         ):
             # handle special case: for normalo2026, Alicia's match with Noel doesn't get revealed, despite Noel finding his match during the show
             if self.season.matchbox_reveals_dm:
-                return "member_has_partner_already"
+                return NoMatchReason.MEMBER_HAS_PARTNER_ALREADY
             else:
                 # l cannot be part of multiple match
                 if (
                     mm_person is not None
                     and not codec.r_in_right_bits(knowledge.mm_mask, r)
                     and self.no_match(l, mm_person, episode, include_night)
-                ):
-                    return "l_cannot_have_double_match"
-                elif episode < self.season.mm_known_from_week:
-                    return "cannot_be_in_double_match"
+                ) or episode < self.season.mm_known_from_week:
+                    return NoMatchReason.L_CANNOT_HAVE_SECOND_MATCH
 
         return None
 
     @override
-    def find_format_violation(self, sol: Mask) -> str | None:
+    def find_format_violation(self, sol: Mask) -> Violation | None:
         """Return the first format violation found in the solution, if any" """
 
         if sol.bit_count() > self.season.num_matches:
-            return "too_many_matches"
+            return Violation.TOO_MANY_MATCHES
 
         if not self.season.double_match_for_right and self.codec.multi_for_right(sol):
-            return "double_match_for_right"
+            return Violation.DOUBLE_MATCH_FOR_RIGHT
 
         return None
 
     @override
-    def find_multiple_match_violation(self, sol: Mask, episode: int) -> str | None:
+    def find_multiple_match_violation(
+        self, sol: Mask, episode: int
+    ) -> Violation | None:
         """Return the first multiple-match violation found in the solution, if any"""
         codec = self.codec
         knowledge = self.knowledge_cache[(episode, True)]
@@ -115,33 +115,37 @@ class BitMaskSolver(Solver[Mask]):
         # double/triple match person
         mm_person = knowledge.mm
 
+        if not self.season.double_match_for_right and self.codec.multi_for_right(sol):
+            return Violation.DOUBLE_MATCH_FOR_RIGHT
+
         if mult_lefts.bit_count() >= 2:
-            return "too_many_double_matches"
+            return Violation.TOO_MANY_MATCHES
 
         elif mult_lefts.bit_count() == 1:
             mult_left = codec.members(mult_lefts)[0]
             mult_rights = codec.partners_of_left(sol, mult_left)
 
             if mult_rights.bit_count() > self.season.max_mm_size:
-                return "multiple_match_too_big"
+                return Violation.MULTIPLE_MATCH_TOO_BIG
 
             if mm_person is not None:
                 seated_rights = codec.rights_in(sol)
-                if not (codec.r_in_right_bits(
-                    codec.partners_of_left(sol, mult_left), mm_person
-                )):
-                    if mult_rights.bit_count() == self.season.max_mm_size:
-                        return "mm_not_in_complete_multiple_match"
-                    elif codec.r_in_right_bits(seated_rights, mm_person):
-                        # only used in normalo2024
-                        return "multiple_match_not_possible_without_mm"
+                if (
+                    not (
+                        codec.r_in_right_bits(
+                            codec.partners_of_left(sol, mult_left), mm_person
+                        )
+                    )
+                    and (knowledge.mm_mask & seated_rights or mult_rights.bit_count() == self.season.max_mm_size)
+                ):
+                    return Violation.MM_NOT_IN_MULTIPLE_MATCH
 
         return None
 
     @override
     def find_violation(
         self, sol: Mask, episode: int, include_night: bool
-    ) -> str | None:
+    ) -> Violation | None:
         """Return the first logic violation found in the solution, if any"""
         knowledge = self.knowledge_cache[(episode, include_night)]
 
@@ -150,7 +154,7 @@ class BitMaskSolver(Solver[Mask]):
 
         # no known no matches
         if self.no_match_masks[(episode, include_night)] & sol:
-            return "known_no_match"
+            return Violation.CONTAINS_KNOWN_NO_MATCH
 
         complete: bool = sol.bit_count() == self.season.num_matches
 
@@ -167,9 +171,9 @@ class BitMaskSolver(Solver[Mask]):
             sol_lights: int = (sol & night_mask).bit_count()
 
             if sol_lights > lights:
-                return "too_many_lights_in_night"
+                return Violation.TOO_MANY_LIGHTS_IN_NIGHT
             elif sol_lights < lights and complete:
-                return "not_enough_lights_in_night"
+                return Violation.NOT_ENOUGH_LIGHTS_IN_NIGHT
 
         return None
 
@@ -223,7 +227,7 @@ class BitMaskSolver(Solver[Mask]):
         include_night: bool,
     ) -> list[Mask]:
         """Merge solution with partial solutions to complete solutions when the multiple match(es) are not present the solution, given `episode`(inclusive) and `include_night`"""
-        
+
         codec = self.codec
         knowledge = self.knowledge_cache[(episode, include_night)]
         mm_person = knowledge.mm
@@ -236,7 +240,7 @@ class BitMaskSolver(Solver[Mask]):
             & ~sitting_no_matches
         )
         if self.season.extra_left != -1:
-            addable &= ~codec.row[self.season.extra_left] 
+            addable &= ~codec.row[self.season.extra_left]
         addable_pairs = [
             list(iter_bits(codec.partners_of_right(addable, r)))
             for r in self.season.rights
@@ -250,10 +254,10 @@ class BitMaskSolver(Solver[Mask]):
         for partial, used in partial_solutions:
             base_matches = sol | partial
             free = full & ~(sitting_rights | used)
-           
+
             # index of right that is missing in solution
             mr = free.bit_length() - 1
-            
+
             if mm_person is not None:
                 # mm_person is not None
                 if mr == mm_person:

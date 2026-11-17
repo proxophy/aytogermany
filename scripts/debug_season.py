@@ -10,12 +10,9 @@ from ayto import (
 )
 from ayto.base import Solver
 from ayto.bitmask_solver import BitMaskSolver
-from ayto.season import MATCH_MODELS
 from ayto.two_double_matches_solver import TwoDoubleMatchesBitMaskSolver
 from ayto.utils import get_solver_type
-from tests.test_solver_logic import (
-    model_to_toy,
-)
+from tests.fixtures import ALL_TOY_SEASONS, toy_season_with_dm_for_right
 
 # pyright: standard
 
@@ -77,7 +74,7 @@ def memory_test():
 
 
 def check_all_solutions(match_model: str):
-    season = model_to_toy[match_model]
+    season = ALL_TOY_SEASONS[match_model]
     empty = season.as_empty()
     empty_tsolver = get_solver_type(empty, False)(empty)
     empty_bmsolver = get_solver_type(empty, True)(empty)
@@ -113,21 +110,23 @@ def check_all_solutions(match_model: str):
 if __name__ == "__main__":
     # uv run python -m scripts.debug_season
     sn = "vip2022"
-    season = get_season(sn)
-    bmsolver = get_solver(sn, True)
-    codec = bmsolver.codec
-    tsolver = get_solver(sn, False)
-    end = 7
-    icl = False
-    # print(len(bsols := bmsolver.solve(end, icl)))
-    # print(len(tsols := tsolver.solve(end, icl)))
+    # season = get_season(sn)
+    season = toy_season_with_dm_for_right
+    # bmsolver = get_solver(sn, True)
+    # codec = bmsolver.codec
+    solver_type = get_solver_type(season)
+    solver = solver_type(season)
+    empty = season.as_empty()
+    solver_for_empty = solver_type(empty)
 
+    end = 0
+    icl = True
+    print(solver_type)
+    
 
-    # print(check_all_solutions("double_match_for_right"))
-
-    for model in MATCH_MODELS:
-        print(check_all_solutions(model))
-        print()
+    # for model in MATCH_MODELS:
+    #     print(check_all_solutions(model))
+    #     print()
 
     # memory_test()
     sys.exit()

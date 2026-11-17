@@ -1,5 +1,6 @@
 from typing import override
 
+from ayto.base import NoMatchReason, Violation
 from ayto.bitmask_solver import BitMaskSolver
 from ayto.season import Pair
 
@@ -18,28 +19,28 @@ class DoubleMatchPairSolver(TupleSolver):
     @override
     def no_match_reason(
         self, l: Person, r: Person, episode: int, include_night: bool
-    ) -> str | None:
+    ) -> NoMatchReason | None:
 
         knowledge = self.knowledge_cache[(episode, include_night)]
         if (l, r) in knowledge.mb_no_matches:
-            return "matchbox_false"
+            return NoMatchReason.MATCHBOX_FALSE
         if episode >= self.season.double_match_pair_known:
             no_matches: list[Pair] = knowledge.mb_no_matches
 
             if r in self.season.double_match_pair:
                 for dmr in self.season.double_match_pair:
                     if (l, dmr) in no_matches:
-                        return "matchbox_false_for_double_match_pair"
+                        return NoMatchReason.MATCHBOX_FALSE_FOR_DOUBLE_MATCH_PAIR
         return super().no_match_reason(l, r, episode, include_night)
 
     @override
-    def find_multiple_match_violation(self, sol: PairSet, episode: int) -> str | None:
+    def find_multiple_match_violation(self, sol: PairSet, episode: int) -> Violation | None:
 
         if episode >= self.season.double_match_pair_known:
             # lefts that partner with double_match_pair
             dml = [l for (l, r) in sol if r in self.season.double_match_pair]
             if len(dml) > 1 and dml[0] != dml[1]:
-                return "double_match_pair_not_same_match"
+                return Violation.DOUBLE_MATCH_PAIR_DO_NOT_HAVE_SAME_MATCH
 
             sol_dict = dict_rep(sol)
 
@@ -51,7 +52,7 @@ class DoubleMatchPairSolver(TupleSolver):
                 if len(mult_rights) == 2 and set(self.season.double_match_pair) != set(
                     mult_rights
                 ):
-                    return "double_match_lefts_not_double_match_pair"
+                    return Violation.DOUBLE_MATCH_LEFTS_NOT_DOUBLE_MATCH_PAIR
 
         return super().find_multiple_match_violation(sol, episode)
 
@@ -106,25 +107,25 @@ class DoubleMatchPairBitMaskSolver(BitMaskSolver):
     @override
     def no_match_reason(
         self, l: Person, r: Person, episode: int, include_night: bool
-    ) -> str | None:
+    ) -> NoMatchReason | None:
 
         codec = self.codec
         knowledge = self.knowledge_cache[(episode, include_night)]
         if episode >= self.season.double_match_pair_known:
             if knowledge.mb_no_matches_mask & codec.bit(l, r):
-                return "matchbox_false"
+                return NoMatchReason.MATCHBOX_FALSE
 
             mask = codec.encode({(l, dmr) for dmr in self.season.double_match_pair})
             if (
                 r in self.season.double_match_pair
                 and mask & knowledge.mb_no_matches_mask
             ):
-                return "matchbox_false_for_double_match_pair"
+                return NoMatchReason.MATCHBOX_FALSE_FOR_DOUBLE_MATCH_PAIR
 
         return super().no_match_reason(l, r, episode, include_night)
 
     @override
-    def find_multiple_match_violation(self, sol: Mask, episode: int) -> str | None:
+    def find_multiple_match_violation(self, sol: Mask, episode: int) -> Violation | None:
 
         codec = self.codec
 
@@ -136,7 +137,7 @@ class DoubleMatchPairBitMaskSolver(BitMaskSolver):
                 sol, dmr2
             )
             if dml.bit_count() > 1 and codec.lefts_in(m=dml).bit_count() > 1:
-                return "double_match_pair_not_same_match"
+                return Violation.DOUBLE_MATCH_PAIR_DO_NOT_HAVE_SAME_MATCH
 
             # lefts with multiple partners
             mult_lefts = codec.multi_lefts(
@@ -150,7 +151,7 @@ class DoubleMatchPairBitMaskSolver(BitMaskSolver):
                 if mult_rights.bit_count() == 2 and mult_rights != (
                     (1 << dmr1) | (1 << dmr2)
                 ):
-                    return "double_match_lefts_not_double_match_pair"
+                    return Violation.DOUBLE_MATCH_LEFTS_NOT_DOUBLE_MATCH_PAIR
 
         return super().find_multiple_match_violation(sol, episode)
 

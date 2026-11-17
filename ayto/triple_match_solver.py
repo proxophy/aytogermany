@@ -1,6 +1,7 @@
 from collections import Counter
 from typing import override
 
+from ayto.base import NoMatchReason
 from ayto.bitmask_solver import BitMaskSolver
 from ayto.codec import RightBits
 
@@ -19,7 +20,7 @@ class TripleMatchSolver(TupleSolver):
     @override
     def no_match_reason(
         self, l: Person, r: Person, episode: int, include_night: bool
-    ) -> str | None:
+    ) -> NoMatchReason | None:
         """Return whether a pair is known not to be a match up to `end`"""
         knowledge = self.knowledge_cache[(episode, include_night)]
         kpm = knowledge.perfect_matches
@@ -32,10 +33,18 @@ class TripleMatchSolver(TupleSolver):
             # for x perfect matches
             mmls = [p for p in pm_lefts if counts[p] > 1]
             # Normalo 24
-            if len(mmls) < 3 and l in mmls and r not in pm_rights:
+            if (
+                len(mmls) < 3
+                and l in mmls
+                and r not in pm_rights
+                and not (
+                    (l, r) in knowledge.mb_no_matches
+                    or (l, r) in knowledge.bp_no_matches
+                )
+            ):
                 # we only know two out of three of the multiple matches in Normalo 2024 at episode 10
                 return None
-            return "triple_match_already_exists"
+            return NoMatchReason.CANNOT_BE_IN_TRIPLE_MATCH
 
         return super().no_match_reason(l, r, episode, include_night)
 
@@ -114,7 +123,7 @@ class TripleMatchBitMaskSolver(BitMaskSolver):
     @override
     def no_match_reason(
         self, l: Person, r: Person, episode: int, include_night: bool
-    ) -> str | None:
+    ) -> NoMatchReason | None:
         """Return whether a pair is known not to be a match up to `end`"""
         knowledge = self.knowledge_cache[(episode, include_night)]
         codec = self.codec
@@ -135,7 +144,7 @@ class TripleMatchBitMaskSolver(BitMaskSolver):
             ):
                 # we only know two out of three of the multiple matches in Normalo 2024 at end of episode 4
                 return None
-            return "triple_match_already_exists"
+            return NoMatchReason.CANNOT_BE_IN_TRIPLE_MATCH
 
         return super().no_match_reason(l, r, episode, include_night)
 

@@ -1,6 +1,7 @@
 from collections import Counter
 from typing import override
 
+from ayto.base import Violation
 from ayto.bitmask_solver import BitMaskSolver, Partial
 from ayto.codec import iter_bits
 
@@ -18,7 +19,9 @@ class TwoDoubleMatchesSolver(TupleSolver):
             )
 
     @override
-    def find_multiple_match_violation(self, sol: PairSet, episode: int) -> str | None:
+    def find_multiple_match_violation(
+        self, sol: PairSet, episode: int
+    ) -> Violation | None:
         # VIP2025 allows two double matches, one of those must include mm_person
         knowledge = self.knowledge_cache[(episode, True)]
         mm_person = knowledge.mm
@@ -33,18 +36,20 @@ class TwoDoubleMatchesSolver(TupleSolver):
             e for l in mult_lefts for e in sol_dict[l]
         ]  # rights part of multi match
 
-        # if mm_person is seated and we have two double matches, he must be part of one of them
-        if (
-            mm_person in seated_rights
-            and len(mult_lefts) == 2
-            and mm_person not in mult_rights
+        if len(mult_lefts) > 2:
+            return Violation.TOO_MANY_MULTIPLE_MATCHES
+
+        # if have two double matches, mm must be part of one of them
+        if len(mult_lefts) == 2 and (
+            (mm_person in seated_rights and mm_person not in mult_rights)
+            or mm_person not in seated_rights
         ):
-            return "mm_person_not_in_double_match"
+            return Violation.MM_NOT_IN_MULTIPLE_MATCH
 
         r_counter = Counter(seated_lefts)
         # no triple matches
         if any(v > 2 for v in r_counter.values()):
-            return "multiple_match_too_big"
+            return Violation.MULTIPLE_MATCH_TOO_BIG
         return None
 
     @override
@@ -139,7 +144,9 @@ class TwoDoubleMatchesBitMaskSolver(BitMaskSolver):
             )
 
     @override
-    def find_multiple_match_violation(self, sol: Mask, episode: int) -> str | None:
+    def find_multiple_match_violation(
+        self, sol: Mask, episode: int
+    ) -> Violation | None:
         codec = self.codec
         R, full = codec.R, codec.full_row
 
@@ -154,12 +161,18 @@ class TwoDoubleMatchesBitMaskSolver(BitMaskSolver):
                 n_multi += 1
                 mult_rights |= row
                 has_triple |= row.bit_count() > 2
+        if n_multi > 2:
+            return Violation.TOO_MANY_MULTIPLE_MATCHES
 
         mm_person = self.knowledge_cache[(episode, True)].mm_mask
-        if mm_person & seated_rights and n_multi == 2 and not (mm_person & mult_rights):
-            return "mm_person_not_in_double_match"
+        if n_multi == 2 and (
+            mm_person & seated_rights
+            and not (mm_person & mult_rights)
+            or not mm_person & seated_rights
+        ):
+            return Violation.MM_NOT_IN_MULTIPLE_MATCH
         if has_triple:
-            return "multiple_match_too_big"
+            return Violation.MULTIPLE_MATCH_TOO_BIG
         return None
 
     @override

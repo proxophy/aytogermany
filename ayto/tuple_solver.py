@@ -1,8 +1,7 @@
 from collections.abc import Iterable
 from typing import override
 
-from ayto.base import Solver
-
+from .base import NoMatchReason, Solver, Violation
 from .season import *
 
 
@@ -26,7 +25,7 @@ def partial_sols(
 
 
 class TupleSolver(
-    Solver[Solution],
+    Solver[Solution, set[Person]],
 ):
     """Solver for a typical AYTO season with one double match.
     Season-specific solvers inherit from this solver and can override its logic where necessary.
@@ -53,7 +52,7 @@ class TupleSolver(
     @override
     def no_match_reason(
         self, l: Person, r: Person, episode: int, include_night: bool
-    ) -> str | None:
+    ) -> NoMatchReason | None:
         knowledge = self.knowledge_cache[(episode, include_night)]
         mb_no_matches = knowledge.mb_no_matches
         kpm = knowledge.perfect_matches
@@ -63,11 +62,11 @@ class TupleSolver(
 
         # matchbox result was false
         if (l, r) in mb_no_matches:
-            return "matchbox_false"
+            return NoMatchReason.MATCHBOX_FALSE
 
         # check for black out nights
         if (l, r) in knowledge.bp_no_matches:
-            return "sitting_in_blackout_night"
+            return NoMatchReason.SITTING_IN_BLACKOUT_NIGHT
 
         # one is part of known perfect match
         # consider multiple seated lefts
@@ -76,7 +75,7 @@ class TupleSolver(
         if (l, r) not in kpm and (l in pm_lefts or r in pm_rights):
             # handle special case: for normalo2026, Alicia's match with Noel doesn't get revealed, despite Noel finding his match during the show
             if self.season.matchbox_reveals_dm:
-                return "member_has_partner_already"
+                return NoMatchReason.MEMBER_HAS_PARTNER_ALREADY
             else:
                 # l cannot be part of multiple match
                 if (
@@ -84,26 +83,26 @@ class TupleSolver(
                     and r != mm_person
                     and self.no_match(l, mm_person, episode, include_night)
                 ):
-                    return "l_cannot_have_double_match"
+                    return NoMatchReason.L_CANNOT_HAVE_SECOND_MATCH  # todo: rename this
                 elif episode < self.season.mm_known_from_week:
-                    return "cannot_be_in_double_match"
+                    return NoMatchReason.L_CANNOT_HAVE_SECOND_MATCH
 
         return None
 
     @override
-    def find_format_violation(self, sol: Solution | set[Pair]) -> str | None:
+    def find_format_violation(self, sol: Solution | set[Pair]) -> Violation | None:
         if len(sol) > self.season.num_matches:
-            return "too_many_matches"
+            return Violation.TOO_MANY_MATCHES
 
         if not self.season.double_match_for_right and has_dm_for_right(sol):
-            return "double_match_for_right"
+            return Violation.DOUBLE_MATCH_FOR_RIGHT
 
         return None
 
     @override
     def find_violation(
         self, sol: PairSet, episode: int, include_night: bool
-    ) -> str | None:
+    ) -> Violation | None:
         knowledge = self.knowledge_cache[(episode, include_night)]
 
         if (format_check := self.find_format_violation(sol)) is not None:
@@ -112,7 +111,7 @@ class TupleSolver(
         # no known no matches
         for pair in sol:
             if self.no_match(*pair, episode, include_night):
-                return "known_no_match"
+                return Violation.CONTAINS_KNOWN_NO_MATCH
 
         complete: bool = len(sol) == self.season.num_matches
 
@@ -129,14 +128,16 @@ class TupleSolver(
             sol_lights: int = len(sol & night.pairs)
 
             if sol_lights > night.lights:
-                return "too_many_lights_in_night"
+                return Violation.TOO_MANY_LIGHTS_IN_NIGHT
             elif sol_lights < night.lights and complete:
-                return "not_enough_lights_in_night"
+                return Violation.NOT_ENOUGH_LIGHTS_IN_NIGHT
 
         return None
 
     @override
-    def find_multiple_match_violation(self, sol: PairSet, episode: int) -> str | None:
+    def find_multiple_match_violation(
+        self, sol: PairSet, episode: int
+    ) -> Violation | None:
         sol_dict = dict_rep(sol)
         # lefts with multiple partners
         mult_lefts = [l for l, rs in sol_dict.items() if len(rs) > 1]
@@ -144,24 +145,27 @@ class TupleSolver(
         knowledge = self.knowledge_cache[(episode, True)]
         mm_person = knowledge.mm
 
+        if not self.season.double_match_for_right and has_dm_for_right(sol):
+            return Violation.DOUBLE_MATCH_FOR_RIGHT
+
         if len(mult_lefts) >= 2:
-            return "too_many_double_matches"
+            return Violation.TOO_MANY_MULTIPLE_MATCHES
 
         elif len(mult_lefts) == 1:
             mult_left = mult_lefts[0]
             mult_rights = sol_dict[mult_left]
             if len(mult_rights) > self.season.max_mm_size:
-                return "multiple_match_too_big"
+                return Violation.MULTIPLE_MATCH_TOO_BIG
 
             if mm_person is not None:  # mm_person is not None
                 _, seated_rights = zip(*sol)
 
-                if mm_person not in sol_dict[mult_left]:
-                    if len(mult_rights) == self.season.max_mm_size:
-                        return "mm_not_in_complete_multiple_match"
-                    elif mm_person in seated_rights:
-                        # only used in normalo2024
-                        return "multiple_match_not_possible_without_mm"
+                # assumes there is one multiple match, case of two double matches overrides this
+                if mm_person not in sol_dict[mult_left] and (
+                    mm_person in seated_rights
+                    or len(mult_rights) == self.season.max_mm_size
+                ):
+                    return Violation.MM_NOT_IN_MULTIPLE_MATCH
 
         return None
 

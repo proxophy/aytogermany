@@ -2,6 +2,7 @@ import functools
 import itertools
 from abc import ABC, abstractmethod
 from collections.abc import Hashable, Iterable
+from enum import StrEnum, auto
 from typing import Any, Protocol, Self
 
 # from line_profiler import profile
@@ -24,12 +25,41 @@ ALL_SEASONS = [
 ]
 
 
+class NoMatchReason(StrEnum):
+    MATCHBOX_FALSE = auto()
+    SITTING_IN_BLACKOUT_NIGHT = auto()
+    MEMBER_HAS_PARTNER_ALREADY = auto()
+    L_CANNOT_HAVE_SECOND_MATCH = auto()
+    MATCHBOX_FALSE_FOR_DOUBLE_MATCH_PAIR = auto()
+    CANNOT_BE_IN_TRIPLE_MATCH = auto()
+
+
+class Violation(StrEnum):
+    # format violations
+    TOO_MANY_MATCHES = auto()
+    DOUBLE_MATCH_FOR_RIGHT = auto()
+    # night violation
+    TOO_MANY_LIGHTS_IN_NIGHT = auto()
+    NOT_ENOUGH_LIGHTS_IN_NIGHT = auto()
+    # no match violation (matchboxes, black out nights and mm logic)
+    CONTAINS_KNOWN_NO_MATCH = auto()
+    # multiple match logic violation
+    TOO_MANY_MULTIPLE_MATCHES = auto()
+    MULTIPLE_MATCH_TOO_BIG = auto()
+    MM_NOT_IN_MULTIPLE_MATCH = auto()
+    MORE_THAN_ONE_DOUBLE_RIGHT_MATCH = auto()
+    EXTRA_LEFT_NOT_IN_DOUBLE_RIGHT_MATCH = auto()
+    DOUBLE_MATCHES_CANNOT_CROSS = auto()
+    DOUBLE_MATCH_PAIR_DO_NOT_HAVE_SAME_MATCH = auto()
+    DOUBLE_MATCH_LEFTS_NOT_DOUBLE_MATCH_PAIR = auto()
+
+
 class SolutionType(Hashable, Protocol):
     def __or__(self, other: Self, /) -> Self: ...
     def __and__(self, other: Self, /) -> Self: ...
 
 
-class Solver[SolType: SolutionType](ABC):
+class Solver[SolType: SolutionType, CandList](ABC):
     """SolutionType: how a (partial) solution is stored: frozenset[Pair] or an int mask."""
 
     def __init__(self, season: Season) -> None:
@@ -45,7 +75,7 @@ class Solver[SolType: SolutionType](ABC):
     @abstractmethod
     def no_match_reason(
         self, l: int, r: int, episode: int, include_night: bool
-    ) -> str | None:
+    ) -> NoMatchReason | None:
         """Return the reason why `(l, r)` is known not to be a match up to a given episode"""
 
     def str_no_match_reason(
@@ -65,17 +95,19 @@ class Solver[SolType: SolutionType](ABC):
         return cached
 
     @abstractmethod
-    def find_format_violation(self, sol: SolType) -> str | None:
+    def find_format_violation(self, sol: SolType) -> Violation | None:
         """Return the first format violation found in the solution, if any"""
 
     @abstractmethod
-    def find_multiple_match_violation(self, sol: SolType, episode: int) -> str | None:
+    def find_multiple_match_violation(
+        self, sol: SolType, episode: int
+    ) -> Violation | None:
         """Return the first multiple-match violation found in the solution, if any"""
 
     @abstractmethod
     def find_violation(
         self, sol: SolType, episode: int, include_night: bool
-    ) -> str | None:
+    ) -> Violation | None:
         """Return the first logic violation found in the solution, if any"""
 
     def solution_possible(
@@ -191,11 +223,7 @@ class Solver[SolType: SolutionType](ABC):
 
     @abstractmethod
     def merge_mm_in_solution(
-        self,
-        sol: SolType,
-        partial_solutions: list[
-            tuple[SolType, Any]
-        ],  # pyright: ignore[reportExplicitAny]
+        self, sol: SolType, partial_solutions: list[tuple[SolType, CandList]]
     ) -> list[SolType]:
         """Merge solution with partial solutions to complete solution when the multiple match(es) are present the solution, given `episode`(inclusive)"""
 
@@ -203,9 +231,7 @@ class Solver[SolType: SolutionType](ABC):
     def merge_mm_not_in_solution(
         self,
         sol: SolType,
-        partial_solutions: list[
-            tuple[SolType, Any]
-        ],  # pyright: ignore[reportExplicitAny]
+        partial_solutions: list[tuple[SolType, CandList]],
         episode: int,
         include_night: bool,
     ) -> list[SolType]:
