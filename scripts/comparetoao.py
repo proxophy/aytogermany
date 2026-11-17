@@ -1,7 +1,9 @@
 import json
 from collections import Counter
 
-from ayto import Solution, TupleSolver, get_solver
+from ayto.season import Solution
+from ayto.tuple_solver import TupleSolver
+from ayto.utils import get_solver
 
 # pyright: standard
 

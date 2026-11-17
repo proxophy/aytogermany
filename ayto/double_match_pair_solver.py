@@ -2,9 +2,9 @@ from typing import override
 
 from ayto.base import NoMatchReason, Violation
 from ayto.bitmask_solver import BitMaskSolver
-from ayto.season import Pair
+from ayto.codec import Mask, RightBits
+from ayto.season import Pair, PairSet, Person, Season, Solution, dict_rep
 
-from .season import *
 from .tuple_solver import TupleSolver
 
 

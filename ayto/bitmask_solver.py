@@ -50,6 +50,10 @@ class BitMaskSolver(Solver[Mask, RightBits]):
         return self.codec.encode(pairs)
 
     @override
+    def to_pairs(self, sol: Mask) -> frozenset[Pair]:
+        return self.codec.decode(sol)
+
+    @override
     def no_match_reason(
         self, l: int, r: int, episode: int, include_night: bool
     ) -> NoMatchReason | None:

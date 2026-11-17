@@ -207,6 +207,16 @@ def get_solver(sn: str, bitmask: bool = False) -> TupleSolver | BitMaskSolver:
     season = get_season(sn)
     return get_solver_type(season, bitmask)(season)
 
+@overload
+def get_solver_from_season(season: Season, bitmask: Literal[True]) -> BitMaskSolver: ...
+
+
+@overload
+def get_solver_from_season(season: Season, bitmask: Literal[False] = False) -> TupleSolver: ...
+
+
+def get_solver_from_season(season: Season, bitmask: bool = False) -> TupleSolver | BitMaskSolver:
+    return get_solver_type(season, bitmask)(season)
 
 @overload
 def get_solver_type(season: Season, bitmask: Literal[True]) -> type[BitMaskSolver]: ...

@@ -1,8 +1,20 @@
 from collections.abc import Iterable
 from typing import override
 
+from ayto.season import (
+    Knowledge,
+    Pair,
+    PairSet,
+    Person,
+    Season,
+    Solution,
+    dict_rep,
+    get_candidates,
+    has_dm_for_right,
+    has_two_dms,
+)
+
 from .base import NoMatchReason, Solver, Violation
-from .season import *
 
 
 def partial_sols(
@@ -48,6 +60,10 @@ class TupleSolver(
     @override
     def from_pairs(self, pairs: Iterable[Pair]) -> Solution:
         return Solution(pairs)
+
+    @override
+    def to_pairs(self, sol: Solution) -> frozenset[Pair]:
+        return sol
 
     @override
     def no_match_reason(

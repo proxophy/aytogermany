@@ -59,7 +59,7 @@ class SolutionType(Hashable, Protocol):
     def __and__(self, other: Self, /) -> Self: ...
 
 
-class Solver[SolType: SolutionType, CandList](ABC):
+class Solver[S: SolutionType, CandList](ABC):
     """SolutionType: how a (partial) solution is stored: frozenset[Pair] or an int mask."""
 
     def __init__(self, season: Season) -> None:
@@ -69,7 +69,11 @@ class Solver[SolType: SolutionType, CandList](ABC):
         self.knowledge_cache: dict[tuple[int, bool], Knowledge] = {}
 
     @abstractmethod
-    def from_pairs(self, pairs: Iterable[Pair]) -> SolType:
+    def from_pairs(self, pairs: Iterable[Pair]) -> S:
+        pass
+
+    @abstractmethod
+    def to_pairs(self, sol: S) -> frozenset[Pair]:
         pass
 
     @abstractmethod
@@ -95,24 +99,20 @@ class Solver[SolType: SolutionType, CandList](ABC):
         return cached
 
     @abstractmethod
-    def find_format_violation(self, sol: SolType) -> Violation | None:
+    def find_format_violation(self, sol: S) -> Violation | None:
         """Return the first format violation found in the solution, if any"""
 
     @abstractmethod
-    def find_multiple_match_violation(
-        self, sol: SolType, episode: int
-    ) -> Violation | None:
+    def find_multiple_match_violation(self, sol: S, episode: int) -> Violation | None:
         """Return the first multiple-match violation found in the solution, if any"""
 
     @abstractmethod
     def find_violation(
-        self, sol: SolType, episode: int, include_night: bool
+        self, sol: S, episode: int, include_night: bool
     ) -> Violation | None:
         """Return the first logic violation found in the solution, if any"""
 
-    def solution_possible(
-        self, sol: SolType, episode: int, include_night: bool
-    ) -> bool:
+    def solution_possible(self, sol: S, episode: int, include_night: bool) -> bool:
         """Check whether the solution is feasible up to a given episode
 
         Args:
@@ -127,14 +127,14 @@ class Solver[SolType: SolutionType, CandList](ABC):
 
     def combine_possible_solutions(
         self,
-        solutions1: list[SolType],
-        solutions2: list[SolType],
+        solutions1: list[S],
+        solutions2: list[S],
         episode: int,
         include_night: bool,
-    ) -> list[SolType]:
+    ) -> list[S]:
         """Combines solutions from two lists and keeps feasible combinations, given `episode`(inclusive) and `include_night`"""
 
-        m_asm: set[SolType] = set()
+        m_asm: set[S] = set()
         for s1, s2 in itertools.product(solutions1, solutions2):
             s3 = s1 | s2
             if self.solution_possible(s3, episode, include_night):
@@ -142,9 +142,7 @@ class Solver[SolType: SolutionType, CandList](ABC):
 
         return list(m_asm)
 
-    def generate_partial_solutions(
-        self, episode: int, include_night: bool
-    ) -> list[SolType]:
+    def generate_partial_solutions(self, episode: int, include_night: bool) -> list[S]:
         """Generate partial solutions from the matching night.
 
         For each matching night, the required number of matching pairs is selected and the resulting partial solutions are combined.
@@ -165,7 +163,7 @@ class Solver[SolType: SolutionType, CandList](ABC):
         if len(nights) == 0:
             return [self.from_pairs(kpm)]
 
-        pairs_per_night: list[list[SolType]] = []
+        pairs_per_night: list[list[S]] = []
         for i, night in enumerate(nights):
             invalid_pairs = list(
                 filter(
@@ -189,7 +187,7 @@ class Solver[SolType: SolutionType, CandList](ABC):
 
             pairs_per_night.append(combinations)
 
-        merged_solutions: list[SolType] = functools.reduce(
+        merged_solutions: list[S] = functools.reduce(
             lambda s1, s2: self.combine_possible_solutions(
                 s1, s2, episode, include_night
             ),
@@ -200,14 +198,14 @@ class Solver[SolType: SolutionType, CandList](ABC):
 
     @abstractmethod
     def possible_matches_for_solution(
-        self, sol: SolType, episode: int, include_night: bool
+        self, sol: S, episode: int, include_night: bool
     ) -> dict[int, Any]:  # pyright: ignore[reportExplicitAny]
         """Given a solution, return a dict for the possible matches for the lefts that are not in the solution, given `episode`(inclusive) and `include_night`"""
 
     @abstractmethod
     def generate_complete_solutions(
-        self, sol: SolType, episode: int, include_night: bool
-    ) -> list[SolType]:
+        self, sol: S, episode: int, include_night: bool
+    ) -> list[S]:
         """Generate complete solutions by extending a partial solution.
 
         Args:
@@ -223,23 +221,23 @@ class Solver[SolType: SolutionType, CandList](ABC):
 
     @abstractmethod
     def merge_mm_in_solution(
-        self, sol: SolType, partial_solutions: list[tuple[SolType, CandList]]
-    ) -> list[SolType]:
+        self, sol: S, partial_solutions: list[tuple[S, CandList]]
+    ) -> list[S]:
         """Merge solution with partial solutions to complete solution when the multiple match(es) are present the solution, given `episode`(inclusive)"""
 
     @abstractmethod
     def merge_mm_not_in_solution(
         self,
-        sol: SolType,
-        partial_solutions: list[tuple[SolType, CandList]],
+        sol: S,
+        partial_solutions: list[tuple[S, CandList]],
         episode: int,
         include_night: bool,
-    ) -> list[SolType]:
+    ) -> list[S]:
         """Merge solution with partial solutions to complete solutions when the multiple match(es) are not present the solution, given `episode`(inclusive) and `include_night`"""
 
     def solve(
         self, episode: int, include_night: bool = True, validate: bool = False
-    ) -> list[SolType]:
+    ) -> list[S]:
         """Solve season and return all possible solutions
 
         Args:
@@ -254,7 +252,7 @@ class Solver[SolType: SolutionType, CandList](ABC):
         # reduction of the search space by generating partial solutions from nights
         partial_solutions = self.generate_partial_solutions(episode, include_night)
 
-        solutions_unfiltered: list[SolType] = []
+        solutions_unfiltered: list[S] = []
         for g in partial_solutions:
             sols_g = self.generate_complete_solutions(g, episode, include_night)
             solutions_unfiltered.extend(sols_g)

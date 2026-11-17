@@ -3,9 +3,9 @@ from typing import override
 
 from ayto.base import NoMatchReason
 from ayto.bitmask_solver import BitMaskSolver
-from ayto.codec import RightBits
+from ayto.codec import Mask, RightBits
+from ayto.season import Person, Season, Solution
 
-from .season import *
 from .tuple_solver import TupleSolver
 
 

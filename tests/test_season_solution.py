@@ -1,6 +1,6 @@
 import unittest
 
-from ayto.utils import get_solver
+from ayto import get_solver
 
 
 class TestSeasonSolution(unittest.TestCase):
@@ -60,16 +60,17 @@ class TestSeasonSolution(unittest.TestCase):
         solver = get_solver(sn)
         solution = solver.season.solution
         self.assertIsNotNone(solution, f"No solution found for season {sn}")
-        if solution:
-            self.assertEqual(len(solution), solver.season.num_matches)
-            solpos = solver.find_violation(solution, 10, True)
-            self.assertIsNone(solpos, solpos)
+        self.assertEqual(len(solution), solver.season.num_matches)
+        solpos = solver.find_violation(solution, solver.season.num_weeks, True)
+        self.assertIsNone(solpos, solpos)
 
     def check_season_with_bitmask(self, sn: str):
         solver = get_solver(sn, True)
+        self.assertIsNotNone(
+            solver.season.solution, f"No solution found for season {sn}"
+        )
         solution = solver.codec.encode(solver.season.solution)
-        self.assertIsNotNone(solution, f"No solution found for season {sn}")
-        if solution:
-            self.assertEqual(solution.bit_count(), solver.season.num_matches)
-            solpos = solver.find_violation(solution, 10, True)
-            self.assertIsNone(solpos, solpos)
+
+        self.assertEqual(solution.bit_count(), solver.season.num_matches)
+        solpos = solver.find_violation(solution, solver.season.num_weeks, True)
+        self.assertIsNone(solpos, solpos)

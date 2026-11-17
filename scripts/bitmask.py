@@ -2,8 +2,8 @@ import itertools
 import sys  # pyright: ignore[reportUnusedImport]  # noqa: F401
 import timeit
 
-from ayto import *
 from ayto.codec import Codec, Mask
+from ayto.utils import get_season, get_solver
 
 
 def compare_no_matches():

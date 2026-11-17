@@ -2,10 +2,18 @@ from typing import override
 
 from ayto.base import Violation
 from ayto.bitmask_solver import BitMaskSolver, partial_masks
-from ayto.codec import RightBits, iter_bits
-
-from .season import *
-from .tuple_solver import TupleSolver, partial_sols
+from ayto.codec import Mask, RightBits, iter_bits
+from ayto.season import (
+    PairSet,
+    Person,
+    Season,
+    Solution,
+    dict_rep,
+    get_candidates,
+    mm_left,
+    mm_left_partners,
+)
+from ayto.tuple_solver import TupleSolver, partial_sols
 
 
 class DoubleMatchForRightSolver(TupleSolver):
@@ -169,8 +177,6 @@ class DoubleMatchForRightBitMaskSolver(BitMaskSolver):
             # remove pair with self.sm if necessary
             el_match = codec.partners_of_left(sol, extra_left)
 
-            # print(smmatches)
-            # isol = set(sol)
             sol = sol & ~codec.row[extra_left]
         else:
             sitting_no_matches = knowledge.get_sitting_no_matches_mask(sol)

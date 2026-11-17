@@ -1,3 +1,4 @@
+# pyright: standard
 import json
 import os
 
@@ -33,7 +34,7 @@ def nights_to_df(sn: str):
     for i, night in enumerate(season.nights):
         nd: dict[str, int | str] = {"Week": i + 1}
         for l, r in night.pairs:
-            nd[l] = r
+            nd[season.decode_left(l)] = season.decode_right(r)
         nd["Lights"] = night.lights
         data.append(nd)
 

@@ -1,8 +1,15 @@
 import random
 import string
 
-from ayto import Matchboxes, Night, Season, Solution, TupleSolver
-from ayto.season import matchboxes_from_list, mm_left
+from ayto.season import (
+    Matchboxes,
+    Night,
+    Season,
+    Solution,
+    matchboxes_from_list,
+    mm_left,
+)
+from ayto.tuple_solver import TupleSolver
 
 # pyright: standard
 
@@ -182,15 +189,15 @@ def check_generated_season(n: int = 5, with_dm: bool = True):
     for s in sols:
         if not solver.solution_possible(s, n - 1, True):
             print(season)
-            assert False, (
-                f"solution in sols not possible {solver.solution_possible(s, n - 1, True)}"
-            )
+            assert (
+                False
+            ), f"solution in sols not possible {solver.solution_possible(s, n - 1, True)}"
 
     if len(sols) != len(solver.solve(n - 1)):
         print(season)
-        assert False, (
-            f"len(sols) = {len(sols)} != {len(solver.solve(n - 1))} = len(solver.solve(n - 1))"
-        )
+        assert (
+            False
+        ), f"len(sols) = {len(sols)} != {len(solver.solve(n - 1))} = len(solver.solve(n - 1))"
 
     if not solver.solution_possible(sols[0], n - 1, True):
         print(season)

@@ -8,7 +8,7 @@ from ayto.codec import Codec, Mask, RightBits
 Person = int
 Pair = tuple[Person, Person]
 Solution = frozenset[Pair]
-PairSet = Solution | set[Pair]
+type PairSet = Solution | set[Pair]
 
 # class Solution(frozenset[Pair]):
 MATCH_MODELS = [

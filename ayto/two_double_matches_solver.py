@@ -3,9 +3,17 @@ from typing import override
 
 from ayto.base import Violation
 from ayto.bitmask_solver import BitMaskSolver, Partial
-from ayto.codec import iter_bits
+from ayto.codec import Mask, RightBits, iter_bits
+from ayto.season import (
+    PairSet,
+    Person,
+    Season,
+    Solution,
+    dict_rep,
+    get_candidates,
+    mm_left,
+)
 
-from .season import *
 from .tuple_solver import TupleSolver
 
 
@@ -64,7 +72,6 @@ class TwoDoubleMatchesSolver(TupleSolver):
         mm_person = knowledge.mm
 
         sitting_no_matches = knowledge.get_sitting_no_matches(sol)
-        # print("TwoDoubleMatchesSolver.merge_mm_not_in_solution", len(partial_solutions))
         addable_lefts = {
             r: [
                 l
