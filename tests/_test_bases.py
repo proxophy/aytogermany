@@ -3,7 +3,8 @@ from typing import Any
 
 import pandas as pd
 
-from ayto import NoMatchReason, Season, SolutionType, Solver, Violation
+from ayto import NoMatchReason, Season, Violation
+from ayto.base import SolutionType, Solver
 from tests.fixtures import (
     toy_season,
     toy_season2,
@@ -265,8 +266,8 @@ class SolverLogicTestsBase[S: SolutionType](unittest.TestCase):
         solver = self.make_solver(toy_season_with_double_match_pair)
         sol0 = solver.from_pairs({(0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (0, 5)})
         self.assertIsNone(solver.find_multiple_match_violation(sol0, 2))
-        # double match pair indices: 0,5
-        sol1 = solver.from_pairs({(3, 3), (3, 4)})
+        # double match pair indices: (0,5), dm: 5
+        sol1 = solver.from_pairs({(3, 3), (3, 5)})
         self.assertEqual(
             solver.find_multiple_match_violation(sol1, 3),
             Violation.DOUBLE_MATCH_LEFTS_NOT_DOUBLE_MATCH_PAIR,
@@ -279,7 +280,7 @@ class SolverLogicTestsBase[S: SolutionType](unittest.TestCase):
         sol3 = solver.from_pairs({(0, 0), (0, 1), (1, 5)})
         self.assertEqual(
             solver.find_multiple_match_violation(sol3, 3),
-            Violation.DOUBLE_MATCH_PAIR_DO_NOT_HAVE_SAME_MATCH,
+            Violation.MM_NOT_IN_MULTIPLE_MATCH,
         )
 
     def test_check_multiple_match_logic_with_triple_match(self):
@@ -361,6 +362,11 @@ class SolverLogicTestsBase[S: SolutionType](unittest.TestCase):
         self.assertEqual(
             solver.find_multiple_match_violation(sol4, 1),
             Violation.DOUBLE_MATCHES_CANNOT_CROSS,
+        )
+        sol5 = solver.from_pairs({(0, 0), (1, 0), (5, 0)})
+        self.assertEqual(
+            solver.find_multiple_match_violation(sol5, 1),
+            Violation.RIGHT_MULTIPLE_MATCH_TOO_BIG,
         )
 
     def test_solve_with_dm(self):

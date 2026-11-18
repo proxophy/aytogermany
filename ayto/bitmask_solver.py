@@ -123,7 +123,7 @@ class BitMaskSolver(Solver[Mask, RightBits]):
             return Violation.DOUBLE_MATCH_FOR_RIGHT
 
         if mult_lefts.bit_count() >= 2:
-            return Violation.TOO_MANY_MATCHES
+            return Violation.TOO_MANY_MULTIPLE_MATCHES
 
         elif mult_lefts.bit_count() == 1:
             mult_left = codec.members(mult_lefts)[0]

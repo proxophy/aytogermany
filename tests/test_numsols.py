@@ -4,15 +4,13 @@ from typing import Any, override
 
 import tests._test_bases as base
 from ayto import (
-    BitMaskSolver,
-    Mask,
     Season,
     Solution,
-    SolutionType,
-    Solver,
-    TupleSolver,
     get_solver,
 )
+from ayto.base import SolutionType, Solver
+from ayto.bitmask_solver import BitMaskSolver
+from ayto.tuple_solver import TupleSolver
 from tests.fixtures import BITMASK_SOLVERS, TUPLE_SOLVERS
 
 type AnySolver[S: SolutionType] = Solver[S, Any]  # pyright: ignore[reportExplicitAny]
@@ -38,7 +36,7 @@ def _real_bitmask_solver(name: str) -> BitMaskSolver:
     return get_solver(name, True)
 
 
-class TestBitMaskNumSols(base.NumSolTestBase[Mask]):
+class TestBitMaskNumSols(base.NumSolTestBase[int]):
     @override
     def make_solver(self, season: Season) -> BitMaskSolver:
         return BITMASK_SOLVERS[season.match_model](season)

@@ -4,7 +4,8 @@ import os
 
 import pandas as pd
 
-from ayto import ALL_SEASONS, TupleSolver, df_for_probs, get_season, get_solver
+from ayto import ALL_SEASONS, df_for_probs, get_season, get_solver
+from ayto.tuple_solver import TupleSolver
 
 
 def get_stats(solver: TupleSolver, end: int):

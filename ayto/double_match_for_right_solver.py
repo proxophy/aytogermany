@@ -46,6 +46,10 @@ class DoubleMatchForRightSolver(TupleSolver):
         elif len(mutiplers) == 1:
             mmr = mutiplers[0]
             mmr_partners = pdict[mmr]
+            n = len(mmr_partners)
+            if n > 2:
+                return Violation.RIGHT_MULTIPLE_MATCH_TOO_BIG
+
             if self.season.extra_left not in mmr_partners:
                 return Violation.EXTRA_LEFT_NOT_IN_DOUBLE_RIGHT_MATCH
 
@@ -137,7 +141,11 @@ class DoubleMatchForRightBitMaskSolver(BitMaskSolver):
             # multir = multi_rs[0]
             mmr = multi_rs.bit_length() - 1
             mmr_partner = codec.partners_of_right(sol, mmr)
-            if mmr_partner.bit_count() == 2 and not (
+            n = mmr_partner.bit_count()
+            if n > 2:
+                return Violation.RIGHT_MULTIPLE_MATCH_TOO_BIG
+
+            if not (
                 codec.bit(extra_left, mmr) & mmr_partner
             ):
                 return Violation.EXTRA_LEFT_NOT_IN_DOUBLE_RIGHT_MATCH

@@ -3,7 +3,8 @@ import unittest
 from typing import override
 
 import tests._test_bases as base
-from ayto import BitMaskSolver, Season, get_solver
+from ayto import Season, get_solver
+from ayto.bitmask_solver import BitMaskSolver
 from tests.fixtures import BITMASK_SOLVERS
 
 

@@ -1,17 +1,18 @@
 """Shared toy seasons and solver registries for the solver tests."""
 
-from ayto import (
-    BitMaskSolver,
+from ayto import Matchboxes, Night, Season
+from ayto.bitmask_solver import BitMaskSolver
+from ayto.double_match_for_right_solver import (
     DoubleMatchForRightBitMaskSolver,
     DoubleMatchForRightSolver,
+)
+from ayto.double_match_pair_solver import (
     DoubleMatchPairBitMaskSolver,
     DoubleMatchPairSolver,
-    Matchboxes,
-    Night,
-    Season,
-    TripleMatchBitMaskSolver,
-    TripleMatchSolver,
-    TupleSolver,
+)
+from ayto.triple_match_solver import TripleMatchBitMaskSolver, TripleMatchSolver
+from ayto.tuple_solver import TupleSolver
+from ayto.two_double_matches_solver import (
     TwoDoubleMatchesBitMaskSolver,
     TwoDoubleMatchesSolver,
 )

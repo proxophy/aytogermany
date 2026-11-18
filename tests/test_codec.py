@@ -6,7 +6,7 @@ from collections import Counter
 from random import Random
 from typing import override
 
-from ayto import Codec, iter_bits
+from ayto.codec import Codec, iter_bits
 
 SIZES = [(10, 11), (10, 12), (11, 11)]  # (lefts, rights) of the real seasons
 

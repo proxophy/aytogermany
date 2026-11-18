@@ -3,12 +3,8 @@ import unittest
 from typing import override
 
 import tests._test_bases as base
-from ayto import (
-    Season,
-    Solution,
-    TupleSolver,
-    get_solver,
-)
+from ayto import Season, Solution, get_solver
+from ayto.tuple_solver import TupleSolver
 from tests.fixtures import TUPLE_SOLVERS
 
 

@@ -4,7 +4,9 @@ import random
 import unittest
 from itertools import islice
 
-from ayto import BitMaskSolver, Pair, Season, TupleSolver, get_season, get_solver
+from ayto import Pair, Season, get_season, get_solver
+from ayto.bitmask_solver import BitMaskSolver
+from ayto.tuple_solver import TupleSolver
 from tests.fixtures import ALL_TOY_SEASONS, BITMASK_SOLVERS, TUPLE_SOLVERS
 
 type Pairs = frozenset[Pair]
@@ -12,7 +14,7 @@ type Mismatch = tuple[object, ...]
 
 EPISODES = range(6)
 INCLUDE_NIGHT = (False, True)
-POOL_SIZE = 200
+POOL_SIZE = 300
 MAX_REPORTED = 5
 
 
@@ -58,7 +60,7 @@ class TestBackendsAgree(unittest.TestCase):
     def assertNoMismatches(self, mismatches: list[Mismatch]) -> None:
         self.assertFalse(
             mismatches,
-            f"{len(mismatches)} disagreements (tuple, bitmask); first "
+            f"{len(mismatches)} disagreements (tuple, bitmask); first " +
             f"{MAX_REPORTED}: {mismatches[:MAX_REPORTED]}",
         )
 
@@ -95,54 +97,54 @@ class TestBackendsAgree(unittest.TestCase):
         for name, season in ALL_TOY_SEASONS.items():
             with self.subTest(season=name):
                 tup, bit = build_solvers(season)
-                self.test_no_match_mismatches(tup, bit, season)
+                self._test_no_match_mismatches(tup, bit, season)
 
     def test_no_match_reason_agrees_on_real_seasons(self):
         for name in ("normalo2020", "normalo2024", "normalo2026", "vip2023"):
             with self.subTest(season=name):
                 tup, bit = get_solver(name), get_solver(name, True)
-                self.test_no_match_mismatches(tup, bit, tup.season)
+                self._test_no_match_mismatches(tup, bit, tup.season)
 
     def test_normalo2020_nomatches(self):
-        self.test_no_match_reason_agree_on_real_season("normalo2020")
+        self._test_no_match_reason_agree_on_real_season("normalo2020")
 
     def test_normalo2021_nomatches(self):
-        self.test_no_match_reason_agree_on_real_season("normalo2021")
+        self._test_no_match_reason_agree_on_real_season("normalo2021")
 
     def test_normalo2022_nomatches(self):
-        self.test_no_match_reason_agree_on_real_season("normalo2022")
+        self._test_no_match_reason_agree_on_real_season("normalo2022")
 
     def test_normalo2023_nomatches(self):
-        self.test_no_match_reason_agree_on_real_season("normalo2023")
+        self._test_no_match_reason_agree_on_real_season("normalo2023")
 
     def test_normalo2024_nomatches(self):
-        self.test_no_match_reason_agree_on_real_season("normalo2024")
+        self._test_no_match_reason_agree_on_real_season("normalo2024")
 
     def test_normalo2025_nomatches(self):
-        self.test_no_match_reason_agree_on_real_season("normalo2025")
+        self._test_no_match_reason_agree_on_real_season("normalo2025")
 
     def test_normalo2026_nomatches(self):
-        self.test_no_match_reason_agree_on_real_season("normalo2026")
+        self._test_no_match_reason_agree_on_real_season("normalo2026")
 
     def test_vip2021_nomatches(self):
-        self.test_no_match_reason_agree_on_real_season("vip2021")
+        self._test_no_match_reason_agree_on_real_season("vip2021")
 
     def test_vip2022_nomatches(self):
-        self.test_no_match_reason_agree_on_real_season("vip2022")
+        self._test_no_match_reason_agree_on_real_season("vip2022")
 
     def test_vip2023_nomatches(self):
-        self.test_no_match_reason_agree_on_real_season("vip2023")
+        self._test_no_match_reason_agree_on_real_season("vip2023")
 
     def test_vip2024_nomatches(self):
-        self.test_no_match_reason_agree_on_real_season("vip2024")
+        self._test_no_match_reason_agree_on_real_season("vip2024")
 
     def test_vip2025_nomatches(self):
-        self.test_no_match_reason_agree_on_real_season("vip2025")
+        self._test_no_match_reason_agree_on_real_season("vip2025")
 
     def test_vip2026_nomatches(self):
-        self.test_no_match_reason_agree_on_real_season("vip2026")
+        self._test_no_match_reason_agree_on_real_season("vip2026")
 
-    def test_no_match_mismatches(
+    def _test_no_match_mismatches(
         self, tup: TupleSolver, bit: BitMaskSolver, season: Season
     ):
         mismatches: list[Mismatch] = []
@@ -158,11 +160,11 @@ class TestBackendsAgree(unittest.TestCase):
                                 mismatches.append((left, right, episode, icl, t, b))
                     self.assertNoMismatches(mismatches)
 
-    def test_no_match_reason_agree_on_real_season(self, sn: str):
+    def _test_no_match_reason_agree_on_real_season(self, sn: str):
         season = get_season(sn)
         bit: BitMaskSolver = get_solver(sn, True)
         tup: TupleSolver = get_solver(sn, False)
-        self.test_no_match_mismatches(tup, bit, season)
+        self._test_no_match_mismatches(tup, bit, season)
 
     def test_solve_agrees_on_toy_seasons(self):
         for name, season in ALL_TOY_SEASONS.items():
