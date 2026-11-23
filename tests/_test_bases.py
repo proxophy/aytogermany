@@ -32,6 +32,35 @@ class SolverLogicTestsBase[S: SolutionType](unittest.TestCase):
     def real_solver(self, name: str) -> AnySolver[S]:
         raise NotImplementedError
 
+    def test_black_out_nights(self):
+        self.assertEqual(
+            self.real_solver("normalo2020").season.get_black_out_nights(), [3]
+        )
+        self.assertEqual(
+            self.real_solver("normalo2021").season.get_black_out_nights(), [7]
+        )
+        self.assertEqual(
+            self.real_solver("normalo2022").season.get_black_out_nights(), []
+        )
+        self.assertEqual(
+            self.real_solver("normalo2023").season.get_black_out_nights(), [6, 7]
+        )
+        self.assertEqual(
+            self.real_solver("normalo2024").season.get_black_out_nights(), []
+        )
+        self.assertEqual(
+            self.real_solver("normalo2025").season.get_black_out_nights(), []
+        )
+        self.assertEqual(
+            self.real_solver("normalo2026").season.get_black_out_nights(), []
+        )
+        self.assertEqual(self.real_solver("vip2021").season.get_black_out_nights(), [7])
+        self.assertEqual(self.real_solver("vip2022").season.get_black_out_nights(), [])
+        self.assertEqual(self.real_solver("vip2023").season.get_black_out_nights(), [7])
+        self.assertEqual(self.real_solver("vip2024").season.get_black_out_nights(), [3])
+        self.assertEqual(self.real_solver("vip2025").season.get_black_out_nights(), [])
+        self.assertEqual(self.real_solver("vip2026").season.get_black_out_nights(), [])
+
     def test_no_match_matchbox(self):
         self.assertEqual(
             self.real_solver("normalo2020").str_no_match_reason("Ivana", "Mo", 2, True),

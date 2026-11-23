@@ -66,6 +66,10 @@ class TupleSolver(
         return sol
 
     @override
+    def size(self, sol: Solution) -> int:
+        return len(sol)
+
+    @override
     def no_match_reason(
         self, l: Person, r: Person, episode: int, include_night: bool
     ) -> NoMatchReason | None:

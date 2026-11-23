@@ -1,10 +1,10 @@
 from .analysis import (
     SolutionSpace,
     analyze_solutions,
+    candidate_probs,
     df_for_probs,
     matching_night_probs,
     plot_probs,
-    sol_probs,
 )
 from .base import ALL_SEASONS, NoMatchReason, Violation
 from .season import Matchboxes, Night, Pair, Season, Solution
@@ -21,10 +21,10 @@ __all__ = [
     "SolutionSpace",
     "Violation",
     "analyze_solutions",
+    "candidate_probs",
     "df_for_probs",
     "get_season",
     "get_solver",
     "matching_night_probs",
-    "plot_probs",
-    "sol_probs"
+    "plot_probs"
 ]

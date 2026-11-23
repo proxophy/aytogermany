@@ -54,6 +54,10 @@ class BitMaskSolver(Solver[Mask, RightBits]):
         return self.codec.decode(sol)
 
     @override
+    def size(self, sol: Mask) -> int:
+        return sol.bit_count()
+
+    @override
     def no_match_reason(
         self, l: int, r: int, episode: int, include_night: bool
     ) -> NoMatchReason | None:

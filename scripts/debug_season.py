@@ -4,19 +4,16 @@ from collections import Counter
 
 from ayto import (
     ALL_SEASONS,
-    Violation,
+    SolutionSpace,
     get_season,
     get_solver,
 )
+from ayto.analysis import candidate_probs
 from ayto.base import Solver
-from ayto.season import Solution
 from ayto.two_double_matches_solver import TwoDoubleMatchesBitMaskSolver
 from ayto.utils import get_solver_from_season
 from tests.fixtures import (
     ALL_TOY_SEASONS,
-    toy_season,
-    toy_season_with_dm_for_right,
-    toy_season_with_double_match_pair,
 )
 
 # pyright: standard
@@ -112,9 +109,9 @@ def check_all_solutions(match_model: str):
 
 if __name__ == "__main__":
     # uv run python -m scripts.debug_season
-    sn = "vip2022"
-    # season = get_season(sn)
-    season = toy_season_with_dm_for_right
+    sn = "normalo2024"
+    season = get_season(sn)
+    # season = toy_season_with_dm_for_right
     # bmsolver = get_solver(sn, True)
     # codec = bmsolver.codec
     # solver_type = get_solver_type(season)
@@ -123,23 +120,32 @@ if __name__ == "__main__":
     empty = season.as_empty()
     solver_for_empty = get_solver_from_season(empty, True)
 
-    end = 0
+    end = 4
     icl = True
     print(tupsolver.__class__)
     print(bitsolver.__class__)
-    f, ep, sol, viot, viob = (
-        "multiple_match",
-        0,
-        [(0, 0), (0, 1), (1, 0), (2, 4), (3, 0), (4, 3), (5, 2)],
-        "extra_left_not_in_double_right_match",
-        None,
-    )
+    # tsols = tupsolver.solve(end, icl)
+    bsols = bitsolver.solve(end, icl)
+    bsolspace: SolutionSpace = SolutionSpace(bitsolver, bsols)
+    for s in bsols:
+        cand_probs= candidate_probs(bitsolver, bsols, s)
+        print(max(cand_probs), cand_probs.index(max(cand_probs)))
+    # plot_probs(bsolspace)
+        # for i, p in enumerate(cand_probs):
+        #     print(f"{i}: {p*100:0.2f}")
+    # tprobs = tsolspace.get_pair_probs_dict()
 
-    # double right 0 with 3 and 1, 0
-    print(bin(bitsolver.codec.multi_rights(bitsolver.from_pairs(sol))))
-    print(season.extra_left) # 5
-    print("tup", tupsolver.find_multiple_match_violation(Solution(sol), ep))
-    print("bit", bitsolver.find_multiple_match_violation(bitsolver.from_pairs(sol), ep))
+    # for end in range(1, 10):
+    #     psols = bitsolver.generate_partial_solutions(end, icl)
+    #     lens = []
+    #     for ps in psols:
+    #         sols = bitsolver.generate_complete_solutions(ps, end, icl)
+    #         lens.append(len(sols))
+    #     print(
+    #         f"end={end}: {len(psols)} psols, {max(lens)} max, {mean(lens):0.1f} mean, {sum(lens)} sum"
+    #     )
+
+    # plot_probs(tsols)
 
     # for model in MATCH_MODELS:
     #     print(check_all_solutions(model))

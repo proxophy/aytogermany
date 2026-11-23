@@ -1,9 +1,12 @@
-from collections.abc import Iterable
+import time
+from collections.abc import Callable, Iterable
+from functools import wraps
 from typing import Literal, overload
 
 import pandas as pd
 
 from ayto.bitmask_solver import BitMaskSolver
+from ayto.codec import Codec
 from ayto.double_match_for_right_solver import (
     DoubleMatchForRightBitMaskSolver,
     DoubleMatchForRightSolver,
@@ -207,16 +210,22 @@ def get_solver(sn: str, bitmask: bool = False) -> TupleSolver | BitMaskSolver:
     season = get_season(sn)
     return get_solver_type(season, bitmask)(season)
 
+
 @overload
 def get_solver_from_season(season: Season, bitmask: Literal[True]) -> BitMaskSolver: ...
 
 
 @overload
-def get_solver_from_season(season: Season, bitmask: Literal[False] = False) -> TupleSolver: ...
+def get_solver_from_season(
+    season: Season, bitmask: Literal[False] = False
+) -> TupleSolver: ...
 
 
-def get_solver_from_season(season: Season, bitmask: bool = False) -> TupleSolver | BitMaskSolver:
+def get_solver_from_season(
+    season: Season, bitmask: bool = False
+) -> TupleSolver | BitMaskSolver:
     return get_solver_type(season, bitmask)(season)
+
 
 @overload
 def get_solver_type(season: Season, bitmask: Literal[True]) -> type[BitMaskSolver]: ...
@@ -259,3 +268,26 @@ def get_solver_type(
                 return TripleMatchSolver
             case _:
                 raise ValueError(f"Unknown match model {season.match_model} for season")
+
+
+def index_to_episode(i: int) -> int:
+    return 2 * (i + 1) + 1
+
+
+def time_it[**P, R](inner: Callable[P, R]) -> Callable[P, R]:
+    @wraps(inner)
+    def c_inner(*args: P.args, **kwargs: P.kwargs) -> R:
+        start = time.time()
+        res = inner(*args, **kwargs)
+        end = time.time()
+        print(f"=== time needed for {inner.__name__}: {(end - start):0.3f}s ===")
+        return res
+
+    return c_inner
+
+
+def compare_solution_lists(sols1: Iterable[Solution], sols2: Iterable[Solution]) -> bool:
+    """Compares the elements of two solutions lists, assumes every solution is complete and over the same L lefts and R rights"""
+    ls, rs = zip(*next(iter(sols1)))
+    codec = Codec(len(set(ls)), len(list(rs)))
+    return sorted(map(codec.encode, sols1)) == sorted(map(codec.encode, sols2))

@@ -5,7 +5,7 @@ import argparse
 from ayto import (
     Season,
     Solution,
-    TupleSolver,
+    SolutionSpace,
     analyze_solutions,
     get_season,
     get_solver,
@@ -27,20 +27,22 @@ if __name__ == "__main__":
 
     season: Season = get_season(sn)
     sol: Solution = season.solution
-    solver: TupleSolver = get_solver(sn)
+    solver = get_solver(sn)
 
     s = time.time()
     sols = solver.solve(end)
     e = time.time()
 
     print(f"Time taken: {(e - s):.2f} seconds")
+    sol_space = SolutionSpace(solver, sols)
 
     if args.analyze:
-        analyze_solutions(sols)
+       
+        analyze_solutions(sol_space)
     else:
         print(f"sn = {sn}, end = {end}: #solutions = {len(sols)}")
 
     if args.plot:
-        plot_probs(sols)
+        plot_probs(sol_space)
 
     # plot_probs(sols)

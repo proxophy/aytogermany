@@ -78,6 +78,13 @@ class Solver[S: SolutionType, CandList](ABC):
         pass
 
     @abstractmethod
+    def size(self, sol: S) -> int:
+        pass
+
+    def as_empty(self)-> Self:
+        return type(self)(self.season.as_empty())
+
+    @abstractmethod
     def no_match_reason(
         self, l: int, r: int, episode: int, include_night: bool
     ) -> NoMatchReason | None:

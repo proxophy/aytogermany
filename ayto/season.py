@@ -359,23 +359,26 @@ class Season:
         pmls: list[Person] = []
         pms: set[Pair] = set()
         known_pms_per_ep = [0 for _ in range(episode + 1)]
+        sitting_pms_per_ep: list[set[Pair]] = [set() for _ in range(episode + 1)]
         for ep, (l, r), res, bf in self.matchboxes:
             if ep > episode:
                 break
             if ep == episode and not include_night and not bf:
                 break  # skip matchbox after last night
+            sitting_pms_per_ep[ep].update(pms)
             if res and l not in pmls:
                 # add one perfect match per person, ignoring double matches
                 num_known_pms += 1
                 pmls.append(l)
                 pms.add((l, r))
+                sitting_pms_per_ep[ep].add((l,r))
             known_pms_per_ep[ep] = num_known_pms
 
         for ep in range(min(self.num_weeks, stop)):
-            known_pms_per_ep[ep] = max(
-                known_pms_per_ep[ep], known_pms_per_ep[ep - 1] if ep > 0 else 0
-            )
-            if known_pms_per_ep[ep] == self.nights[ep].lights:
+            if  ep > 0 and known_pms_per_ep[ep] == 0:
+                known_pms_per_ep[ep] = known_pms_per_ep[ep - 1]
+                sitting_pms_per_ep[ep] = sitting_pms_per_ep[ep-1]
+            if known_pms_per_ep[ep] == self.nights[ep].lights and all(p in self.nights[ep].pairs for p in sitting_pms_per_ep[ep]):
                 bo_nights.append(ep)
         return bo_nights
 
