@@ -57,7 +57,7 @@ class TestSeasonSolution(unittest.TestCase):
         self.check_season_with_bitmask("vip2026")
 
     def check_season(self, sn: str):
-        solver = get_solver(sn)
+        solver = get_solver(sn, False)
         solution = solver.season.solution
         self.assertIsNotNone(solution, f"No solution found for season {sn}")
         self.assertEqual(len(solution), solver.season.num_matches)

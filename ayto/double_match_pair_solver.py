@@ -34,7 +34,12 @@ class DoubleMatchPairSolver(TupleSolver):
         return super().no_match_reason(l, r, episode, include_night)
 
     @override
-    def find_multiple_match_violation(self, sol: PairSet, episode: int) -> Violation | None:
+    def find_multiple_match_violation(
+        self, sol: PairSet, episode: int
+    ) -> Violation | None:
+        if super_vio := super().find_multiple_match_violation(sol, episode):
+            return super_vio
+
         if episode >= self.season.double_match_pair_known:
             # lefts that partner with double_match_pair
             dml = [l for (l, r) in sol if r in self.season.double_match_pair]
@@ -53,7 +58,7 @@ class DoubleMatchPairSolver(TupleSolver):
                 ):
                     return Violation.DOUBLE_MATCH_LEFTS_NOT_DOUBLE_MATCH_PAIR
 
-        return super().find_multiple_match_violation(sol, episode)
+        return None
 
     @override
     def merge_mm_not_in_solution(
@@ -122,7 +127,9 @@ class DoubleMatchPairBitMaskSolver(BitMaskSolver):
         return super().no_match_reason(l, r, episode, include_night)
 
     @override
-    def find_multiple_match_violation(self, sol: Mask, episode: int) -> Violation | None:
+    def find_multiple_match_violation(
+        self, sol: Mask, episode: int
+    ) -> Violation | None:
 
         codec = self.codec
         if super_vio := super().find_multiple_match_violation(sol, episode):

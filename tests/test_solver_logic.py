@@ -10,7 +10,7 @@ from tests.fixtures import TUPLE_SOLVERS
 
 @functools.cache
 def _real_tuple_solver(name: str) -> TupleSolver:
-    return get_solver(name)
+    return get_solver(name, False)
 
 
 class TestTupleSolverLogic(base.SolverLogicTestsBase[Solution]):
