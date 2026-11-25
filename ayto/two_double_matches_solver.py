@@ -10,7 +10,6 @@ from ayto.season import (
     Season,
     Solution,
     dict_rep,
-    get_candidates,
     mm_left,
 )
 
@@ -86,12 +85,10 @@ class TwoDoubleMatchesSolver(TupleSolver):
 
         solutions: list[Solution] = []
 
-        _, sitting_rights, _ = get_candidates(sol)
-        full = set(self.season.rights)
 
         for partial, used in partial_solutions:
             base = sol | partial
-            free = list(full - used - sitting_rights)
+            free = self.get_free(base, used)
 
             if len(free) == 2:
                 # add two matches
@@ -119,7 +116,7 @@ class TwoDoubleMatchesSolver(TupleSolver):
                             if l1 != mm_person_partner
                         )
             elif len(free) == 1:
-                mr = free[0]
+                mr = next(iter(free))
                 mml = mm_left(base)
                 if mr == mm_person:
                     solutions.extend(
@@ -212,12 +209,10 @@ class TwoDoubleMatchesBitMaskSolver(BitMaskSolver):
         mm_bit = knowledge.mm_mask
         mm_person_idx = mm_bit.bit_length() - 1
 
-        sitting_rights = codec.rights_in(sol)
-        full = codec.full_row
 
         for partial, used in partial_solutions:
             base = sol | partial
-            free: RightBits = full & ~(sitting_rights | used)
+            free: RightBits = self.get_free(base, used)
             n = free.bit_count()
 
             if n == 2:

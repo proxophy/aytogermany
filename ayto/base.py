@@ -211,6 +211,10 @@ class Solver[S: SolutionType, CandList](ABC):
         """Given a solution, return a dict for the possible matches for the lefts that are not in the solution, given `episode`(inclusive) and `include_night`"""
 
     @abstractmethod
+    def get_free(self, sol: S, used: CandList)-> CandList:
+        pass
+
+    @abstractmethod
     def generate_complete_solutions(
         self, sol: S, episode: int, include_night: bool
     ) -> list[S]:

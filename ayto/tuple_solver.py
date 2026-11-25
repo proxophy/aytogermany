@@ -12,6 +12,7 @@ from ayto.season import (
     get_candidates,
     has_dm_for_right,
     has_two_dms,
+    mm_right,
 )
 
 from .base import NoMatchReason, Solver, Violation
@@ -56,6 +57,15 @@ class TupleSolver(
         for i in range(self.season.max_lights + 1):
             for b in [True, False]:
                 self.knowledge_cache[(i, b)] = Knowledge(season, i, b)
+        if season.solution and not (
+            (vio := self.find_violation(
+                self.from_pairs(season.solution), season.num_weeks, True
+            ))
+            is None
+        ):
+            raise ValueError(
+                f"Season solution not compatible with data from season with violation {vio} for episode {season.num_weeks}"
+            )
 
     @override
     def from_pairs(self, pairs: Iterable[Pair]) -> Solution:
@@ -89,23 +99,36 @@ class TupleSolver(
             return NoMatchReason.SITTING_IN_BLACKOUT_NIGHT
 
         # one is part of known perfect match
+        if (l, r) not in kpm and r in pm_rights:
+            # assumes double match for right gets revealed in the same episode
+            return NoMatchReason.MEMBER_HAS_PARTNER_ALREADY
+
         # consider multiple seated lefts
         # assumption: if dm is not known and you get double match,
         # you find the double match in the same episode
-        if (l, r) not in kpm and (l in pm_lefts or r in pm_rights):
+        if (l, r) not in kpm and l in pm_lefts:
             # handle special case: for normalo2026, Alicia's match with Noel doesn't get revealed, despite Noel finding his match during the show
             if self.season.matchbox_reveals_dm:
                 return NoMatchReason.MEMBER_HAS_PARTNER_ALREADY
             else:
                 # l cannot be part of multiple match
                 if (
-                    mm_person
+                    mm_person and not self.season.two_dms
                     and r != mm_person
                     and self.no_match(l, mm_person, episode, include_night)
                 ):
                     return NoMatchReason.L_CANNOT_HAVE_SECOND_MATCH  # todo: rename this
                 elif episode < self.season.mm_known_from_week:
+                   
                     return NoMatchReason.L_CANNOT_HAVE_SECOND_MATCH
+                elif self.season.double_match_for_right and has_dm_for_right(kpm):
+                    mmr = mm_right(kpm) # person with double right match
+                    assert mmr
+                    # left that is part of double right match cannot have a second match
+                    mmr_partners = {ll for ll,rr in kpm if rr == mmr}
+                    if l in mmr_partners:
+                        return NoMatchReason.L_CANNOT_HAVE_SECOND_MATCH
+
 
         return None
 
@@ -228,6 +251,12 @@ class TupleSolver(
         return sols
 
     @override
+    def get_free(self, sol: Solution, used: set[Person])-> set[Person]:
+        full = set(self.season.rights)
+        _, sitting_rights, _ = get_candidates(sol)
+        return full - used - sitting_rights
+
+    @override
     def merge_mm_not_in_solution(
         self,
         sol: Solution,
@@ -258,22 +287,21 @@ class TupleSolver(
         }
 
         solutions: list[Solution] = []
-        full = set(self.season.rights)
-        _, sitting_rights, _ = get_candidates(sol)
 
         for partial, used in partial_solutions:
             base_matches = sol | partial
-            free = full - used - sitting_rights
+            free = self.get_free(base_matches, used)
+            # print(mm_person, sol, partial, free)
 
             # right that is missing in solution
             mr = free.pop()
             if mm_person is not None:
-                # mm_person is not None
                 if mr == mm_person:
                     solutions.extend(
                         Solution(base_matches | {(l, mr)}) for l in addable_lefts[mr]
                     )
                 else:
+                    
                     dm_left = next(
                         l for (l, r) in base_matches if r == mm_person
                     )  # left that matches with mm
@@ -281,7 +309,6 @@ class TupleSolver(
                         continue
                     solutions.append(Solution(base_matches | {(dm_left, mr)}))
             else:
-                # Normalo 2023/24/25/26: dm not known, match mr with everyone possible
                 solutions.extend(
                     [Solution(base_matches | {(l, mr)}) for l in addable_lefts[mr]]
                 )

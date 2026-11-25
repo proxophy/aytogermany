@@ -91,6 +91,7 @@ class Codec:
         return out
 
     def multi_rights(self, m: Mask) -> RightBits:
+        """Bitset over right: every right with MORE than one partner"""
         once = twice = 0
         full = self.full_row
         for _ in range(self.L):

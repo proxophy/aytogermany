@@ -7,6 +7,7 @@ from .codec import Codec, Mask, RightBits, iter_bits
 from .season import BitMaskKnowledge, Pair, Season
 
 Partial = tuple[Mask, RightBits]
+# pyright: reportIncompatibleVariableOverride=false
 
 
 def partial_masks(pos_matches: dict[int, RightBits], R: int) -> list[Partial]:
@@ -30,10 +31,7 @@ class BitMaskSolver(Solver[Mask, RightBits]):
         # self.season: Season = season
         self.codec: Codec = Codec(len(season.lefts), len(season.rights))
 
-        self.knowledge_cache: dict[tuple[int, bool], BitMaskKnowledge] = (  # pyright: ignore[reportIncompatibleVariableOverride]
-            {}
-        )  
-
+        self.knowledge_cache: dict[tuple[int, bool], BitMaskKnowledge] = {}
         self.no_match_masks: dict[tuple[int, bool], Mask] = {}
 
         for i in range(self.season.max_lights + 1):
@@ -44,6 +42,18 @@ class BitMaskSolver(Solver[Mask, RightBits]):
                     if self.no_match(l, r, i, b):
                         mask |= self.codec.bit(l, r)
                 self.no_match_masks[(i, b)] = mask
+
+        if season.solution and not (
+            (
+                vio := self.find_violation(
+                    self.from_pairs(season.solution), season.num_weeks, True
+                )
+            )
+            is None
+        ):
+            raise ValueError(
+                f"Season solution not compatible with data from season with violation {vio}"
+            )
 
     @override
     def from_pairs(self, pairs: Iterable[Pair]) -> Mask:
@@ -79,11 +89,17 @@ class BitMaskSolver(Solver[Mask, RightBits]):
             return NoMatchReason.SITTING_IN_BLACKOUT_NIGHT
 
         # one is part of known perfect match
+        if not (bit & knowledge.perfect_matches_mask) and codec.r_in_right_bits(
+            pm_rights, r
+        ):
+            # assumes double match for right gets revealed in the same episode
+            return NoMatchReason.MEMBER_HAS_PARTNER_ALREADY
+
         # consider multiple seated lefts
         # assumption: if dm is not known and you get double match,
         # you find the double match in the same episode
-        if not (bit & knowledge.perfect_matches_mask) and (
-            codec.l_in_left_bits(pm_lefts, l) or codec.r_in_right_bits(pm_rights, r)
+        if not (bit & knowledge.perfect_matches_mask) and codec.l_in_left_bits(
+            pm_lefts, l
         ):
             # handle special case: for normalo2026, Alicia's match with Noel doesn't get revealed, despite Noel finding his match during the show
             if self.season.matchbox_reveals_dm:
@@ -91,11 +107,19 @@ class BitMaskSolver(Solver[Mask, RightBits]):
             else:
                 # l cannot be part of multiple match
                 if (
-                    mm_person is not None
+                    mm_person is not None and not self.season.two_dms
                     and not codec.r_in_right_bits(knowledge.mm_mask, r)
                     and self.no_match(l, mm_person, episode, include_night)
                 ) or episode < self.season.mm_known_from_week:
                     return NoMatchReason.L_CANNOT_HAVE_SECOND_MATCH
+                elif self.season.double_match_for_right and codec.multi_for_right(kpm):
+                    mmr = (
+                        codec.multi_rights(kpm).bit_length() - 1
+                    )  # right person with double right match
+                    # left that is part of double right match cannot have a second match
+                    mmr_partners = codec.lefts_in(codec.partners_of_right(kpm, mmr))
+                    if (1 << l) & mmr_partners:
+                        return NoMatchReason.L_CANNOT_HAVE_SECOND_MATCH
 
         return None
 
@@ -138,13 +162,13 @@ class BitMaskSolver(Solver[Mask, RightBits]):
 
             if mm_person is not None:
                 seated_rights = codec.rights_in(sol)
-                if (
-                    not (
-                        codec.r_in_right_bits(
-                            codec.partners_of_left(sol, mult_left), mm_person
-                        )
+                if not (
+                    codec.r_in_right_bits(
+                        codec.partners_of_left(sol, mult_left), mm_person
                     )
-                    and (knowledge.mm_mask & seated_rights or mult_rights.bit_count() == self.season.max_mm_size)
+                ) and (
+                    knowledge.mm_mask & seated_rights
+                    or mult_rights.bit_count() == self.season.max_mm_size
                 ):
                     return Violation.MM_NOT_IN_MULTIPLE_MATCH
 
@@ -213,6 +237,14 @@ class BitMaskSolver(Solver[Mask, RightBits]):
         return pos_matches
 
     @override
+    def get_free(self, sol: Mask, used: RightBits) -> RightBits:
+        codec = self.codec
+        full = codec.full_row
+        sitting_rights = codec.rights_in(sol)
+        free = full & ~(sitting_rights | used)
+        return free
+
+    @override
     def merge_mm_in_solution(
         self, sol: Mask, partial_solutions: list[Partial]
     ) -> list[int]:
@@ -254,14 +286,11 @@ class BitMaskSolver(Solver[Mask, RightBits]):
             for r in self.season.rights
         ]
 
-        sitting_rights = codec.rights_in(sol)
-        full = codec.full_row
-
         solutions: list[Mask] = []
 
         for partial, used in partial_solutions:
             base_matches = sol | partial
-            free = full & ~(sitting_rights | used)
+            free = self.get_free(base_matches, used)
 
             # index of right that is missing in solution
             mr = free.bit_length() - 1

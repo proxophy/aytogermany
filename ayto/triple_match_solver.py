@@ -23,29 +23,25 @@ class TripleMatchSolver(TupleSolver):
     ) -> NoMatchReason | None:
         """Return whether a pair is known not to be a match up to `end`"""
         knowledge = self.knowledge_cache[(episode, include_night)]
+        mm = knowledge.mm
         kpm = knowledge.perfect_matches
         pm_lefts = [a for a, _ in kpm]
         pm_rights = {b for _, b in kpm}
 
-        counts = Counter(pm_lefts)
         if (l, r) not in kpm and l in pm_lefts:
-            # lefts with multiple matches from matchboxes, appear x times
-            # for x perfect matches
-            mmls = [p for p in pm_lefts if counts[p] > 1]
-            # Normalo 24
             if (
-                len(mmls) < 3
-                and l in mmls
+                knowledge.kpm_mm_size < 3
                 and r not in pm_rights
                 and not (
                     (l, r) in knowledge.mb_no_matches
+                    or (l, mm) in knowledge.mb_no_matches
                     or (l, r) in knowledge.bp_no_matches
+                    or (l, mm) in knowledge.bp_no_matches
                 )
             ):
                 # we only know two out of three of the multiple matches in Normalo 2024 at episode 10
                 return None
             return NoMatchReason.CANNOT_BE_IN_TRIPLE_MATCH
-
         return super().no_match_reason(l, r, episode, include_night)
 
     @override
@@ -75,10 +71,10 @@ class TripleMatchSolver(TupleSolver):
         solutions: list[Solution] = []
         mm_person = knowledge.mm
 
-        for partial, _ in partial_solutions:
+        for partial, used in partial_solutions:
             base_matches = sol.union(partial)
             sitting_lefts, sitting_rights = zip(*base_matches)
-            mrs = [r for r in self.season.rights if r not in sitting_rights]
+            mrs = self.get_free(base_matches, used)
 
             if len(mrs) == 2:
                 mr1, mr2 = mrs
@@ -126,6 +122,8 @@ class TripleMatchBitMaskSolver(BitMaskSolver):
     ) -> NoMatchReason | None:
         """Return whether a pair is known not to be a match up to `end`"""
         knowledge = self.knowledge_cache[(episode, include_night)]
+        mm = knowledge.mm
+        assert mm
         codec = self.codec
 
         kpm = knowledge.perfect_matches_mask
@@ -133,14 +131,13 @@ class TripleMatchBitMaskSolver(BitMaskSolver):
         pm_rights = codec.rights_in(kpm)
 
         if not (codec.bit(l, r) & kpm) and (1 << l & pm_lefts):
-            # lefts with multiple matches from matchboxes, appear x times
-            # for x perfect matches
-            mmls = codec.multi_lefts(kpm)
-            # Normalo 24
             if (
-                codec.max_mm_size(kpm) < 3
-                and ((1 << l) & mmls)
+               knowledge.kpm_mm_size < 3
                 and not ((1 << r) & pm_rights)
+                and not (
+                    (codec.bit(l, r) | codec.bit(l, mm))
+                    & (knowledge.mb_no_matches_mask | knowledge.bp_no_matches_mask)
+                )
             ):
                 # we only know two out of three of the multiple matches in Normalo 2024 at end of episode 4
                 return None
@@ -171,13 +168,11 @@ class TripleMatchBitMaskSolver(BitMaskSolver):
         solutions: list[Mask] = []
         mm_bit: RightBits = knowledge.mm_mask
         mm_idx = mm_bit.bit_length() - 1
-        sitting_rights = codec.rights_in(sol)
-        full = codec.full_row
         first_col = codec.first_col
 
         for partial, used in partial_solutions:
             base = sol | partial
-            free: RightBits = full & ~(sitting_rights | used)
+            free: RightBits = self.get_free(base, used)
             n = free.bit_count()
 
             if n == 2:

@@ -8,8 +8,7 @@ from ayto import (
     get_season,
     get_solver,
 )
-from ayto.analysis import candidate_probs
-from ayto.base import Solver
+from ayto.base import SolutionType, Solver
 from ayto.two_double_matches_solver import TwoDoubleMatchesBitMaskSolver
 from ayto.utils import get_solver_from_season
 from tests.fixtures import (
@@ -21,26 +20,26 @@ from tests.fixtures import (
 
 def iterate_through(solver, start=3):
     amounts = []
-    for end in range(start, 10):
-        sols = solver.solve(end, True)
+    for ep in range(start, 10):
+        sols = solver.solve(ep, True)
         amounts.append(len(sols))
     return amounts
 
 
-def check_solution_possible(sols, solver: Solver, end: int, icl: bool):
+def check_solution_possible(sols, solver: Solver, ep: int, icl: bool):
     reasons = []
     for s in sols:
-        p = solver.find_violation(s, end, icl)
+        p = solver.find_violation(s, ep, icl)
         if p is not None:
             reasons.append(p)
             # print(s, p["reason"], p.get("detail", ""))
     return Counter(reasons)
 
 
-def findpsol(sol, solver: Solver, end, icl):
-    psols = solver.generate_partial_solutions(end, icl)
+def findpsol[S : SolutionType,T](sol: S, solver: Solver[S,T], episode: int, icl: bool):
+    psols = solver.generate_partial_solutions(episode, icl)
     for p in psols:
-        if sol in solver.generate_complete_solutions(p, end, icl):
+        if sol in solver.generate_complete_solutions(p, episode, icl):
             return p
     return None
 
@@ -55,14 +54,14 @@ def memory_test():
     sn = "vip2025"
     season = get_season(sn)
     solver = TwoDoubleMatchesBitMaskSolver(season)
-    end = 2
+    ep = 2
     icl = True
 
     start = peak_mb()
 
-    sols = solver.solve(end, icl)
+    sols = solver.solve(ep, icl)
     print(f"{peak_mb()} nach solve")
-    # print(f"{timeit.timeit(lambda: print(len(solver.solve(end, icl))), number=1):.2f} s")
+    # print(f"{timeit.timeit(lambda: print(len(solver.solve(ep, icl))), number=1):.2f} s")
     # print(f"Total: {asizeof.asizeof(sols) / 1024**3:.3f} GB")
     # print(f"Number of solutions: {len(sols):,}")
     # print(f"Average per solution: " f"{asizeof.asizeof(sols) / len(sols):.1f} bytes")
@@ -82,12 +81,12 @@ def check_all_solutions(match_model: str):
     bmsolver = get_solver_from_season(season, True)
     codec = bmsolver.codec
 
-    end = 0
+    ep = 0
     icl = False
 
-    sols = empty_tsolver.generate_complete_solutions(frozenset(), end, True)
+    sols = empty_tsolver.generate_complete_solutions(frozenset(), ep, True)
     sols = set(sols)
-    msols = empty_bmsolver.generate_complete_solutions(0, end, True)
+    msols = empty_bmsolver.generate_complete_solutions(0, ep, True)
     msols = set(msols)
     print(f"For match model {match_model} {len(sols)} (t) {len(msols)} (bm)")
     print(tsolver.__class__, bmsolver.__class__)
@@ -98,8 +97,8 @@ def check_all_solutions(match_model: str):
     for se in msols:
         s = codec.decode(se)
         # se = codec.encode(s)
-        if (tv := tsolver.find_violation(s, end, icl)) != (
-            bv := bmsolver.find_violation(se, end, icl)
+        if (tv := tsolver.find_violation(s, ep, icl)) != (
+            bv := bmsolver.find_violation(se, ep, icl)
         ):
             count += 1
             reasons_t.append(tv)
@@ -109,40 +108,35 @@ def check_all_solutions(match_model: str):
 
 if __name__ == "__main__":
     # uv run python -m scripts.debug_season
-    sn = "normalo2024"
+    sn = "vip2026"
     season = get_season(sn)
     # season = toy_season_with_dm_for_right
     # bmsolver = get_solver(sn, True)
-    # codec = bmsolver.codec
+    
     # solver_type = get_solver_type(season)
     bitsolver = get_solver_from_season(season, True)
     tupsolver = get_solver_from_season(season, False)
+    codec = bitsolver.codec
+
     empty = season.as_empty()
     solver_for_empty = get_solver_from_season(empty, True)
 
-    end = 4
+    ep = 5
     icl = True
     print(tupsolver.__class__)
     print(bitsolver.__class__)
-    # tsols = tupsolver.solve(end, icl)
-    bsols = bitsolver.solve(end, icl)
-    bsolspace: SolutionSpace = SolutionSpace(bitsolver, bsols)
-    for s in bsols:
-        cand_probs= candidate_probs(bitsolver, bsols, s)
-        print(max(cand_probs), cand_probs.index(max(cand_probs)))
-    # plot_probs(bsolspace)
-        # for i, p in enumerate(cand_probs):
-        #     print(f"{i}: {p*100:0.2f}")
-    # tprobs = tsolspace.get_pair_probs_dict()
+    # tsols = tupsolver.solve(ep, icl)
+    # bsols = bitsolver.solve(ep, icl)
+    # print(len(tsols), len(bsols))
 
-    # for end in range(1, 10):
-    #     psols = bitsolver.generate_partial_solutions(end, icl)
+    # for ep in range(1, 10):
+    #     psols = bitsolver.generate_partial_solutions(ep, icl)
     #     lens = []
     #     for ps in psols:
-    #         sols = bitsolver.generate_complete_solutions(ps, end, icl)
+    #         sols = bitsolver.generate_complete_solutions(ps, ep, icl)
     #         lens.append(len(sols))
     #     print(
-    #         f"end={end}: {len(psols)} psols, {max(lens)} max, {mean(lens):0.1f} mean, {sum(lens)} sum"
+    #         f"ep={ep}: {len(psols)} psols, {max(lens)} max, {mean(lens):0.1f} mean, {sum(lens)} sum"
     #     )
 
     # plot_probs(tsols)
@@ -161,11 +155,11 @@ if __name__ == "__main__":
     for sn in ALL_SEASONS:
         bitsolver = get_solver(sn, True)
         td = {}
-        for end in range(10):
+        for ep in range(10):
             x = timeit.timeit(
-                lambda solver=bitsolver, end=end: len(solver.solve(end, True)), number=3
+                lambda solver=bitsolver, ep=ep: len(solver.solve(ep, True)), number=3
             )
-            td[end] = x
+            td[ep] = x
         data.append(td)
     df = pd.DataFrame(data, index=ALL_SEASONS)
     # df.to_csv("analytics/time")

@@ -75,12 +75,10 @@ class DoubleMatchPairSolver(TupleSolver):
         solutions: list[Solution] = []
         knowledge = self.knowledge_cache[(episode, include_night)]
         sitting_no_matches = knowledge.get_sitting_no_matches(sol)
-        full = set(self.season.rights)
 
         for partial, used in partial_solutions:
             ten_matches = sol.union(partial)
-            _, sitting_rights = zip(*ten_matches)
-            free = full - used - set(sitting_rights)
+            free = self.get_free(ten_matches, used)
 
             # right that is missing in solution
             mr = free.pop()
@@ -177,13 +175,11 @@ class DoubleMatchPairBitMaskSolver(BitMaskSolver):
         solutions: list[Mask] = []
         knowledge = self.knowledge_cache[(episode, include_night)]
         sitting_no_matches = knowledge.get_sitting_no_matches_mask(sol)
-        full = codec.full_row
-        sitting_rights = codec.rights_in(sol)
         dmr1, dmr2 = self.season.double_match_pair
 
         for partial, used in partial_solutions:
             base_matches = sol | partial
-            free = full & ~(sitting_rights | used)
+            free = self.get_free(base_matches, used)
 
             # right that is missing in solution
             mr = free.bit_length() - 1

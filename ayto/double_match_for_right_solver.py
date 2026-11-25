@@ -10,6 +10,7 @@ from ayto.season import (
     Solution,
     dict_rep,
     get_candidates,
+    has_dm_for_right,
     mm_left,
     mm_left_partners,
 )
@@ -62,6 +63,54 @@ class DoubleMatchForRightSolver(TupleSolver):
         return None
 
     @override
+    def possible_matches_for_solution(
+        self, sol: Solution, episode: int, include_night: bool
+    ) -> dict[Person, list[Person]]:
+
+        pos_matches = super().possible_matches_for_solution(sol, episode, include_night)
+        sitting_lefts, _, _ = get_candidates(sol)
+        knowledge = self.knowledge_cache[(episode, include_night)]
+        sitting_no_matches = knowledge.get_sitting_no_matches(sol)
+        mm_person = knowledge.mm
+
+        extra_left = self.season.extra_left
+        # print("possible_matches_for_solution")
+        # print(extra_left in sitting_lefts, not has_dm_for_right(sol))
+
+        # add right of extra_left back to candidates if we dont have a double match right
+        if extra_left in sitting_lefts and not has_dm_for_right(sol):
+            el_r: Person = next(r for l, r in sol if l == extra_left)
+            for l in pos_matches:
+                # print(
+                #     l,
+                #     el_r,
+                #     (l, el_r) in sitting_no_matches,
+                #     self.no_match(l, el_r, episode, include_night),
+                #     el_r == mm_person,
+                # )
+                if (
+                    (l, el_r) in sitting_no_matches
+                    or self.no_match(l, el_r, episode, include_night)
+                    or el_r == mm_person
+                ):
+                    continue
+
+                pos_matches[l].append(el_r)
+
+        return pos_matches
+
+    @override
+    def get_free(self, sol: Solution, used: set[Person])-> set[Person]:
+        full = set(self.season.rights)
+        sitting_lefts, sitting_rights, _ = get_candidates(sol)
+        free = full - used - sitting_rights
+        extra_left = self.season.extra_left
+        if extra_left in sitting_lefts and not has_dm_for_right(sol):
+            el_r: Person = next(r for l, r in sol if l == extra_left)
+            free.add(el_r)
+        return free
+
+    @override
     def generate_complete_solutions(
         self, sol: Solution, episode: int, include_night: bool
     ) -> list[Solution]:
@@ -80,11 +129,10 @@ class DoubleMatchForRightSolver(TupleSolver):
         pos_matches: dict[Person, list[Person]] = self.possible_matches_for_solution(
             sol, episode, include_night
         )
+
         _ = pos_matches.pop(extra_left, None)
         if extra_left in glefts:
-            # remove pair with self.sm if necessary
             el_matches = [r for l, r in sol if l == extra_left]
-            sol = Solution(sol.difference({(extra_left, el_matches[0])}))
         else:
             el_matches = [
                 r
@@ -93,6 +141,12 @@ class DoubleMatchForRightSolver(TupleSolver):
             ]
 
         partial_solutions = partial_sols(pos_matches)
+        # print("DoubleMatchForRightSolver.generate_complete_solution")
+        # print(len(partial_solutions))
+        # for k, v in pos_matches.items():
+        #     print(k, v)
+        # print(sol, mmnum)
+
         if mmnum >= 2:
             isols = self.merge_mm_in_solution(sol, partial_solutions)
         else:
@@ -145,9 +199,7 @@ class DoubleMatchForRightBitMaskSolver(BitMaskSolver):
             if n > 2:
                 return Violation.RIGHT_MULTIPLE_MATCH_TOO_BIG
 
-            if not (
-                codec.bit(extra_left, mmr) & mmr_partner
-            ):
+            if not (codec.bit(extra_left, mmr) & mmr_partner):
                 return Violation.EXTRA_LEFT_NOT_IN_DOUBLE_RIGHT_MATCH
 
             mmls = codec.multi_lefts(sol)
@@ -162,6 +214,59 @@ class DoubleMatchForRightBitMaskSolver(BitMaskSolver):
         return None
 
     @override
+    def possible_matches_for_solution(
+        self, sol: Mask, episode: int, include_night: bool
+    ) -> dict[Person, RightBits]:
+        codec = self.codec
+        pos_matches = super().possible_matches_for_solution(sol, episode, include_night)
+        sitting_lefts = self.codec.lefts_in(sol)
+        codec = self.codec
+        knowledge = self.knowledge_cache[(episode, include_night)]
+        sitting_no_matches = knowledge.get_sitting_no_matches_mask(sol)
+
+        extra_left = self.season.extra_left
+        # print("possible_matches_for_solution")
+        # print(((1 << extra_left) & sitting_lefts), not codec.multi_for_right(sol))
+        # add right of extra_left back to candidates if we dont have a double match right
+        if ((1 << extra_left) & sitting_lefts) and not codec.multi_for_right(sol):
+            el_r = codec.partners_of_left(sol, extra_left).bit_length() - 1
+
+            for l in pos_matches:
+                bit = codec.bit(l, el_r)
+                # print(
+                #     l,
+                #     el_r,
+                #     bit & sitting_no_matches,
+                #     bit & self.no_match_masks[(episode, include_night)],
+                #     (1 << el_r) & knowledge.mm_mask,
+                # )
+                if (
+                    bit
+                    & (
+                        sitting_no_matches
+                        | self.no_match_masks[(episode, include_night)]
+                    )
+                    or (1 << el_r) & knowledge.mm_mask
+                ):
+                    continue
+                pos_matches[l] |=1 << el_r
+
+        return pos_matches
+
+    @override
+    def get_free(self, sol: Mask, used: RightBits) -> RightBits:
+        codec = self.codec
+        sitting_rights = codec.rights_in(sol)
+        
+        free = super().get_free(sol, used)
+        extra_left = self.season.extra_left
+        if (1 << extra_left) & sitting_rights and not codec.multi_for_right(sol):
+            el_r = codec.partners_of_left(sol, extra_left)
+            free |= el_r
+        return free
+    
+
+    @override
     def generate_complete_solutions(
         self, sol: Mask, episode: int, include_night: bool
     ) -> list[Mask]:
@@ -170,33 +275,33 @@ class DoubleMatchForRightBitMaskSolver(BitMaskSolver):
 
         if sol.bit_count() == self.season.num_matches:
             return [sol]
-
         extra_left = self.season.extra_left
         codec = self.codec
 
         knowledge = self.knowledge_cache[(episode, include_night)]
-        # glefts, _, mmnum = get_candidates(sol)
 
         pos_matches = self.possible_matches_for_solution(sol, episode, include_night)
         _ = pos_matches.pop(extra_left, None)
 
-        el_match: RightBits = 0  #  all pairs of extra_left possible
+        el_matches: RightBits = 0  #  all pairs of extra_left possible
         if codec.partners_of_left(sol, extra_left):
             # remove pair with self.sm if necessary
-            el_match = codec.partners_of_left(sol, extra_left)
-
-            sol = sol & ~codec.row[extra_left]
+            el_matches = codec.partners_of_left(sol, extra_left)
         else:
             sitting_no_matches = knowledge.get_sitting_no_matches_mask(sol)
-            el_match = codec.partners_of_left(
+            el_matches = codec.partners_of_left(
                 codec.full_mask
                 & ~self.no_match_masks[(episode, include_night)]
                 & ~sitting_no_matches,
                 extra_left,
             )
 
-        # products = [list(ps) for ps in product_without_reps(list(pos_matches.values()))]
         partial_solutions = partial_masks(pos_matches, codec.R)
+        # print("DoubleMatchForRightBitMaskSolver.generate_complete_solution")
+        # print(len(partial_solutions))
+        # for k, v in pos_matches.items():
+        #     print(k, bin(v), codec.members(v))
+
         mmnum = codec.max_mm_size(sol)
         if mmnum >= 2:
             isols = self.merge_mm_in_solution(sol, partial_solutions)
@@ -212,7 +317,7 @@ class DoubleMatchForRightBitMaskSolver(BitMaskSolver):
         solutions: list[Mask] = []
         for s in isols:
             ml = codec.multi_lefts(s).bit_length() - 1
-            el_r = el_match & ~codec.partners_of_left(s, ml)
+            el_r = el_matches & ~codec.partners_of_left(s, ml)
             el_bits = [b << shift for b in iter_bits(el_r)]
             solutions.extend(s | p for p in el_bits)
 

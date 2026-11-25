@@ -1,5 +1,6 @@
 import random
-from collections.abc import Sequence
+from collections import Counter
+from collections.abc import Collection, Iterable, Sequence
 from dataclasses import dataclass
 from typing import override
 
@@ -10,7 +11,6 @@ Pair = tuple[Person, Person]
 Solution = frozenset[Pair]
 type PairSet = Solution | set[Pair]
 
-# class Solution(frozenset[Pair]):
 MATCH_MODELS = [
     "double_match",
     "double_match_pair",
@@ -20,17 +20,22 @@ MATCH_MODELS = [
 ]
 
 
-def has_dm_for_right(sol: PairSet) -> bool:
-    """Return whether solution has a double match for a right"""
-    rs: list[Person] = []
+def has_dm_for_right(sol: Iterable[Pair]) -> bool:
+    """Return whether solution has a double match for a right (assuming there are no duplicate pairs)"""
+    return mm_right(sol) is not None
+
+
+def mm_right(sol: Iterable[Pair]) -> Person | None:
+    """Return first right with multiple match or `None` if there isn't any (assuming there are no duplicate pairs)"""
+    rs: set[Person] = set()
     for _, r in sol:
         if r in rs:
-            return True
-        rs.append(r)
-    return False
+            return r
+        rs.add(r)
+    return None
 
 
-def get_candidates(sol: PairSet) -> tuple[set[Person], set[Person], int]:
+def get_candidates(sol: Collection[Pair]) -> tuple[set[Person], set[Person], int]:
     """Return sets of lefts and rights in solution and size of the maximum multiple match"""
     if len(sol) > 0:
         g_lefts, g_rights = zip(*sol)
@@ -41,7 +46,7 @@ def get_candidates(sol: PairSet) -> tuple[set[Person], set[Person], int]:
     return set(g_lefts), set(g_rights), max(map(len, d.values()))
 
 
-def mm_left(sol: PairSet) -> Person | None:
+def mm_left(sol: Iterable[Pair]) -> Person | None:
     """Return first left with multiple match or `None` if there isn't any"""
     ls: set[Person] = set()
     for l, _ in sol:
@@ -50,16 +55,17 @@ def mm_left(sol: PairSet) -> Person | None:
         ls.add(l)
     return None
 
-def mm_left_partners(sol: PairSet)-> list[Person]:
+
+def mm_left_partners(sol: Iterable[Pair]) -> set[Person]:
     """Return partners of first left with multiple match or empty list if there isn't such a left"""
     mml = mm_left(sol)
     if mml is not None:
         return dict_rep(sol)[mml]
     else:
-        return []
+        return set()
 
 
-def has_two_dms(sol: PairSet) -> bool:
+def has_two_dms(sol: Iterable[Pair]) -> bool:
     """Return whether there are two double matches in a solution"""
     sol_dict = dict_rep(sol)
     # lefts with multiple partners
@@ -67,15 +73,24 @@ def has_two_dms(sol: PairSet) -> bool:
     return len(mult_lefts) == 2
 
 
-def dict_rep(sol: PairSet) -> dict[Person, list[Person]]:
+def dict_rep(sol: Iterable[Pair]) -> dict[Person, set[Person]]:
     """Return dict representation of set of pairs"""
-    d: dict[Person, list[Person]] = {}
+    d: dict[Person, set[Person]] = {}
     for l, r in sol:
         if l in d:
-            d[l].append(r)
+            d[l].add(r)
         else:
-            d[l] = [r]
+            d[l] = {r}
     return d
+
+
+def max_mm_size(sol: Iterable[Pair]) -> int:
+    """Return size of biggest multiple match, 1 if there are no multiple match, 0 if the solution is empty"""
+    if not sol:
+        return 0
+    ls, _ = zip(*sol)
+    counter = Counter(ls)
+    return max(counter.values())
 
 
 @dataclass(frozen=True)
@@ -263,7 +278,9 @@ class Season:
                     "Season with match_model=double_match_for_right has to have the same number of lefts and rights"
                 )
             if self.extra_left_name is None:
-                raise ValueError("Season with match_model=double_match_for_right must have a extra_left_name that is not none")
+                raise ValueError(
+                    "Season with match_model=double_match_for_right must have a extra_left_name that is not none"
+                )
         else:
             if len(self.rights_names) != self.num_matches:
                 raise ValueError(
@@ -304,7 +321,7 @@ class Season:
         )
 
     @property
-    def double_match_pair(self) -> tuple[Person, Person] :
+    def double_match_pair(self) -> tuple[Person, Person]:
         if not self.double_match_pair_names:
             return (-1, -1)
         return (
@@ -371,14 +388,16 @@ class Season:
                 num_known_pms += 1
                 pmls.append(l)
                 pms.add((l, r))
-                sitting_pms_per_ep[ep].add((l,r))
+                sitting_pms_per_ep[ep].add((l, r))
             known_pms_per_ep[ep] = num_known_pms
 
         for ep in range(min(self.num_weeks, stop)):
-            if  ep > 0 and known_pms_per_ep[ep] == 0:
+            if ep > 0 and known_pms_per_ep[ep] == 0:
                 known_pms_per_ep[ep] = known_pms_per_ep[ep - 1]
-                sitting_pms_per_ep[ep] = sitting_pms_per_ep[ep-1]
-            if known_pms_per_ep[ep] == self.nights[ep].lights and all(p in self.nights[ep].pairs for p in sitting_pms_per_ep[ep]):
+                sitting_pms_per_ep[ep] = sitting_pms_per_ep[ep - 1]
+            if known_pms_per_ep[ep] == self.nights[ep].lights and all(
+                p in self.nights[ep].pairs for p in sitting_pms_per_ep[ep]
+            ):
                 bo_nights.append(ep)
         return bo_nights
 
@@ -406,7 +425,6 @@ class Season:
 
     def decode_solution(self, sol: PairSet):
         return {self.decode_pair(p) for p in sol}
-    
 
     def as_empty(self):
         return Season(
@@ -421,10 +439,11 @@ class Season:
             double_match_pair_known=self.double_match_pair_known,
             mm_known_from_week=self.mm_known_from_week,
             matchbox_reveals_dm=self.matchbox_reveals_dm,
-            extra_left_name= self.extra_left_name
+            extra_left_name=self.extra_left_name,
         )
 
 
+# todo: check this
 def random_night_for_sol(sol: Solution, lefts: list[Person], rights: list[Person]):
     perm = random.sample(rights, len(lefts))
     pairs = {(l, r) for l, r in zip(lefts, perm)}
@@ -452,6 +471,7 @@ class Knowledge:
                 self.bp_no_matches.append(p)
 
         self.mm: Person | None = season.get_mm(episode)
+        self.kpm_mm_size: int = max_mm_size(self.perfect_matches)
 
     def get_sitting_no_matches(self, sol: Solution) -> set[Pair]:
         nights = self.nights

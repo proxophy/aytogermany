@@ -156,33 +156,31 @@ class SolverLogicTestsBase[S: SolutionType](unittest.TestCase):
         )
 
     def test_no_match_dm_later_known(self):
-        self.assertIsNone(
-            self.real_solver("normalo2026").str_no_match_reason(
-                "Noel", "Alicia", 5, True
-            )
-        )
-        self.assertIsNone(
-            self.real_solver("normalo2026").str_no_match_reason(
-                "Noel", "Alicia", 6, True
-            )
+        solver = self.real_solver("normalo2026")
+        self.assertIsNone(solver.str_no_match_reason("Noel", "Alicia", 5, True))
+        self.assertIsNone(solver.str_no_match_reason("Noel", "Alicia", 6, True))
+        self.assertEqual(
+            solver.str_no_match_reason("Julian M", "Alicia", 4, True),
+            NoMatchReason.MATCHBOX_FALSE
         )
         self.assertEqual(
-            self.real_solver("normalo2026").str_no_match_reason(
-                "Julian M", "Alicia", 4, True
-            ),
-            NoMatchReason.MATCHBOX_FALSE,
+            solver.str_no_match_reason("Julian M", "Linda", 4, True),
+            NoMatchReason.L_CANNOT_HAVE_SECOND_MATCH
         )
         self.assertEqual(
-            self.real_solver("normalo2026").str_no_match_reason(
-                "Julian M", "Linda", 4, True
-            ),
-            NoMatchReason.L_CANNOT_HAVE_SECOND_MATCH,
+            solver.str_no_match_reason("Julian M", "Linda", 6, True),
+            NoMatchReason.L_CANNOT_HAVE_SECOND_MATCH
+        )
+
+    def test_no_match_dm_for_right(self):
+        solver = self.real_solver("vip2026")
+        self.assertEqual(
+            solver.str_no_match_reason("Laurenz", "Jenny", 7, True),
+            NoMatchReason.MEMBER_HAS_PARTNER_ALREADY,
         )
         self.assertEqual(
-            self.real_solver("normalo2026").str_no_match_reason(
-                "Julian M", "Linda", 6, True
-            ),
-            NoMatchReason.L_CANNOT_HAVE_SECOND_MATCH,
+            solver.str_no_match_reason("Laurenz", "Marta", 6, True),
+            NoMatchReason.MEMBER_HAS_PARTNER_ALREADY,
         )
 
     def test_solution_correct_format(self):
