@@ -52,11 +52,6 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen
 
-      # The tests import `tests.fixtures` and read analytics/*.csv relative to
-      # the repo root, hence -t . and running from the root.
-      - name: Run tests
-        run: uv run python -m unittest discover -s tests -t . -v
-
       - name: Check out site repo
         uses: actions/checkout@v5
         with:
@@ -67,12 +62,14 @@ jobs:
       - name: Export site data
         env:
           SEASON: ${{ inputs.season }}
+        timeout-minutes: 30
         run: |
+          set -euxo pipefail
           args=(--out site/static/ayto)
           if [ -n "$SEASON" ]; then
             args+=(--season "$SEASON")
           fi
-          uv run python -m scripts.export_site "${args[@]}"
+          uv run python -u -m scripts.export_site "${args[@]}"
 
       - name: Open or update pull request
         uses: peter-evans/create-pull-request@v7

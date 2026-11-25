@@ -1,0 +1,70 @@
+{
+ "schema_version": 1,
+ "seasons": [
+  {
+   "name": "normalo2020",
+   "episodes": 10,
+   "has_solution": true
+  },
+  {
+   "name": "normalo2021",
+   "episodes": 10,
+   "has_solution": true
+  },
+  {
+   "name": "normalo2022",
+   "episodes": 10,
+   "has_solution": true
+  },
+  {
+   "name": "normalo2023",
+   "episodes": 9,
+   "has_solution": true
+  },
+  {
+   "name": "normalo2024",
+   "episodes": 10,
+   "has_solution": true
+  },
+  {
+   "name": "normalo2025",
+   "episodes": 10,
+   "has_solution": true
+  },
+  {
+   "name": "normalo2026",
+   "episodes": 10,
+   "has_solution": true
+  },
+  {
+   "name": "vip2021",
+   "episodes": 10,
+   "has_solution": true
+  },
+  {
+   "name": "vip2022",
+   "episodes": 10,
+   "has_solution": true
+  },
+  {
+   "name": "vip2023",
+   "episodes": 10,
+   "has_solution": true
+  },
+  {
+   "name": "vip2024",
+   "episodes": 9,
+   "has_solution": true
+  },
+  {
+   "name": "vip2025",
+   "episodes": 10,
+   "has_solution": true
+  },
+  {
+   "name": "vip2026",
+   "episodes": 10,
+   "has_solution": true
+  }
+ ]
+}

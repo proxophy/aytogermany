@@ -1,0 +1,10 @@
+episode,Mann,Frau,result,before_night
+0,Danilo,Finnja,False,True
+1,Francesco,Jules,True,True
+2,Tommy,Walentina,False,True
+5,Salvatore,Finnja,False,True
+6,Eugen,Finnja,False,True
+7,Eugen,Steffi,False,True
+8,Josua,Sarah,False,True
+8,Tommy,Melina,False,False
+9,Josua,Aurelia,True,True

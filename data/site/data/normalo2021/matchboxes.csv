@@ -1,0 +1,9 @@
+episode,Mann,Frau,result,before_night
+0,Maximilian,Sabrina,False,True
+2,Aaron,Kathleen,False,True
+3,Marcel,Laura,False,True
+4,Marcel,Leonie,True,True
+6,Dario,Laura,False,True
+7,Marko,Sabrina,False,True
+8,Aaron,Melissa,True,True
+9,Marc,Mirjam,True,True

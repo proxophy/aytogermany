@@ -1,0 +1,14 @@
+episode,Mann,Frau,result,before_night
+0,Paulo,Jana,False,True
+1,Ryan,Lina,False,True
+2,Kevin,Maja,False,True
+2,Eti,Mela,False,True
+3,Wilson,Shelly,True,True
+3,Wilson,Mela,False,True
+3,Gerrit,Tais,True,False
+3,Gerrit,Mela,True,False
+4,Gerrit,Pia,True,True
+5,Sandro,Sina,False,True
+6,Paulo,Julia,False,True
+8,Sandro,Afra,False,True
+9,Kevin,Lina,True,True
