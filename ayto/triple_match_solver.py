@@ -123,7 +123,7 @@ class TripleMatchBitMaskSolver(BitMaskSolver):
         """Return whether a pair is known not to be a match up to `end`"""
         knowledge = self.knowledge_cache[(episode, include_night)]
         mm = knowledge.mm
-        assert mm
+        assert mm is not None
         codec = self.codec
 
         kpm = knowledge.perfect_matches_mask
@@ -167,7 +167,7 @@ class TripleMatchBitMaskSolver(BitMaskSolver):
 
         solutions: list[Mask] = []
         mm_bit: RightBits = knowledge.mm_mask
-        mm_idx = mm_bit.bit_length() - 1
+        mm_idx = mm_bit.bit_length() - 1 # assumes mm_bit is not 0 
         first_col = codec.first_col
 
         for partial, used in partial_solutions:

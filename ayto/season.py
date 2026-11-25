@@ -493,7 +493,7 @@ class BitMaskKnowledge(Knowledge):
         self.mb_no_matches_mask: Mask = self.codec.encode(self.mb_no_matches)
         self.bp_no_matches_mask: Mask = self.codec.encode(self.bp_no_matches)
         self.perfect_matches_mask: Mask = self.codec.encode(self.perfect_matches)
-        self.mm_mask: RightBits = 0 if not self.mm else 1 << self.mm
+        self.mm_mask: RightBits = 0 if self.mm is None else 1 << self.mm
         self.night_masks: list[tuple[Mask, int]] = [
             (self.codec.encode(night.pairs), night.lights) for night in self.nights
         ]

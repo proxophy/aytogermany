@@ -3,22 +3,26 @@ import json
 import os
 
 import pandas as pd
+from pandas.core.frame import DataFrame
 
-from ayto import ALL_SEASONS, df_for_probs, get_season, get_solver
-from ayto.tuple_solver import TupleSolver
+from ayto import SolutionSpace, df_for_probs, get_season, get_solver
+from ayto.base import SolutionType, Solver
 
 
-def get_stats(solver: TupleSolver, end: int):
+def get_stats[S: SolutionType, T](
+    solver: Solver[S, T], end: int
+) -> tuple[DataFrame, int]:
     sols = solver.solve(end, True)
     print(f"sn = {solver.season.name}, end = {end}: #solutions = {len(sols)}")
-    df = df_for_probs(sols)
+    solsp = SolutionSpace(solver, sols)
+    df = df_for_probs(solsp)
     return df, len(sols)
 
 
 def export_season_results(sn: str):
-    solver: TupleSolver = get_solver(sn)
+    solver = get_solver(sn, True)
     episodes = {}
-    for i in range(1, solver.season.num_weeks):
+    for i in range(solver.season.num_weeks):
         df, num_sols = get_stats(solver, i)
         episodes[i + 1] = {
             "num_sols": num_sols,
@@ -45,7 +49,7 @@ def nights_to_df(sn: str):
 
 
 def export_excel(sn: str):
-    d = pd.read_excel(f"data/{sn}.xlsx", sheet_name=None)
+    d = pd.read_excel(f"data/seasons/{sn}.xlsx", sheet_name=None)
     print(d.keys())
     os.mkdir(f"data/csv/{sn}")
     for k, v in d.items():
@@ -57,10 +61,11 @@ if __name__ == "__main__":
 
     sn = "vip2021"
     # for sn in allseasons:
-    #     export_season_results(sn)
-    solver = get_solver(sn)
-    for sn in ALL_SEASONS:
-        export_excel(sn)
+    # export_season_results(sn)
+    export_excel(sn)
+    # solver = get_solver(sn)
+    # for sn in ALL_SEASONS:
+    #     export_excel(sn)
 
     # df, _ = get_stats(solver, 6)
     # nights_to_df(sn)

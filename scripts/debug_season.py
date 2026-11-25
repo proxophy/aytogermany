@@ -4,7 +4,6 @@ from collections import Counter
 
 from ayto import (
     ALL_SEASONS,
-    SolutionSpace,
     get_season,
     get_solver,
 )

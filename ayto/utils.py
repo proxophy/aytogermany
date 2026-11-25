@@ -1,5 +1,5 @@
 import time
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Collection, Iterable
 from functools import wraps
 from typing import Literal, overload
 
@@ -206,7 +206,7 @@ def get_solver(sn: str, bitmask: Literal[True]) -> BitMaskSolver: ...
 def get_solver(sn: str, bitmask: Literal[False] = False) -> TupleSolver: ...
 
 
-def get_solver(sn: str, bitmask: bool = False) -> TupleSolver | BitMaskSolver:
+def get_solver(sn: str, bitmask: bool = True) -> TupleSolver | BitMaskSolver:
     season = get_season(sn)
     return get_solver_type(season, bitmask)(season)
 
@@ -222,7 +222,7 @@ def get_solver_from_season(
 
 
 def get_solver_from_season(
-    season: Season, bitmask: bool = False
+    season: Season, bitmask: bool = True
 ) -> TupleSolver | BitMaskSolver:
     return get_solver_type(season, bitmask)(season)
 
@@ -238,7 +238,7 @@ def get_solver_type(
 
 
 def get_solver_type(
-    season: Season, bitmask: bool = False
+    season: Season, bitmask: bool = True
 ) -> type[TupleSolver] | type[BitMaskSolver]:
     if bitmask:
         match season.match_model:
@@ -286,7 +286,7 @@ def time_it[**P, R](inner: Callable[P, R]) -> Callable[P, R]:
     return c_inner
 
 
-def compare_solution_lists(sols1: Iterable[Solution], sols2: Iterable[Solution]) -> bool:
+def compare_solution_lists(sols1: Collection[Solution], sols2: Collection[Solution]) -> bool:
     """Compares the elements of two solutions lists, assumes every solution is complete and over the same L lefts and R rights"""
     ls, rs = zip(*next(iter(sols1)))
     codec = Codec(len(set(ls)), len(list(rs)))

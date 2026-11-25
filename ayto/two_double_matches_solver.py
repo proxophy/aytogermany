@@ -49,7 +49,7 @@ class TwoDoubleMatchesSolver(TupleSolver):
         # if have two double matches, mm must be part of one of them
         if len(mult_lefts) == 2 and (
             (mm_person in seated_rights and mm_person not in mult_rights)
-            or mm_person not in seated_rights
+            or (mm_person is not None and mm_person not in seated_rights)
         ):
             return Violation.MM_NOT_IN_MULTIPLE_MATCH
 
@@ -172,7 +172,7 @@ class TwoDoubleMatchesBitMaskSolver(BitMaskSolver):
         if n_multi == 2 and (
             mm_person & seated_rights
             and not (mm_person & mult_rights)
-            or not mm_person & seated_rights
+            or not (mm_person > 0 and mm_person & seated_rights)
         ):
             return Violation.MM_NOT_IN_MULTIPLE_MATCH
         if has_triple:

@@ -113,7 +113,7 @@ class TupleSolver(
             else:
                 # l cannot be part of multiple match
                 if (
-                    mm_person and not self.season.two_dms
+                    mm_person is not None and not self.season.two_dms
                     and r != mm_person
                     and self.no_match(l, mm_person, episode, include_night)
                 ):
@@ -123,7 +123,7 @@ class TupleSolver(
                     return NoMatchReason.L_CANNOT_HAVE_SECOND_MATCH
                 elif self.season.double_match_for_right and has_dm_for_right(kpm):
                     mmr = mm_right(kpm) # person with double right match
-                    assert mmr
+                    assert mmr is not None
                     # left that is part of double right match cannot have a second match
                     mmr_partners = {ll for ll,rr in kpm if rr == mmr}
                     if l in mmr_partners:

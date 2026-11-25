@@ -1,13 +1,11 @@
-from collections import Counter
 import itertools
 import random
 import string
-import sys
+from collections import Counter
 from typing import Any
 
 import tqdm
 
-from ayto import SolutionSpace, df_for_probs
 from ayto.codec import Codec
 from ayto.season import (
     MATCH_MODELS,
@@ -86,7 +84,7 @@ def simulate_season(
         n + 2 if match_model in ("triple_match", "two_double_matches") else n + 1
     )
     rights = tuple(str(i) for i in range(1, numrights + 1))
-    dm = str(n + 1)
+    dm = "1"  # str(n + 1)
     solbase = {(l, r) for l, r in zip(range(n), range(n))}
     if match_model in ("double_match", "double_match_pair"):
         solution = frozenset(solbase | {(0, n)})
@@ -251,112 +249,13 @@ def stress_test(n: int = 5, model="double_match", matchbox_reveals_dm=False):
 
 if __name__ == "__main__":
     # uv run python -m scripts.artificial_seasons
-    # todo: check all with_dm and matchbox_reveals_dm combs
     # random.seed(42)
     ep = 5
     icl = True
-    # model = "two_double_matches"
-    # errors = stress_test(model=model, matchbox_reveals_dm=False)
-    # print(errors)
+    model = "two_double_matches"
+    errors = stress_test(model=model, matchbox_reveals_dm=False)
+    print(errors)
 
-    # season = simulate_season(5, match_model=model)
-    season = Season(
-        name="generated",
-        lefts_names=("A", "B", "C", "D", "E"),
-        rights_names=("1", "2", "3", "4", "5", "6", "7"),
-        nights=(
-            Night(pairs=frozenset({(0, 4), (2, 6), (1, 1), (4, 2), (3, 0)}), lights=1),
-            Night(pairs=frozenset({(2, 1), (3, 4), (1, 6), (0, 3), (4, 2)}), lights=1),
-            Night(pairs=frozenset({(2, 4), (1, 2), (3, 0), (4, 1), (0, 6)}), lights=0),
-            Night(pairs=frozenset({(2, 2), (0, 0), (1, 1), (4, 6), (3, 5)}), lights=3),
-            Night(pairs=frozenset({(3, 3), (0, 5), (1, 1), (4, 6), (2, 0)}), lights=3),
-        ),
-        matchboxes=Matchboxes(
-            weeks=(0, 1, 2, 3, 4),
-            pairs=((2, 2), (1, 1), (3, 4), (1, 5), (4, 2)),
-            results=(True, True, False, False, False),
-            before_night=(True, True, True, True, True),
-        ),
-        solution=frozenset({(4, 4), (3, 3), (2, 2), (0, 5), (0, 0), (1, 6), (1, 1)}),
-        match_model="two_double_matches",
-        mm_person="6",
-        mm_known_from_week=0,
-        matchbox_reveals_dm=False,
-        double_match_pair_names=None,
-        double_match_pair_known=0,
-        extra_left_name=None,
-    )
-    # print("check_generated_season", check_generated_season(season, ep, icl))
-
-    solution = season.solution
-    solver = get_solver_from_season(season)
-    empty_solver = solver.as_empty()
-    print(solver.__class__)
-    for l, r in solution:
-        if nm := solver.no_match_reason(l, r, ep, icl):
-            print(l, r, nm)
-    print(solver.find_violation(solution, ep, icl))
-
-    # sys.exit()
-
-    # # print(solver.solution_possible(solution, ep, icl))
-    # codec = Codec(len(season.lefts), len(season.rights))
-    bitsolver = get_solver_from_season(season, True)
-
-    # ot_sols = bitsolver.solve(ep, icl)
-    sols_by_solve = solver.solve(ep, icl)
-    for s in sols_by_solve:
-        if vio := solver.find_violation(s, ep, icl):
-            print(s, vio)
-            break
-
-    # sols_by_solve = [codec.encode(s) for s in sols_by_solve]
-    # print(len(ot_sols), len(sols_by_solve))
-    # for s in sols_by_solve:
-    #     if (vio := bitsolver.find_violation(s, ep, icl)) or s not in ot_sols:
-    #         print(s, vio)
-    # break
-
-    # print(sol & season.nights[0].pairs, season.nights[0].lights)
-    # sols = solver.generate_complete_solutions(ps, ep, icl)
-    # print("sol in sols", sol in sols)
-    sols_filtered = [
-        s for s in empty_solver.solve(ep) if solver.solution_possible(s, ep, icl)
-    ]
-
-    # print(len(sols_filtered), len(sols_by_solve))
-    # for s in sols_by_solve:
-    #     if s not in sols_filtered:
-    #         print("s not in sols_filtered", solver.find_violation(s, ep, icl))
-
-    solsf_sp = SolutionSpace(solver, sols_filtered)
-    solss_sp = SolutionSpace(solver, sols_by_solve)
-    no_matches_f = {season.encode_pair(l, r) for l, r in solsf_sp.get_no_matches()}
-    no_matches_s = {season.encode_pair(l, r) for l, r in solss_sp.get_no_matches()}
-    sol_pairs = {p for s in sols_filtered for p in s}
-    # print(df_for_probs(solsf_sp))
-    # print(df_for_probs(solss_sp))
-    # print(no_matches_f)
-    # print(no_matches_s)
-    # print(no_matches_s - no_matches_f)
-    # print((5,3) in sol_pairs)
-    # print(len(sols_filtered), len(sols_by_solve))
-
-    # print(season.matchboxes)
-    # l, r = 5, 3
-    # print("no_match_reason", bitsolver.no_match_reason(l, r, ep, icl))
-    # psols = solver.generate_partial_solutions(ep, icl)
-    # print(len(psols))
-    # ps = frozenset({(5, 1)})
-    # for p in psols:
-    #     bsols = bitsolver.generate_complete_solutions(bitsolver.from_pairs(p), ep, icl)
-    #     tsols = solver.generate_complete_solutions(solver.from_pairs(p), ep, icl)
-    #     print(len(bsols), len(tsols))
-
-    # match_model = double_match_for_right with matchbox_reveals_dm = False has error
-    # match_model = two_double_matches with matchbox_reveals_dm = False has error
-
-    # sys.exit()
     for model in MATCH_MODELS:
         for matchbox_reveals_dm in [True, False]:
             if not matchbox_reveals_dm and model not in [

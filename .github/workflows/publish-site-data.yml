@@ -1,0 +1,95 @@
+# Place at: aytogermany/.github/workflows/publish-site-data.yml
+#
+# Runs the tests, regenerates the site data and opens (or updates) a pull
+# request in the site repo. Merging that PR triggers the site's own
+# "Deploy Hugo site to Pages" workflow.
+#
+# Requires:
+#   - secret SITE_REPO_TOKEN: fine-grained PAT limited to the site repo with
+#     Contents: read/write and Pull requests: read/write
+#   - scripts/export_site.py (--out <dir>, optional --season <names>, --force)
+#   - pyproject.toml + uv.lock (pandas, openpyxl, ... ) so `uv sync` works
+
+name: Publish site data
+
+on:
+  workflow_dispatch:
+    inputs:
+      season:
+        description: "Season to export, e.g. vip2026 (empty = all changed seasons)"
+        required: false
+        default: ""
+  push:
+    branches: [main]
+    paths:
+      - "data/**"
+      - "ayto/**"
+      - "scripts/**"
+      - ".github/workflows/publish-site-data.yml"
+
+permissions:
+  contents: read
+
+# One run at a time; a newer run waits instead of racing on the PR branch.
+concurrency:
+  group: publish-site-data
+  cancel-in-progress: false
+
+env:
+  SITE_REPO: proxophy/proxophy.github.io
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      # The tests import `tests.fixtures` and read analytics/*.csv relative to
+      # the repo root, hence -t . and running from the root.
+      - name: Run tests
+        run: uv run python -m unittest discover -s tests -t . -v
+
+      - name: Check out site repo
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ env.SITE_REPO }}
+          token: ${{ secrets.SITE_REPO_TOKEN }}
+          path: site
+
+      - name: Export site data
+        env:
+          SEASON: ${{ inputs.season }}
+        run: |
+          args=(--out site/static/ayto)
+          if [ -n "$SEASON" ]; then
+            args+=(--season "$SEASON")
+          fi
+          uv run python -m scripts.export_site "${args[@]}"
+
+      - name: Open or update pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          path: site
+          token: ${{ secrets.SITE_REPO_TOKEN }}
+          base: main
+          branch: data/ayto-update
+          add-paths: static/ayto/**
+          delete-branch: true
+          commit-message: "ayto: update data from aytogermany@${{ github.sha }}"
+          title: "ayto: update data"
+          body: |
+            Automated data update from `${{ github.repository }}`
+            at `${{ github.sha }}`.
+
+            Triggered by: `${{ github.event_name }}`
+            Season filter: `${{ inputs.season || 'none' }}`
+
+            Review the diff, then merge. Merging redeploys the site.
