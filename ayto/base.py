@@ -277,6 +277,6 @@ class Solver[S: SolutionType, CandList](ABC):
                 if self.solution_possible(s, episode, include_night)
             ]
         else:
-            solutions = list(solutions_unfiltered)
+            solutions = solutions_unfiltered
 
         return solutions
